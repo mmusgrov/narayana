@@ -45,6 +45,8 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
+import com.arjuna.ats.arjuna.coordinator.AddOutcome;
+import com.arjuna.ats.internal.jta.resources.arjunacore.XAOnePhaseResource;
 import org.omg.CORBA.INVALID_TRANSACTION;
 import org.omg.CORBA.TRANSACTION_ROLLEDBACK;
 import org.omg.CORBA.TRANSACTION_UNAVAILABLE;
@@ -707,7 +709,8 @@ public class TransactionImple implements javax.transaction.Transaction,
                                 }
                                 catch (XAException te)
                                 {
-                                    jtaxLogger.i18NLogger.warn_jtax_transaction_jts_timeouterror("TransactionImple.enlistResource",
+                                    jtaxLogger.i18NLogger.warn_jtax_transaction_jts_timeouterror(
+                                            "TransactionImple.enlistResource",
                                             XAHelper.printXAErrorCode(te), XAHelper.xidToString(xid), te);
                                 }
                             }
@@ -722,21 +725,47 @@ public class TransactionImple implements javax.transaction.Transaction,
                         // The xid will change on each pass of the loop, so we need to create a new record on each pass.
                         // The registerResource will fail in the case of multiple last resources being disallowed.
                         // see JBTM-362 and JBTM-363
-                        XAResourceRecord xaResourceRecord = createRecord(xaRes, params, xid);
-                        if(xaResourceRecord != null) {
+                        TwoPhaseCoordinator theTx = (TwoPhaseCoordinator) BasicAction.Current();
+
+                        if (theTx != null) {
+                            int result;
+
                             xaRes.start(xid, XAResource.TMNOFLAGS);
-                            try {
-                                RecoveryCoordinator recCoord = _theTransaction.registerResource(xaResourceRecord.getResource());
-                                xaResourceRecord.setRecoveryCoordinator(recCoord);
-                            } catch(Exception e) {
-                                // we called start on the resource, but _theTransaction did not accept it.
-                                // we therefore have a mess which we must now clean up by ensuring the start is undone:
-                                xaResourceRecord.rollback();
-                                markRollbackOnly();
-                                return false;
+                            if ((xaRes instanceof LastResourceCommitOptimisation)
+                                    || ((LAST_RESOURCE_OPTIMISATION_INTERFACE != null) &&
+                                    LAST_RESOURCE_OPTIMISATION_INTERFACE.isInstance(xaRes))) {
+                                result = theTx.add(
+                                        new com.arjuna.ats.internal.arjuna.abstractrecords.LastResourceRecord(
+                                        new XAOnePhaseResource(xaRes, xid, params)));
+                            } else {
+                                result = theTx.add(new com.arjuna.ats.internal.jta.resources.jta.XAResourceRecord(
+                                        this, xaRes, xid, params));
                             }
-                            _resources.put(xaRes, new TxInfo(xid));
-                            return true; // dive out, no need to set associatedWork = true;
+
+                            if (result != AddOutcome.AR_ADDED) {
+                                    // we called start on the resource, but _theTransaction did not accept it. We
+                                    // therefore have a mess which we must now clean up by ensuring the start is undone:
+                                    xaRes.rollback(xid);
+                            } else {
+                                _resources.put(xaRes, new TxInfo(xid));
+                                return true; // dive out, no need to set associatedWork = true;
+                            }
+                        } else {
+                            XAResourceRecord xaResourceRecord = createRecord(xaRes, params, xid);
+                            if(xaResourceRecord != null) {
+                                xaRes.start(xid, XAResource.TMNOFLAGS);
+                                try {
+                                    RecoveryCoordinator recCoord = _theTransaction.registerResource(
+                                            xaResourceRecord.getResource());
+                                    xaResourceRecord.setRecoveryCoordinator(recCoord);
+                                    _resources.put(xaRes, new TxInfo(xid));
+                                    return true; // dive out, no need to set associatedWork = true;
+                                } catch(Exception e) {
+                                    // we called start on the resource, but _theTransaction did not accept it. We
+                                    // therefore have a mess which we must now clean up by ensuring the start is undone:
+                                    xaResourceRecord.rollback();
+                                }
+                            }
                         }
 
                         // if we get to here, something other than a failure of xaRes.start probably went wrong.
@@ -772,7 +801,8 @@ public class TransactionImple implements javax.transaction.Transaction,
 								 * rollback only.
 								 */
 
-                                jtaxLogger.i18NLogger.warn_jtax_transaction_jts_starterror("TransactionImple.enlistResource - XAResource.start",
+                                jtaxLogger.i18NLogger.warn_jtax_transaction_jts_starterror(
+                                        "TransactionImple.enlistResource - XAResource.start",
                                         XAHelper.printXAErrorCode(e), XAHelper.xidToString(xid), e);
 
 								markRollbackOnly();
@@ -782,7 +812,8 @@ public class TransactionImple implements javax.transaction.Transaction,
 
 						if (retry < 0)
 						{
-                            jtaxLogger.i18NLogger.warn_jtax_transaction_jts_starterror("TransactionImple.enlistResource - XAResource.start",
+                            jtaxLogger.i18NLogger.warn_jtax_transaction_jts_starterror(
+                                    "TransactionImple.enlistResource - XAResource.start",
                                     XAHelper.printXAErrorCode(e), XAHelper.xidToString(xid), e);
 
 							markRollbackOnly();
@@ -813,7 +844,8 @@ public class TransactionImple implements javax.transaction.Transaction,
 				}
 				catch (XAException ex)
 				{
-                    jtaxLogger.i18NLogger.warn_jtax_transaction_jts_xaerror("TransactionImple.enlistResource - xa_start: ", XAHelper.printXAErrorCode(ex), ex);
+                    jtaxLogger.i18NLogger.warn_jtax_transaction_jts_xaerror(
+                            "TransactionImple.enlistResource - xa_start: ", XAHelper.printXAErrorCode(ex), ex);
 
 					markRollbackOnly();
 
@@ -1049,7 +1081,8 @@ public class TransactionImple implements javax.transaction.Transaction,
 
 			markRollbackOnly();
 
-            jtaxLogger.i18NLogger.warn_jtax_transaction_jts_xaerror("TransactionImple.delistResource", XAHelper.printXAErrorCode(exp), exp);
+            jtaxLogger.i18NLogger.warn_jtax_transaction_jts_xaerror("TransactionImple.delistResource",
+                    XAHelper.printXAErrorCode(exp), exp);
 
 			return false;
 		}

@@ -1195,7 +1195,7 @@ public class XAResourceRecord extends AbstractRecord
 	 * with the thread, i.e., has end already been called on it?
 	 */
 
-	private final boolean endAssociation()
+	protected boolean endAssociation()
 	{
 		boolean doEnd = true;
 
