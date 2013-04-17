@@ -106,6 +106,7 @@
 
   </dependencies>
   <build>
+     <finalName>${project.artifactId}</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -159,7 +160,10 @@
       <plugin>
           <groupId>org.jboss.as.plugins</groupId>
           <artifactId>jboss-as-maven-plugin</artifactId>
-          <version>7.1.1.Final</version>
+          <configuration>
+            <skip>false</skip>
+            <filename>${project.artifactId}-${version.artifactId}.war</filename>
+          </configuration>
       </plugin>
     </plugins>
   </build>
