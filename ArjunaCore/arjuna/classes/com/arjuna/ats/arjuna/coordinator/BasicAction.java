@@ -1406,6 +1406,41 @@ public class BasicAction extends StateManager
         return actionStatus;
     }
 
+    private void traceEndStatus() {
+        int status = actionStatus;
+        StringBuilder sb = new StringBuilder();
+
+        switch (heuristicDecision)
+        {
+            case TwoPhaseOutcome.PREPARE_OK:
+            case TwoPhaseOutcome.FINISH_OK:
+                break;
+            case TwoPhaseOutcome.HEURISTIC_ROLLBACK:
+                status = ActionStatus.H_ROLLBACK;
+                break;
+            case TwoPhaseOutcome.HEURISTIC_COMMIT:
+                status = ActionStatus.H_COMMIT;
+                break;
+            case TwoPhaseOutcome.HEURISTIC_MIXED:
+                status = ActionStatus.H_MIXED;
+                break;
+            case TwoPhaseOutcome.HEURISTIC_HAZARD:
+            default:
+                status = ActionStatus.H_HAZARD;
+        }
+
+        if (failedList.size() != 0) {
+            AbstractRecord rec;
+
+            while (((rec = failedList.getFront()) != null)) {
+                sb.append(rec.get_uid()).append(' ');
+            }
+        }
+
+        tsLogger.logger.tracef("BasicAction::End() result for action-id (%s) is (%d). Failed List: (%s). Node id: (%s)",
+                get_uid(), status, arjPropertyManager.getCoreEnvironmentBean().getNodeIdentifier(), sb.toString());
+    }
+
     /**
      * End the atomic action by committing it. This invokes the prepare()
      * operation. If this succeeds then the pendingList should be empty and the
@@ -1519,6 +1554,9 @@ public class BasicAction extends StateManager
                 }
             }
         }
+
+        if (tsLogger.logger.isTraceEnabled())
+            traceEndStatus();
 
         boolean returnCurrentStatus = false;
 
