@@ -32,27 +32,25 @@ import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.PassivationCapable;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import javax.transaction.TransactionScoped;
-import javax.transaction.TransactionSynchronizationRegistry;
+import javax.transaction.*;
 import java.lang.annotation.Annotation;
 
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * @author paul.robinson@redhat.com 01/05/2013
  */
-public class TransactionContext implements Context {
+public class TransactionContext implements Context, Synchronization {
 
     private static TransactionManager transactionManager;
 
     private static TransactionSynchronizationRegistry transactionSynchronizationRegistry;
 
+    private Set<TransactionScopedBean> beans;
+
     @Override
     public Class<? extends Annotation> getScope() {
-
         return TransactionScoped.class;
     }
 
@@ -74,6 +72,24 @@ public class TransactionContext implements Context {
         } else if (creationalContext != null) {
             T t = contextual.create(creationalContext);
             tsr.putResource(bean.getId(), t);
+            synchronized (this) {
+                if (beans == null) {
+                    beans = new CopyOnWriteArraySet<TransactionScopedBean>();
+
+                    Transaction transaction = getCurrentTransaction();
+
+                    try {
+                        transaction.registerSynchronization(this);
+                    } catch (RollbackException e) {
+                        throw new RuntimeException(jtaLogger.i18NLogger.get_transaction_arjunacore_syncwhenaborted());
+                    } catch (SystemException e) {
+                        throw new RuntimeException(jtaLogger.i18NLogger.get_transaction_arjunacore_nullparam());
+                    }
+                }
+            }
+
+            beans.add(new TransactionScopedBean(contextual, creationalContext, t));
+
             return t;
         } else {
             return null;
@@ -140,5 +156,31 @@ public class TransactionContext implements Context {
             }
         }
         return transactionSynchronizationRegistry;
+    }
+
+    @Override
+    public void beforeCompletion() {
+    }
+
+    @Override
+    public void afterCompletion(int i) {
+        for (TransactionScopedBean bean : beans)
+            bean.destroy();
+    }
+
+    private class TransactionScopedBean<T> {
+        Contextual<T> contextual;
+        CreationalContext<T> creationalContext;
+        T bean;
+
+        private TransactionScopedBean(Contextual<T> contextual, CreationalContext<T> creationalContext, T bean) {
+            this.contextual = contextual;
+            this.creationalContext = creationalContext;
+            this.bean = bean;
+        }
+
+        public <T> void destroy() {
+            contextual.destroy(bean, creationalContext);
+        }
     }
 }

@@ -25,10 +25,8 @@ package com.hp.mwtests.ts.jta.cdi.transactionScoped;
 import junit.framework.Assert;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.shrinkwrap.api.ArchivePaths;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.After;
 import org.junit.Test;
@@ -39,6 +37,9 @@ import javax.inject.Inject;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.UserTransaction;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author paul.robinson@redhat.com 01/05/2013
@@ -76,12 +77,16 @@ public class TransactionScopedTest {
     @Test
     public void testTxAssociationChange() throws Exception {
 
+        TestCDITransactionScopeBean.setPreDestroyCalled(false);
+
         transactionManager = com.arjuna.ats.jta.TransactionManager.transactionManager();
 
         userTransaction.begin(); //tx1 begun
+        assertTrue(testTxAssociationChangeBean.isPostConstructCalled());
         testTxAssociationChangeBean.setValue(1);
         Transaction transaction = transactionManager.suspend();
 
+        assertFalse(TestCDITransactionScopeBean.isPreDestroyCalled());
         assertContextUnavailable();
 
         userTransaction.begin(); //tx2 begun
@@ -95,6 +100,7 @@ public class TransactionScopedTest {
         Assert.assertEquals(1, testTxAssociationChangeBean.getValue());
         userTransaction.commit();
 
+        assertTrue(TestCDITransactionScopeBean.isPreDestroyCalled());
         assertContextUnavailable();
     }
 
