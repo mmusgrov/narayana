@@ -21,9 +21,11 @@
  */
 package io.narayana.spi.util;
 
-import io.narayana.spi.DataSourceBindException;
-import io.narayana.spi.DataSourceManager;
+import io.narayana.spi.InitializationException;
 
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,9 +33,6 @@ import java.util.Map;
 public class TestUtils {
     public static final String H2_BINDING = "h2";
     public static final String PG_BINDING = "postgresql";
-    public static final String H2_DRIVER = "org.h2.Driver";
-    public static final String PG_DRIVER = "org.postgresql.Driver";
-    public static final String H2_URL = "jdbc:h2:~/ceylondb";
 
     public static int countRows(Connection connection, String tableName) throws SQLException {
         int count = 0;
@@ -50,17 +49,19 @@ public class TestUtils {
         return count;
     }
 
-    public static Map<String, Connection> getConnections(DataSourceManager dataSourceManager) throws SQLException, DataSourceBindException {
+    private static DataSource getDataSource(String bindingName) throws InitializationException, SQLException {
+        try {
+            return (DataSource) new InitialContext().lookup(bindingName);
+        } catch (NamingException e) {
+            throw new InitializationException(e.getMessage(), e);
+        }
+    }
+
+    public static Map<String, Connection> getConnections() throws SQLException, InitializationException {
         Map<String, Connection> connections = new HashMap<>();
 
-        connections.put("h2",  dataSourceManager.getDataSource(H2_BINDING, "sa", "sa").getConnection());
-        connections.put("postgresql",  dataSourceManager.getDataSource(PG_BINDING, "sa", "sa").getConnection());
-
-//        connections.put("h2",  dataSourceManager.getDataSource(H2_BINDING).getConnection("sa", "sa"));
-//        connections.put("postgresql",  dataSourceManager.getDataSource(PG_BINDING).getConnection("sa", "sa"));
-
-//        connections.put("h2", dataSourceManager.getConnection(H2_BINDING, "sa", "sa"));
-//        connections.put("postgresql", dataSourceManager.getConnection(PG_BINDING, "sa", "sa"));
+        connections.put("h2",  getDataSource(H2_BINDING).getConnection());
+        connections.put("postgresql",  getDataSource(PG_BINDING).getConnection());
 
         createTables(connections);
 

@@ -21,8 +21,6 @@
  */
 package io.narayana.spi;
 
-import com.arjuna.ats.arjuna.common.CoordinatorEnvironmentBean;
-import com.arjuna.common.internal.util.propertyservice.BeanPopulator;
 import io.narayana.spi.util.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -34,62 +32,33 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.transaction.*;
 import java.sql.*;
 import java.util.Map;
 
 public class SPIUnitTest
 {
-    static TransactionService transactionService;
-    static DataSourceManager dataSourceManager;
-
     @BeforeClass
     public static void setUp() throws Exception {
-//        EnvironmentConfig.EnvironmentConfigBuilder configBuilder;
-        ConfigurationHolder config = new ConfigurationHolder();
-
-//        try {
- //           configBuilder = new EnvironmentConfig.EnvironmentConfigBuilder().
-                    config.
-                    setDefaultTimeout(4).
-                    setNodeIdentifier("node1").
-                    setObjectStorePath("txnlogs");
-//        } catch (ConfigurationException e) {
-//            config = null;
-//        }
-
-        transactionService = TransactionServiceFactory.getTransactionService(config);
-        dataSourceManager = TransactionServiceFactory.getDataSourceManager();
-
-        dataSourceManager.registerDbResource(TestUtils.PG_DRIVER, TestUtils.PG_BINDING, "ceylondb", "localhost", 5432);
-        dataSourceManager.registerDbResource(TestUtils.H2_DRIVER, TestUtils.H2_BINDING, TestUtils.H2_URL);
+        JndiProvider.start();
+        TransactionServiceFactory.start(true);
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
-        if (transactionService != null)
-            transactionService.close();
-    }
-
-    @Test(expected = RollbackException.class)
-    public void testConfig() throws Exception {
-        final CoordinatorEnvironmentBean coordinatorEnvironmentBean =
-                BeanPopulator.getDefaultInstance(CoordinatorEnvironmentBean.class);
-        int defaultTimeout = new EnvironmentConfig().getDefaultTimeout();
-
-        assertEquals(coordinatorEnvironmentBean.getDefaultTimeout(), defaultTimeout);
-
-        Transaction txn = transactionService.beginTransaction();
-        Thread.sleep(defaultTimeout * 1000 + 1000);
-
-        txn.commit();
-        fail("committing a timed out transaction should have thrown a RollbackException");
+        TransactionServiceFactory.stop();
+        JndiProvider.stop();
     }
 
     @Test(expected = RollbackException.class)
     public void testTimeout() throws Exception {
         final int timeout = 2;
-        Transaction txn = transactionService.beginTransaction(timeout);
+        UserTransaction txn = (UserTransaction) new InitialContext().lookup(TransactionServiceFactory.getUserTransactionJNDIContext());
+
+        txn.setTransactionTimeout(timeout);
+        txn.begin();
 
         Thread.sleep(timeout * 1000 + 1000);
         txn.commit();
@@ -98,7 +67,9 @@ public class SPIUnitTest
 
     @Test
     public void testTransaction() throws Exception {
-        Transaction txn = transactionService.beginTransaction();
+        UserTransaction txn = (UserTransaction) new InitialContext().lookup(TransactionServiceFactory.getUserTransactionJNDIContext());
+
+        txn.begin();
 
         assertNotNull(txn);
         assertEquals(Status.STATUS_ACTIVE, txn.getStatus());
@@ -107,17 +78,23 @@ public class SPIUnitTest
 
         // the transaction should have been disassociated
         assertEquals(Status.STATUS_NO_TRANSACTION, txn.getStatus());
+
+        txn.begin();
+        txn.commit();
+        assertEquals(Status.STATUS_NO_TRANSACTION, txn.getStatus());
     }
 
     @Test
     public void testCommitXADS() throws Exception {
         final int NROWS = 3;
-        Map<String, Connection> connections = TestUtils.getConnections(dataSourceManager);
+        UserTransaction txn = (UserTransaction) new InitialContext().lookup(TransactionServiceFactory.getUserTransactionJNDIContext());
+//        UserTransaction txn = TransactionServiceFactory.getUserTransaction();
+        Map<String, Connection> connections = TestUtils.getConnections();
 
         int c0 = TestUtils.countRows(connections.get("h2"), "CEYLONKV");
         int c1 = TestUtils.countRows(connections.get("postgresql"), "CEYLONKV");
 
-        Transaction txn = transactionService.beginTransaction();
+        txn.begin();
 
         for (Map.Entry<String, Connection> entry : connections.entrySet()) {
             Connection connection = entry.getValue();
@@ -147,12 +124,13 @@ public class SPIUnitTest
     @Test
     public void testAbortXADS() throws Exception {
         final int NROWS = 3;
-        Map<String, Connection> connections = TestUtils.getConnections(dataSourceManager);
+        UserTransaction txn = (UserTransaction) new InitialContext().lookup(TransactionServiceFactory.getUserTransactionJNDIContext());
+        Map<String, Connection> connections = TestUtils.getConnections();
 
         int c0 = TestUtils.countRows(connections.get("h2"), "CEYLONKV");
         int c1 = TestUtils.countRows(connections.get("postgresql"), "CEYLONKV");
 
-        Transaction txn = transactionService.beginTransaction();
+        txn.begin();
 
         for (Map.Entry<String, Connection> entry : connections.entrySet()) {
             Connection connection = entry.getValue();
@@ -179,25 +157,25 @@ public class SPIUnitTest
         TestUtils.dropTables(connections);
     }
 
-    private void injectFault(Transaction txn, ASFailureType type, ASFailureMode mode, String modeArg) throws RollbackException, SystemException {
+    private void injectFault(ASFailureType type, ASFailureMode mode, String modeArg) throws RollbackException, SystemException, NamingException {
         ASFailureSpec fault = new ASFailureSpec("fault", mode, modeArg, type);
-
-        txn.enlistResource(new DummyXAResource(fault));
+        TransactionManager transactionManager = (TransactionManager) new InitialContext().lookup(TransactionServiceFactory.getTransactionManagerJNDIContext());
+        transactionManager.getTransaction().enlistResource(new DummyXAResource(fault));
     }
 
     @Test
     public void testXADSWithFaults() throws Exception {
         final int NROWS = 3;
-        boolean enlisted = false;
-        Map<String, Connection> connections = TestUtils.getConnections(dataSourceManager);
-
+//        boolean enlisted = false;
+        Map<String, Connection> connections = TestUtils.getConnections();
+        UserTransaction txn = (UserTransaction) new InitialContext().lookup(TransactionServiceFactory.getUserTransactionJNDIContext());
         int c0 = TestUtils.countRows(connections.get("h2"), "CEYLONKV");
         int c1 = TestUtils.countRows(connections.get("postgresql"), "CEYLONKV");
 
-        Transaction txn = transactionService.beginTransaction();
+        txn.begin();
 
         // the first participant will throw a rollback exception during the commit phase resulting in a transaction rollback
-        injectFault(txn, ASFailureType.XARES_COMMIT, ASFailureMode.XAEXCEPTION, "XA_RBROLLBACK");
+        injectFault(ASFailureType.XARES_COMMIT, ASFailureMode.XAEXCEPTION, "XA_RBROLLBACK");
 
         for (Map.Entry<String, Connection> entry : connections.entrySet()) {
             Connection connection = entry.getValue();
@@ -206,7 +184,7 @@ public class SPIUnitTest
                 TestUtils.insertTable(connection, "k" + i, "v" + i);
 
 //            if (!enlisted) {
-//                injectFault(txn, ASFailureType.XARES_COMMIT, ASFailureMode.XAEXCEPTION, "XA_HEURRB");
+//                injectFault(ASFailureType.XARES_COMMIT, ASFailureMode.XAEXCEPTION, "XA_HEURRB");
 //
 //                enlisted = true;
 //            }
@@ -247,9 +225,12 @@ public class SPIUnitTest
     public void testSynchronization() throws Exception {
         TestSynchronization synch =  new TestSynchronization() ;
 
-        Transaction txn = transactionService.beginTransaction();
+        UserTransaction txn = (UserTransaction) new InitialContext().lookup(TransactionServiceFactory.getUserTransactionJNDIContext());
+        TransactionManager transactionManager = (TransactionManager) new InitialContext().lookup(TransactionServiceFactory.getTransactionManagerJNDIContext());
 
-        txn.registerSynchronization(synch);
+        txn.begin();
+
+        transactionManager.getTransaction().registerSynchronization(synch);
 
         txn.commit();
 
