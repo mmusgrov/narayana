@@ -113,6 +113,7 @@ public class CommitMarkableResourceRecord extends AbstractRecord {
 			.getDefaultCommitMarkableTableName();
 	private boolean isPerformImmediateCleanupOfBranches = jtaEnvironmentBean
 			.isPerformImmediateCleanupOfCommitMarkableResourceBranches();
+	private Connection preparedConnection;
 	private static final boolean isNotifyRecoveryModuleOfCompletedBranches = jtaEnvironmentBean
 			.isNotifyCommitMarkableResourceRecoveryModuleOfCompleteBranches();
 	private static final Map<String, Boolean> isPerformImmediateCleanupOfCommitMarkableResourceBranchesMap = jtaEnvironmentBean
@@ -238,7 +239,7 @@ public class CommitMarkableResourceRecord extends AbstractRecord {
 									connection.close();
 								} catch (SQLException e) {
 									tsLogger.logger
-											.warn("Could not close the connection",
+											.warn("Could not close the preparedConnection",
 													e);
 								}
 							}
@@ -358,15 +359,15 @@ public class CommitMarkableResourceRecord extends AbstractRecord {
 
 	/**
 	 * This will add the required recovery data about this resource into the
-	 * resources connection. If the connection is in read only mode, we do not
-	 * need to persist this information.
+	 * resources preparedConnection. If the preparedConnection is in read only
+	 * mode, we do not need to persist this information.
 	 */
 	public int topLevelPrepare() {
 		try {
-			Connection connection = (Connection) connectableResource
+			preparedConnection = (Connection) connectableResource
 					.getConnection();
 
-			PreparedStatement prepareStatement = connection
+			PreparedStatement prepareStatement = preparedConnection
 					.prepareStatement("insert into "
 							+ tableName
 							+ " (xid, transactionManagerID, actionuid) values (?,?,?)");
@@ -421,9 +422,12 @@ public class CommitMarkableResourceRecord extends AbstractRecord {
 			}
 		} finally {
 			try {
-				((Connection) connectableResource.getConnection()).close();
+				if (preparedConnection != null) {
+					preparedConnection.close();
+				}
 			} catch (Throwable e) {
-				tsLogger.logger.warn("Could not close the connection", e);
+				tsLogger.logger.warn("Could not close the preparedConnection",
+						e);
 			}
 		}
 	}
@@ -449,16 +453,20 @@ public class CommitMarkableResourceRecord extends AbstractRecord {
 				committed = true;
 				return TwoPhaseOutcome.FINISH_OK;
 			} catch (Throwable e) {
-				tsLogger.logger.error("Could not commit the connection", e);
+				tsLogger.logger.error(
+						"Could not commit the preparedConnection", e);
 				return TwoPhaseOutcome.FINISH_ERROR;
 			} finally {
 				if (!isPerformImmediateCleanupOfBranches) {
 					try {
-						((Connection) connectableResource.getConnection())
-								.close();
+						if (preparedConnection != null) {
+							if (preparedConnection != null) {
+								preparedConnection.close();
+							}
+						}
 					} catch (Throwable e) {
-						tsLogger.logger.warn("Could not close the connection",
-								e);
+						tsLogger.logger.warn(
+								"Could not close the preparedConnection", e);
 					}
 				}
 			}
