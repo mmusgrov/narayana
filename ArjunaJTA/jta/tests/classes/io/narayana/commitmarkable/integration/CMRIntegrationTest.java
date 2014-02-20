@@ -177,8 +177,8 @@ public class CMRIntegrationTest {
 												// helps us though as JCA seems
 												// to rely on finalize
 
-							System.out
-									.printf("committed txn iteration %d%n", i);
+//							System.out
+//									.printf("committed txn iteration %d%n", i);
 							success++;
 						} catch (SQLException e) {
 							System.err.println("boom");
