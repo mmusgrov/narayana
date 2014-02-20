@@ -157,17 +157,24 @@ public class CommitMarkableResourceRecordRecoveryModule implements
 
 	@Override
 	public void periodicWorkFirstPass() {
-
+		// TODO - this is one shot only due to a
+		// remove in the function, if this delete fails only normal
+		// recovery is possible
+		Map<String, List<Xid>> completedBranches2 = new HashMap<String, List<Xid>>();
 		synchronized (completedBranches) {
-			Iterator<String> iterator2 = completedBranches.keySet().iterator();
-			while (iterator2.hasNext()) {
-				String jndiName = iterator2.next();
-				List<Xid> completedXids = this.completedBranches.get(jndiName);
-				// TODO - this is one shot only due to a
-				// remove in the function, if this delete fails only normal
-				// recovery is possible
-				delete(jndiName, completedXids);
+			Iterator<String> iterator = completedBranches.keySet().iterator();
+			while (iterator.hasNext()) {
+				String jndiName = iterator.next();
+				List<Xid> completedXids = completedBranches.remove(jndiName);
+				completedBranches2.put(jndiName, completedXids);
 			}
+		}
+
+		Iterator<String> iterator2 = completedBranches2.keySet().iterator();
+		while (iterator2.hasNext()) {
+			String jndiName = iterator2.next();
+			List<Xid> completedXids = completedBranches2.get(jndiName);
+			delete(jndiName, completedXids);
 		}
 
 		if (tsLogger.logger.isTraceEnabled()) {
@@ -640,11 +647,13 @@ public class CommitMarkableResourceRecordRecoveryModule implements
 							}
 						}
 					} finally {
-						try {
-							connection.close();
-						} catch (SQLException e) {
-							tsLogger.logger.warn(
-									"Could not close the connection", e);
+						if (connection != null) {
+							try {
+								connection.close();
+							} catch (SQLException e) {
+								tsLogger.logger.warn(
+										"Could not close the connection", e);
+							}
 						}
 					}
 				} catch (SQLException e) {

@@ -19,9 +19,6 @@ package io.narayana.commitmarkable.integration;
 import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import io.narayana.commitmarkable.DummyXAResource;
-import io.narayana.commitmarkable.JDBCConnectableResource;
-import io.narayana.commitmarkable.TestCommitMarkableResource;
-import io.narayana.commitmarkable.TestCommitMarkableResourceBase;
 import io.narayana.commitmarkable.Utils;
 
 import java.sql.Connection;
@@ -72,10 +69,7 @@ public class CMRIntegrationTest {
 	public static JavaArchive createTestArchive() {
 		return ShrinkWrap
 				.create(JavaArchive.class, "test.jar")
-				.addClasses(DummyXAResource.class,
-						TestCommitMarkableResource.class,
-						TestCommitMarkableResourceBase.class,
-						JDBCConnectableResource.class, Utils.class,
+				.addClasses(DummyXAResource.class, Utils.class,
 						JdbcDataSource.class)
 				.addPackage("io.narayana.connectableresource")
 				.addAsManifestResource(new StringAsset(DEPENDENCIES),
@@ -177,6 +171,11 @@ public class CMRIntegrationTest {
 							// System.out.printf("XXX txn close%n");
 
 							userTransaction.commit();
+							connection.close(); // This wouldn't work for a
+												// none-JCA code as commit has
+												// closed the connection - it
+												// helps us though as JCA seems
+												// to rely on finalize
 
 							System.out
 									.printf("committed txn iteration %d%n", i);
