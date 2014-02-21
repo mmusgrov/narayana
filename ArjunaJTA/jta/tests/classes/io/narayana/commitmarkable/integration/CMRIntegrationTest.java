@@ -123,8 +123,8 @@ public class CMRIntegrationTest {
 		}
 	}
 
-	private int threadCount = 100;
-	private int iterationCount = 2000;
+	private int threadCount = 10;
+	private int iterationCount = 100;
 	private int waiting;
 	private boolean go;
 	private final Object waitLock = new Object();
@@ -133,6 +133,7 @@ public class CMRIntegrationTest {
 	public void doTest(final DataSource dataSource) throws Exception {
 
 		// Test code
+		checkFooSize(dataSource, 0);
 		Thread[] threads = new Thread[threadCount];
 		for (int i = 0; i < threads.length; i++) {
 			threads[i] = new Thread(new Runnable() {
@@ -163,11 +164,19 @@ public class CMRIntegrationTest {
 									new DummyXAResource());
 
 							connection = dataSource.getConnection();
+							int maxRetries = 10;
 
-							Statement createStatement = connection
-									.createStatement();
-							createStatement
-									.execute("INSERT INTO foo (bar) VALUES (1)");
+							for (int retries = 0; retries < maxRetries; retries++) {
+							    try {
+							        Statement createStatement = connection.createStatement();
+							        createStatement.execute("INSERT INTO foo (bar) VALUES (1)");
+									break;
+						        } catch (SQLException ex) {
+							        System.err.printf("retry %d (reason: %s)%n", retries, ex.getMessage());
+								    if (retries == maxRetries - 1)
+									    throw ex;
+								}
+							}
 							// System.out.printf("XXX txn close%n");
 
 							userTransaction.commit();
@@ -261,7 +270,7 @@ public class CMRIntegrationTest {
 				.printf("  Transactions per second: %d%n",
 						Math.round((totalExecuted.intValue() / (timeInMillis / 1000d))));
 
-		checkFooSize(dataSource);
+		checkFooSize(dataSource, threadCount * iterationCount);
 	}
 
 	private void checkSize(String string, Statement statement, int expected)
@@ -274,14 +283,14 @@ public class CMRIntegrationTest {
 		assertEquals(expected, actual);
 	}
 
-	public void checkFooSize(DataSource dataSource) throws SQLException,
+	private void checkFooSize(DataSource dataSource, int expected) throws SQLException,
 			HeuristicRollbackException, RollbackException,
 			HeuristicMixedException, SystemException, NotSupportedException {
 		userTransaction.begin();
 		Connection connection = dataSource.getConnection();
 		String tableToCheck = "foo";
 		Statement statement = connection.createStatement();
-		checkSize(tableToCheck, statement, threadCount * iterationCount);
+		checkSize(tableToCheck, statement, expected);
 		statement.close();
 		userTransaction.commit();
 		connection.close();
