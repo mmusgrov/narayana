@@ -196,7 +196,7 @@ public class PerformanceTestCommitMarkableResource extends
 			// large (1318148 > 1048576). You can change this value on the
 			// server by setting the max_allowed_packet' variable
 			BeanPopulator.getDefaultInstance(JTAEnvironmentBean.class)
-					.setCommitMarkableResourceRecordDeleteBatchSize(5000);
+					.setCommitMarkableResourceRecordDeleteBatchSize(3500);
 
 			dataSource = new MysqlConnectionPoolDataSource();
 			// need paranoid as otherwise it sends a connection change user
