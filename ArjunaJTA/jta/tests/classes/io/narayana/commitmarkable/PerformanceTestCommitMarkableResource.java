@@ -128,8 +128,8 @@ public class PerformanceTestCommitMarkableResource extends
 					dataSource, new Object[] { "dtf11" });
 			clazz.getMethod("setPassword", new Class[] { String.class })
 					.invoke(dataSource, new Object[] { "dtf11" });
-			clazz.getMethod("setPortNumber", new Class[] { Integer.class })
-					.invoke(dataSource, new Object[] { 1521 });
+			clazz.getMethod("setPortNumber", new Class[] { int.class }).invoke(
+					dataSource, new Object[] { 1521 });
 			recoveryDataSource = (DataSource) dataSource;
 		} else if (dbType.equals("sybase")) {
 
@@ -148,8 +148,8 @@ public class PerformanceTestCommitMarkableResource extends
 					dataSource, new Object[] { "sa" });
 			clazz.getMethod("setPassword", new Class[] { String.class })
 					.invoke(dataSource, new Object[] { "sybase" });
-			clazz.getMethod("setPortNumber", new Class[] { Integer.class })
-					.invoke(dataSource, new Object[] { 5000 });
+			clazz.getMethod("setPortNumber", new Class[] { int.class }).invoke(
+					dataSource, new Object[] { 5000 });
 
 			Class clazz2 = Class.forName("com.sybase.jdbc3.jdbc.SybDataSource");
 			recoveryDataSource = (DataSource) clazz2.newInstance();
@@ -161,7 +161,7 @@ public class PerformanceTestCommitMarkableResource extends
 					recoveryDataSource, new Object[] { "sa" });
 			clazz2.getMethod("setPassword", new Class[] { String.class })
 					.invoke(recoveryDataSource, new Object[] { "sybase" });
-			clazz2.getMethod("setPortNumber", new Class[] { Integer.class })
+			clazz2.getMethod("setPortNumber", new Class[] { int.class })
 					.invoke(recoveryDataSource, new Object[] { 5000 });
 		} else if (dbType.equals("h2")) {
 
@@ -216,10 +216,10 @@ public class PerformanceTestCommitMarkableResource extends
 					dataSource, new Object[] { "db2" });
 			clazz.getMethod("setPassword", new Class[] { String.class })
 					.invoke(dataSource, new Object[] { "db2" });
-			clazz.getMethod("setDriverType", new Class[] { Integer.class })
-					.invoke(dataSource, new Object[] { 4 });
-			clazz.getMethod("setPortNumber", new Class[] { Integer.class })
-					.invoke(dataSource, new Object[] { 50001 });
+			clazz.getMethod("setDriverType", new Class[] { int.class }).invoke(
+					dataSource, new Object[] { 4 });
+			clazz.getMethod("setPortNumber", new Class[] { int.class }).invoke(
+					dataSource, new Object[] { 50001 });
 
 			Class clazz2 = Class.forName("com.ibm.db2.jcc.DB2DataSource");
 			recoveryDataSource = (DataSource) clazz2.newInstance();
@@ -232,9 +232,9 @@ public class PerformanceTestCommitMarkableResource extends
 					recoveryDataSource, new Object[] { "db2" });
 			clazz2.getMethod("setPassword", new Class[] { String.class })
 					.invoke(recoveryDataSource, new Object[] { "db2" });
-			clazz2.getMethod("setDriverType", new Class[] { Integer.class })
+			clazz2.getMethod("setDriverType", new Class[] { int.class })
 					.invoke(recoveryDataSource, new Object[] { 4 });
-			clazz2.getMethod("setPortNumber", new Class[] { Integer.class })
+			clazz2.getMethod("setPortNumber", new Class[] { int.class })
 					.invoke(recoveryDataSource, new Object[] { 50001 });
 		} else if (dbType.equals("sqlserver")) {
 			Class clazz = Class
@@ -253,8 +253,8 @@ public class PerformanceTestCommitMarkableResource extends
 			clazz.getMethod("setSendStringParametersAsUnicode",
 					new Class[] { Boolean.class }).invoke(dataSource,
 					new Object[] { false });
-			clazz.getMethod("setPortNumber", new Class[] { Integer.class })
-					.invoke(dataSource, new Object[] { 3918 });
+			clazz.getMethod("setPortNumber", new Class[] { int.class }).invoke(
+					dataSource, new Object[] { 3918 });
 			recoveryDataSource = (DataSource) dataSource;
 		}
 		PooledConnection pooledConnection = dataSource.getPooledConnection();
@@ -288,8 +288,8 @@ public class PerformanceTestCommitMarkableResource extends
 					dataSource, new Object[] { "dtf11" });
 			clazz.getMethod("setPassword", new Class[] { String.class })
 					.invoke(dataSource, new Object[] { "dtf11" });
-			clazz.getMethod("setPortNumber", new Class[] { Integer.class })
-					.invoke(dataSource, new Object[] { 1521 });
+			clazz.getMethod("setPortNumber", new Class[] { int.class }).invoke(
+					dataSource, new Object[] { 1521 });
 		} else if (dbType.equals("sybase")) {
 			Class clazz = Class
 					.forName("com.sybase.jdbc3.jdbc.SybXADataSource");
@@ -303,8 +303,8 @@ public class PerformanceTestCommitMarkableResource extends
 					dataSource, new Object[] { "sa" });
 			clazz.getMethod("setPassword", new Class[] { String.class })
 					.invoke(dataSource, new Object[] { "sybase" });
-			clazz.getMethod("setPortNumber", new Class[] { Integer.class })
-					.invoke(dataSource, new Object[] { 5000 });
+			clazz.getMethod("setPortNumber", new Class[] { int.class }).invoke(
+					dataSource, new Object[] { 5000 });
 		} else if (dbType.equals("h2")) {
 			dataSource = new org.h2.jdbcx.JdbcDataSource();
 			((JdbcDataSource) dataSource)
@@ -339,10 +339,10 @@ public class PerformanceTestCommitMarkableResource extends
 					dataSource, new Object[] { "db2" });
 			clazz.getMethod("setPassword", new Class[] { String.class })
 					.invoke(dataSource, new Object[] { "db2" });
-			clazz.getMethod("setDriverType", new Class[] { Integer.class })
-					.invoke(dataSource, new Object[] { 4 });
-			clazz.getMethod("setPortNumber", new Class[] { Integer.class })
-					.invoke(dataSource, new Object[] { 50001 });
+			clazz.getMethod("setDriverType", new Class[] { int.class }).invoke(
+					dataSource, new Object[] { 4 });
+			clazz.getMethod("setPortNumber", new Class[] { int.class }).invoke(
+					dataSource, new Object[] { 50001 });
 		} else if (dbType.equals("sqlserver")) {
 			Class clazz = Class
 					.forName("com.microsoft.sqlserver.jdbc.SQLServerXADataSource");
@@ -360,8 +360,8 @@ public class PerformanceTestCommitMarkableResource extends
 			clazz.getMethod("setSendStringParametersAsUnicode",
 					new Class[] { Boolean.class }).invoke(dataSource,
 					new Object[] { false });
-			clazz.getMethod("setPortNumber", new Class[] { Integer.class })
-					.invoke(dataSource, new Object[] { 3918 });
+			clazz.getMethod("setPortNumber", new Class[] { int.class }).invoke(
+					dataSource, new Object[] { 3918 });
 		}
 
 		Utils.createTables(dataSource);
