@@ -62,6 +62,11 @@
             <exclude>**/DummyXARecoveryResource.java</exclude>
             <exclude>**/TestSynchronization.java</exclude>
             <exclude>**/TestXAResource.java</exclude>
+
+<!-- temporarily disable BMUnitRunner tests due to issue with the IBM java agent -->
+                    <exclude>**/TestCommitMarkableResource*</exclude>
+                    <exclude>**/CrashRecovery*</exclude>
+
           </excludes>
         </configuration>
       </plugin>

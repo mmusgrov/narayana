@@ -19,54 +19,27 @@
  * @author JBoss Inc.
  */
 /*
- * Copyright (C) 2001,
+ * Copyright (C) 1998, 1999, 2000, 2001, 2002
  *
- * Arjuna Solutions Limited,
+ * Arjuna Technologies Ltd.
  * Newcastle upon Tyne,
  * Tyne and Wear,
- * UK.  
- *
- * $Id: ORBRunner.java 2342 2006-03-30 13:06:17Z  $
- *
+ * UK.
+ * 
+ * $Id: javaidl_1_4.java 2342 2006-03-30 13:06:17Z  $
  */
+package com.arjuna.orbportability.internal.orbspecific.ibmorb.orb.implementations;
 
-package com.arjuna.ats.internal.jts.orbspecific.javaidl.recoverycoordinators;
+import com.arjuna.orbportability.internal.orbspecific.orb.implementations.ORBBase;
 
-public class ORBRunner extends Thread
+public class ibmorb_7_1 extends ORBBase
 {
-
-    public ORBRunner ()
+    public ibmorb_7_1()
     {
-        setDaemon(true);
+	System.setProperty("org.omg.CORBA.ORBClass", "com.sun.corba.se.internal.Interceptors.PIORB");
+	System.setProperty("org.omg.CORBA.ORBSingletonClass", "com.sun.corba.se.internal.corba.ORBSingleton");
 
-        start();
+    // it seems nothing ever reads this, so we should be able to get away without it
+	// opPropertyManager.getPropertyManager().setProperty("com.arjuna.orbportability.internal.defaultBindMechanism", Services.bindString(Services.CONFIGURATION_FILE));
     }
-
-    public void run()
-    {
-        try
-        {
-            JavaIdlRCServiceInit._orb.orb().run();
-        }
-        catch (Throwable e)
-        {
-            e.printStackTrace();
-        }
-
-        try
-        {
-            if (JavaIdlRCServiceInit._oa != null)
-                JavaIdlRCServiceInit._oa.destroy();
-
-            if (JavaIdlRCServiceInit._orb != null)
-                JavaIdlRCServiceInit._orb.shutdown();
-        }
-        catch (Exception ex)
-        {
-        }
-
-        //JavaIdlRCServiceInit.orbRunnerCompleted();
-    }
-
 }
-

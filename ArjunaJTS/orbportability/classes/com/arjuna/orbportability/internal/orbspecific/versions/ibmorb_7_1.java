@@ -19,54 +19,25 @@
  * @author JBoss Inc.
  */
 /*
- * Copyright (C) 2001,
+ * Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003
  *
- * Arjuna Solutions Limited,
+ * Arjuna Technologies Ltd.
  * Newcastle upon Tyne,
  * Tyne and Wear,
- * UK.  
- *
- * $Id: ORBRunner.java 2342 2006-03-30 13:06:17Z  $
- *
+ * UK.
+ * 
+ * $Id: jacorb_2_0.java 2342 2006-03-30 13:06:17Z  $
  */
+package com.arjuna.orbportability.internal.orbspecific.versions;
 
-package com.arjuna.ats.internal.jts.orbspecific.javaidl.recoverycoordinators;
+import com.arjuna.orbportability.ORBData;
+import com.arjuna.orbportability.ORBType;
 
-public class ORBRunner extends Thread
+public class ibmorb_7_1 implements ORBData
 {
-
-    public ORBRunner ()
+    public String getORBdata()
     {
-        setDaemon(true);
-
-        start();
+        // the lib/orb.idl refers to V2.3 - not sure about the ibmorb jars though
+        return "<orb-data><name>" + ORBType.ibmorb+"</name><version><major>7</major><minor>2</minor></version><corba-version><major>2</major><minor>3</minor></corba-version></orb-data>";
     }
-
-    public void run()
-    {
-        try
-        {
-            JavaIdlRCServiceInit._orb.orb().run();
-        }
-        catch (Throwable e)
-        {
-            e.printStackTrace();
-        }
-
-        try
-        {
-            if (JavaIdlRCServiceInit._oa != null)
-                JavaIdlRCServiceInit._oa.destroy();
-
-            if (JavaIdlRCServiceInit._orb != null)
-                JavaIdlRCServiceInit._orb.shutdown();
-        }
-        catch (Exception ex)
-        {
-        }
-
-        //JavaIdlRCServiceInit.orbRunnerCompleted();
-    }
-
 }
-

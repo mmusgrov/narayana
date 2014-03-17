@@ -24,6 +24,7 @@ function get_pull_description {
 function init_test_options {
     [ $NARAYANA_VERSION ] || NARAYANA_VERSION="5.0.0.M3-SNAPSHOT"
     [ $ARQ_PROF ] || ARQ_PROF=arq	# IPv4 arquillian profile
+    [ $IBM_ORB ] || IBM_ORB=0
 
     PULL_DESCRIPTION=$(get_pull_description)
 
@@ -142,8 +143,17 @@ function build_narayana {
   echo "Building Narayana"
   cd $WORKSPACE
   [ $NARAYANA_TESTS = 1 ] && NARAYANA_ARGS= || NARAYANA_ARGS="-DskipTests"
+  if [ $IBM_ORB = 1 ]; then
+    ibm="true"
+	sun="false"
+    ${JAVA_HOME}/bin/java -version | grep IBM
+    [ $? = 1 ] || fatal "You must use the IBM jdk to build with ibmorb"
+  else
+    ibm="false"
+	sun="true"
+  fi
 
-  ./build.sh -P${FINDBUGS}release,community$OBJECT_STORE_PROFILE -Didlj-enabled=true "$@" $NARAYANA_ARGS $IPV6_OPTS clean install
+  ./build.sh -P${FINDBUGS}release,community$OBJECT_STORE_PROFILE -Didlj-enabled=$sun -Dibmorb-enabled=$ibm "$@" $NARAYANA_ARGS $IPV6_OPTS clean install
   [ $? = 0 ] || fatal "narayana build failed"
 
   return 0
@@ -415,12 +425,15 @@ function qa_tests_once {
     [ $i = "-PcodeCoverage" ] && codeCoverage=true
   done
 
-  # check to see if we were called with orb=idlj as one of the arguments
+  # check to see which orb we are running against:
   if [ x$orb = x"idlj" ]; then
-    IDLJ=1
+    orbtype=idlj
     testoutputzip="testoutput-idlj.zip"
+  elif [ x$orb = x"ibmorb" ]; then
+    orbtype=ibmorb
+    testoutputzip="testoutput-ibmorb.zip"
   else
-    IDLJ=0
+    orbtype=jacorb
     testoutputzip="testoutput-jacorb.zip"
   fi
 
@@ -429,7 +442,7 @@ function qa_tests_once {
   [ $? = 0 ] || fatal "sed TaskImpl.properties failed"
 
   # delete lines containing jacorb
-  [ $IDLJ = 1 ] && sed -i TaskImpl.properties -e  '/^.*separator}jacorb/ d'
+  [ $orbtype != "jacorb" ] && sed -i TaskImpl.properties -e  '/^.*separator}jacorb/ d'
 
   # if the env variable MFACTOR is set then set the bean property CoreEnvironmentBean.timeoutFactor
   if [[ "$MFACTOR" =~ ^[0-9]+$ ]] ; then
@@ -440,8 +453,8 @@ function qa_tests_once {
     sed -i TaskImpl.properties -e "s/COMMAND_LINE_13=-DCoordinatorEnvironmentBean.defaultTimeout=[0-9]*/COMMAND_LINE_13=-DCoordinatorEnvironmentBean.defaultTimeout=${txtimeout}/"
   fi
   # if IPV6_OPTS is not set get the jdbc drivers (we do not run the jdbc tests in IPv6 mode)
-  [ -z "${IPV6_OPTS+x}" ] && ant -DisIdlj=$IDLJ "$QA_BUILD_ARGS" get.drivers dist ||
-    ant -DisIdlj=$IDLJ "$QA_BUILD_ARGS" dist
+  [ -z "${IPV6_OPTS+x}" ] && ant -Dorbtype=$orbtype "$QA_BUILD_ARGS" get.drivers dist ||
+    ant -Dorbtype=$orbtype "$QA_BUILD_ARGS" dist
 
   [ $? = 0 ] || fatal "qa build failed"
 
@@ -452,8 +465,8 @@ function qa_tests_once {
     # if IPV6_OPTS is set then do not do the jdbc tests (ie run target junit-testsuite)
     [ -z "${IPV6_OPTS+x}" ] || target="junit"
 
-    # IDLJ = 1 overrides the previous setting 
-    [ $IDLJ = 1 ] && target="ci-jts-tests" # if called with orb=idlj then only run the jtsremote tests
+    # if called with the sun or ibm orbs then only run the jtsremote tests
+    [ $orbtype != "jacorb" ] && target="ci-jts-tests"
 
     # QA_TARGET overrides the previous settings
     [ x$QA_TARGET = x ] || target=$QA_TARGET # the caller can force the build to run a specific target
@@ -502,19 +515,26 @@ function qa_tests_once {
 function qa_tests {
   ok1=0;
   ok2=0;
-  if [ $SUN_ORB = 1 ]; then
-    qa_tests_once "orb=idlj" "$@" # run qa against the Sun orb
-    ok2=$?
-  fi
-  if [ $JAC_ORB = 1 ]; then
-    qa_tests_once "$@"    # run qa against the default orb
-    ok1=$?
+  ok3=0;
+  if [ $IBM_ORB = 1 ]; then
+    qa_tests_once "orb=ibmorb" "$@" # run qa against the Sun orb
+    ok3=$?
+  else
+    if [ $SUN_ORB = 1 ]; then
+      qa_tests_once "orb=idlj" "$@" # run qa against the Sun orb
+      ok2=$?
+    fi
+    if [ $JAC_ORB = 1 ]; then
+      qa_tests_once "orb=jacorb" "$@"    # run qa against the default orb
+      ok1=$?
+    fi
   fi
 
   [ $ok1 = 0 ] || echo some jacorb QA tests failed
   [ $ok2 = 0 ] || echo some Sun ORB QA tests failed
+  [ $ok3 = 0 ] || echo some IBM ORB QA tests failed
 
-  [ $ok1 = 0 -a $ok2 = 0 ] || fatal "some qa tests failed"
+  [ $ok1 = 0 -a $ok2 = 0 -a $ok3 = 0 ] || fatal "some qa tests failed"
 }
 
 

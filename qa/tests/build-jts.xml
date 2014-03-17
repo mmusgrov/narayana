@@ -19,13 +19,24 @@
   @author JBoss Inc.
 -->
 <project name="JBossTS JTS QA Suite" default="build">
+    <taskdef resource="net/sf/antcontrib/antlib.xml">
+        <classpath>
+            <pathelement location="../ant-contrib-1.0b3.jar"/>
+        </classpath>
+    </taskdef>
+
 
 	<!-- set this property to the location of a JBossTS JTS build -->
 	<property name="org.jboss.jbossts.qa.ts.home" location="../dist"/>
 	<property name="narayana.version" value="5.0.2.Final-SNAPSHOT"/>
 	<property name="isIdlj" value="0"/>
+	<property name="orbtype" value="jacorb"/>
 	<condition property="useJavaIdl">
-		<equals arg1="${isIdlj}" arg2="1"/>
+	  <or>
+		<equals arg1="${orbtype}" arg2="idlj"/>
+		<!-- IBM jdk bundles the sun jdk orb -->
+		<equals arg1="${orbtype}" arg2="ibmorb"/>
+	  </or>
 	</condition>
 
 	<!-- set properties for AS testing -->
@@ -44,8 +55,17 @@
 	<property name="org.jboss.jbossts.qa.idl" location="idl"/>
 
 	<target name="setJavaIdlProps" if="useJavaIdl">
+        <if>
+	         <equals arg1="${orbtype}" arg2="ibmorb" />
+        <then>
+		     <property name="org.jboss.jbossts.qa.orb.name.long" value="IbmOrb"/>
+        </then>
+        <else>
+		     <property name="org.jboss.jbossts.qa.orb.name.long" value="JavaIDL"/>
+        </else>
+        </if>
+
 		<property name="org.jboss.jbossts.qa.orb.name.short" value="jacorb"/>
-		<property name="org.jboss.jbossts.qa.orb.name.long" value="JavaIDL"/>
 		<property name="org.jboss.jbossts.qa.orb.home" value="${env.JAVA_HOME}/lib"/>
 		<property name="org.jboss.jbossts.qa.orb.classpath" value="${org.jboss.jbossts.qa.orb.home}/lib/idl.jar;${org.jboss.jbossts.qa.orb.home}/lib/logkit-1.2.jar"/>
 		<path id="jts.classpath">

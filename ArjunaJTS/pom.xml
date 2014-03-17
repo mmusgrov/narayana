@@ -85,5 +85,17 @@
               </plugins>
           </build>
       </profile>
+      <profile>
+        <id>jts-ibmorb</id>
+        <activation>
+            <property>
+              <name>ibmorb-enabled</name>
+              <value>true</value>
+            </property>
+        </activation>
+        <modules>
+            <module>narayana-jts-ibmorb</module>
+        </modules>
+      </profile>
   </profiles>
 </project>
