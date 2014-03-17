@@ -93,6 +93,9 @@ public class RecoveryInit
 		    case ORBType.JAVAIDL:
 			initClassName = "com.arjuna.ats.internal.jts.orbspecific.javaidl.recoverycoordinators.JavaIdlRecoveryInit";
 			break;
+		    case ORBType.IBMORB:
+			initClassName = "com.arjuna.ats.internal.jts.orbspecific.ibmorb.recoverycoordinators.IbmOrbRecoveryInit";
+			break;
 		    default: {
                 initClassName = null;
                 jtsLogger.i18NLogger.warn_recovery_recoveryinit_1();
