@@ -34,10 +34,7 @@ package com.hp.mwtests.ts.jts.remote.hammer;
 import com.arjuna.ats.internal.jts.ORBManager;
 import com.arjuna.ats.internal.jts.OTSImpleManager;
 import com.arjuna.ats.internal.jts.orbspecific.CurrentImple;
-import com.arjuna.orbportability.OA;
-import com.arjuna.orbportability.ORB;
-import com.arjuna.orbportability.RootOA;
-import com.arjuna.orbportability.Services;
+import com.arjuna.orbportability.*;
 import com.hp.mwtests.ts.jts.TestModule.grid;
 import com.hp.mwtests.ts.jts.TestModule.gridHelper;
 import com.hp.mwtests.ts.jts.resources.TestUtility;
@@ -54,6 +51,8 @@ public class PerfHammer
     public static void main(String[] args) throws Exception
     {
         String gridReference = args[0];
+        int threadCount = args.length > 1 ? Integer.parseInt(args[1]) : 10;
+        int numberOfCalls = args.length > 2 ? Integer.parseInt(args[2]) : 100000;
 
         ORB myORB = ORB.getInstance("test");
         RootOA myOA = OA.getRootOA(myORB);
@@ -64,13 +63,16 @@ public class PerfHammer
         ORBManager.setORB(myORB);
         ORBManager.setPOA(myOA);
 
-        PerformanceTester tester = new PerformanceTester(10, 10);
+        PerformanceTester tester = new PerformanceTester();
         GridWorker worker = new GridWorker(myORB, gridReference);
-        Result opts = new Result(false, 10, 100, 1, false, true, 0, false, true, true, "Unknown");
+        Result opts = new Result(false, threadCount, numberOfCalls, 1, false, true, 0, false, true, false, "Unknown");
 
         try {
             tester.measureThroughput(new PrintWriter(System.out), worker, opts);
-            System.out.printf("Test performance: %s%n", opts.toString());
+
+            System.out.printf("Test performance (for orb type %s): %d calls/sec (%d invocations using %d threads with %d errors. Total time %d ms)%n",
+                    ORBInfo.getOrbName(), opts.getThroughputBMT(), opts.getNumberOfCalls(), opts.getThreadCount(),
+                    opts.getErrorCount(), opts.getTotalMillis());
         } finally {
             tester.fini();
         }
