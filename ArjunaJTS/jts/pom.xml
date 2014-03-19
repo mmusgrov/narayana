@@ -393,7 +393,7 @@
                 <configuration>
                   <excludes>
                     <exclude>**/jacorb/**</exclude>
-                    <exclude>**/javaidl/**</exclude>
+					<!-- do not exclude **/javaidl/** since the ibm jdk bundles the sun orb -->
                   </excludes>
                 </configuration>
               </execution>
@@ -406,7 +406,6 @@
                   <testExcludes>
                     <exclude>**/GenericRecoveryCreatorUnitTest.java</exclude>
                     <exclude>**/JacORB*Test.java</exclude>
-                    <exclude>**/JavaIdl*Test.java</exclude>
                   </testExcludes>
                 </configuration>
               </execution>
@@ -429,7 +428,6 @@
                     <exclude>**/JacORBGenericRecoveryCreatorSuccessUnitTest.java</exclude>
                     <exclude>**/JacORBGenericRecoveryCreatorFailureUnitTest.java</exclude>
                     <exclude>**/JacORBRecoveryUnitTest.java</exclude>
-                    <exclude>**/JavaIdlORB*Test.java</exclude>
                     <exclude>**/GenericRecoveryCreatorUnitTest.java</exclude>
                     <exclude>**/common/**</exclude>
                     <exclude>**/exceptions/**</exclude>
@@ -448,8 +446,6 @@
                   <classpathDependencyExcludes>
                     <classpathDependencyExcludes>org.jboss.narayana.jts:jacorb-idl</classpathDependencyExcludes>
                     <classpathDependencyExcludes>org.jboss.narayana.jts:jacorb-idl:test-jar</classpathDependencyExcludes>
-					<classpathDependencyExcludes>org.jboss.narayana.jts:idlj-idl</classpathDependencyExcludes>
-					<classpathDependencyExcludes>org.jboss.narayana.jts:idlj-idl:test-jar</classpathDependencyExcludes>
                   </classpathDependencyExcludes>
                   <systemPropertyVariables combine.children="append">
                     <OrbPortabilityEnvironmentBean.orbImpleClassName>com.arjuna.orbportability.internal.orbspecific.ibmorb.orb.implementations.ibmorb_7_1</OrbPortabilityEnvironmentBean.orbImpleClassName>

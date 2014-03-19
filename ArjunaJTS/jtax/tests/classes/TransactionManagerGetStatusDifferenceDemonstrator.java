@@ -81,10 +81,10 @@ public class TransactionManagerGetStatusDifferenceDemonstrator {
 
 		try {
 			if (mode.equals("jts")) {
-                // TODO JBTM-2110 check what ibmorb reports
-				if ("com.arjuna.orbportability.internal.orbspecific.javaidl.orb.implementations.javaidl_1_4"
-						.equals(System
-								.getProperty("OrbPortabilityEnvironmentBean.orbImpleClassName"))) {
+                String orbClassName = System.getProperty("OrbPortabilityEnvironmentBean.orbImpleClassName");
+
+                if (orbClassName.equals("com.arjuna.orbportability.internal.orbspecific.javaidl.orb.implementations.javaidl_1_4") ||
+                    orbClassName.equals("com.arjuna.orbportability.internal.orbspecific.ibmorb.orb.implementations.ibmorb_7_1")) {
 					assertTrue(
 							"Status: "
 									+ getStatusSync
