@@ -49,6 +49,7 @@ import org.jboss.jbossts.star.util.media.txstatusext.TransactionStatisticsElemen
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.spi.Link;
 import org.jboss.resteasy.spi.LinkHeader;
+import com.squareup.okhttp.OkHttpClient;
 
 /**
  * Various utilities for sending HTTP messages
@@ -61,6 +62,7 @@ public class TxSupport
      * context root
      */
     public static final String TX_CONTEXT = System.getProperty("rest.tx.context.path", "/rest-tx");
+    public static final boolean useSpdy = Boolean.getBoolean("rts.usespdy") ;
     /**
      * Transaction Coordinator resource path
      */
@@ -89,6 +91,7 @@ public class TxSupport
     private String contentType = null;
     private String txnMgr;
     private int readTimeout = DEFAULT_READ_TIMEOUT;
+    private OkHttpClient spdyClient;
 
     public static void setTxnMgrUrl(String txnMgrUrl) {
         TXN_MGR_URL = txnMgrUrl;
@@ -96,6 +99,8 @@ public class TxSupport
     public TxSupport(String txnMgr, int readTimeout) {
         this.txnMgr = txnMgr;
         this.readTimeout = readTimeout;
+		if (useSpdy)
+		    this.spdyClient = new OkHttpClient();
     }
 
     public TxSupport(String txnMgr) {
@@ -555,7 +560,10 @@ public class TxSupport
         if (connection != null)
             connection.disconnect();
 
-        connection = (HttpURLConnection) new URL(url).openConnection();
+        if (useSpdy)
+		    connection = spdyClient.open(new URL(url));
+        else
+            connection = (HttpURLConnection) new URL(url).openConnection();
 
         connection.setRequestMethod(method);
 
