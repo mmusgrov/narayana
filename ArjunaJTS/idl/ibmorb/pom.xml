@@ -54,8 +54,9 @@
          <tasks name="Generate idl stubs">  
 		 <!--
            <java classname="com.ibm.idl.toJavaPortable.Compile">
-		   -->
            <java classname="com.sun.tools.corba.se.idl.toJavaPortable.Compile">
+		   -->
+           <java classname="com.ibm.idl.toJavaPortable.Compile">
 
 		     <arg value="-i"/>
              <arg value="${project.build.directory}/../../src/main/idl"/>
@@ -82,12 +83,12 @@
              <arg value="-fallTIE"/>
              <arg value="${project.build.directory}/../../src/main/idl/omg/CosTransactions.idl"/>
              <classpath>
-               <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
                <pathelement location="${env.JAVA_HOME}/lib/ibmorbtools.jar"/>
+               <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
              </classpath>
            </java>
 
-           <java classname="com.sun.tools.corba.se.idl.toJavaPortable.Compile">
+           <java classname="com.ibm.idl.toJavaPortable.Compile">
              <arg value="-i"/>
              <arg value="${project.build.directory}/../../src/main/idl"/>
              <arg value="-td"/>
@@ -113,12 +114,12 @@
              <arg value="-fallTIE"/>
              <arg value="${project.build.directory}/../../src/main/idl/omg/XA.idl"/>
              <classpath>
-               <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
                <pathelement location="${env.JAVA_HOME}/lib/ibmorbtools.jar"/>
+               <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
              </classpath>
            </java>
 
-           <java classname="com.sun.tools.corba.se.idl.toJavaPortable.Compile">
+           <java classname="com.ibm.idl.toJavaPortable.Compile">
              <arg value="-i"/>
              <arg value="${project.build.directory}/../../src/main/idl"/>
              <arg value="-td"/>
@@ -144,8 +145,8 @@
              <arg value="-fallTIE"/>
              <arg value="${project.build.directory}/../../src/main/idl/arjuna/ArjunaOTS.idl"/>
              <classpath>
-               <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
                <pathelement location="${env.JAVA_HOME}/lib/ibmorbtools.jar"/>
+               <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
              </classpath>
            </java>
         </tasks>  
@@ -159,7 +160,7 @@
        </goals>
        <configuration>
          <tasks name="Generate test idl stubs">  
-           <java classname="com.sun.tools.corba.se.idl.toJavaPortable.Compile">
+           <java classname="com.ibm.idl.toJavaPortable.Compile">
              <arg value="-i"/>
              <arg value="${project.build.directory}/../../src/test/idl"/>
              <arg value="-td"/>
@@ -185,11 +186,14 @@
              <arg value="-fallTIE"/>
              <arg value="${project.build.directory}/../../src/test/idl/orbtests.idl"/>
              <classpath>
-               <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
+			 <!--
+               <pathelement location="${env.JAVA_HOME}/lib/tools.jar"/>
+			   -->
                <pathelement location="${env.JAVA_HOME}/lib/ibmorbtools.jar"/>
+               <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
              </classpath>
            </java>
-           <java classname="com.sun.tools.corba.se.idl.toJavaPortable.Compile">
+           <java classname="com.ibm.idl.toJavaPortable.Compile">
              <arg value="-i"/>
              <arg value="${project.build.directory}/../../src/test/idl"/>
              <arg value="-td"/>
@@ -215,8 +219,8 @@
              <arg value="-fallTIE"/>
              <arg value="${project.build.directory}/../../src/test/idl/test.idl"/>
              <classpath>
-               <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
                <pathelement location="${env.JAVA_HOME}/lib/ibmorbtools.jar"/>
+               <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
              </classpath>
            </java>
 
@@ -246,8 +250,8 @@
              <arg value="-fallTIE"/>
              <arg value="${project.build.directory}/../../src/test/idl/TestModule.idl"/>
              <classpath>
-               <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
                <pathelement location="${env.JAVA_HOME}/lib/ibmorbtools.jar"/>
+               <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
              </classpath>
            </java>
         </tasks>

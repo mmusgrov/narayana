@@ -233,13 +233,13 @@
 
 		<idl-compiler orb="${org.jboss.jbossts.qa.orb.name.long}"
 					  buildlist="${idl.buildlist}"
-					  verbose="false" debug="false"
+					  verbose="true" debug="true"
 					  destdir="${org.jboss.jbossts.qa.build.idl}"
 					  parameters="${idl.params1}" />
             
 		<idl-compiler orb="${org.jboss.jbossts.qa.orb.name.long}"
 					  buildlist="${org.jboss.jbossts.qa.jts.idl.buildlist}"
-					  verbose="false" debug="false"
+					  verbose="true" debug="true"
 					  destdir="${org.jboss.jbossts.qa.build.idl}"
 					  parameters="${idl.params2}" />
 	</target>

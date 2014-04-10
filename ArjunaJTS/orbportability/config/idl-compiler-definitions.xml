@@ -91,7 +91,16 @@
 	    <param name="classpath" required="true" delimiter=";" classpath="true"/>
 	</in-parameters>
 
-	<idl-executable>idlj</idl-executable>
+	<idl-executable>java -cp /usr/lib/jvm/java-1.7.0-ibm-1.7.0.6.1.x86_64/lib/tools.jar:/usr/lib/jvm/java-1.7.0-ibm-1.7.0.6.1.x86_64/jre/lib/ibmorb.jar com.ibm.idl.toJavaPortable.Compile</idl-executable>
+	<!--
+	<idl-executable>java -cp /usr/local/ibm-java-x86_64-71/lib/ibmorbtools.jar com.ibm.idl.toJavaPortable.Compile</idl-executable>
+
+	<idl-executable>java -cp /usr/local/ibm-java-x86_64-71/lib/tools.jar com.sun.tools.corba.se.idl.toJavaPortable.Compile</idl-executable>
+	<idl-executable>java -cp /usr/local/ibm-java-x86_64-71/jre/lib/ibmorb.jar:/usr/local/ibm-java-x86_64-71/lib/ibmorbtools.jar com.sun.tools.corba.se.idl.toJavaPortable.Compile</idl-executable>
+
+	<idl-executable>java -cp ${classpath} com.sun.tools.corba.se.idl.toJavaPortable.Compile</idl-executable>
+	<idl-executable>/usr/local/ibm-java-x86_64-71/bin/idlj</idl-executable>
+	-->
 
 	<out-parameters>
 	    <param>-td</param>
