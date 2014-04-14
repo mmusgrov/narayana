@@ -53,6 +53,7 @@ import com.arjuna.ats.arjuna.objectstore.StoreManager;
 import com.arjuna.ats.arjuna.state.InputObjectState;
 import com.arjuna.ats.internal.arjuna.common.UidHelper;
 import com.arjuna.ats.internal.jta.transaction.arjunacore.AtomicAction;
+import org.glassfish.grizzly.http.server.HttpServer;
 import org.jboss.jbossts.star.provider.HttpResponseException;
 import org.jboss.jbossts.star.provider.HttpResponseMapper;
 import org.jboss.jbossts.star.provider.NotFoundMapper;
@@ -78,7 +79,7 @@ public class BaseTest {
     protected static boolean USE_RESTEASY = false;
 
     protected static final int PORT = 58081;
-    protected static final String SURL = "http://localhost:" + PORT + '/';
+    protected static final String SURL = "https://localhost:" + PORT + '/';
     protected static final String PSEGMENT = "txresource";
     protected static final String NO_RESPONSE_SEGMENT = "no-response";
     protected static final String PURL = SURL + PSEGMENT;
@@ -86,6 +87,9 @@ public class BaseTest {
     protected static String TXN_MGR_URL = SURL + "tx/transaction-manager";
     private static TJWSEmbeddedJaxrsServer server = null;
     private static SelectorThread threadSelector = null;
+
+    private static HttpServer grizzlyServer;
+    private static final boolean useSpdyWithGrizzly = Boolean.getBoolean("rts.usespdy");  // NB: only configured for use with grizzly
 
     protected static void setTxnMgrUrl(String txnMgrUrl) {
         TXN_MGR_URL = txnMgrUrl;
@@ -124,7 +128,16 @@ public class BaseTest {
         initParams.put("com.sun.jersey.config.property.packages", packages);
 
         try {
-            threadSelector = GrizzlyWebContainerFactory.create(baseUri, initParams);
+            if (useSpdyWithGrizzly) {
+                String trustStoreFile = System.getProperty("javax.net.ssl.trustStore");
+                String trustStorePswd = System.getProperty("javax.net.ssl.trustStorePassword");
+
+                if (trustStoreFile == null || trustStorePswd == null)
+                    throw new IllegalArgumentException("Please set SSL javax.net.ssl.trustStore and javax.net.ssl.trustStorePassword to use SPDY suppport");
+                grizzlyServer = SpdyEnabledHttpServer.create(baseUri, initParams, trustStoreFile, trustStorePswd);
+            } else {
+                threadSelector = GrizzlyWebContainerFactory.create(baseUri, initParams);
+            }
         } catch (IOException e) {
             log.infof(e, "Error starting Grizzly");
         }
@@ -208,6 +221,8 @@ public class BaseTest {
         if (threadSelector != null) {
             threadSelector.stopEndpoint();
             threadSelector = null;
+        } else if (grizzlyServer != null) {
+            grizzlyServer.shutdownNow();
         }
     }
 
