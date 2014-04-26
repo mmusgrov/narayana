@@ -115,6 +115,12 @@
       <version>${version.com.sun.grizzly}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.jboss.narayana</groupId>
+      <artifactId>test-utils</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <!-- end Jersey -->
     <dependency>
       <groupId>org.jboss.narayana.jta</groupId>
@@ -182,14 +188,14 @@
       <scope>test</scope>
     </dependency>
 
-
+<!--
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <version>3.0.1</version>
             <scope>test</scope>
         </dependency>
-
+-->
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-grizzly2-servlet</artifactId>

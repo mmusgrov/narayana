@@ -79,7 +79,7 @@ public class BaseTest {
     protected static boolean USE_RESTEASY = false;
 
     protected static final int PORT = 58081;
-    protected static final String SURL = "https://localhost:" + PORT + '/';
+    protected static final String SURL = "http://localhost:" + PORT + '/';
     protected static final String PSEGMENT = "txresource";
     protected static final String NO_RESPONSE_SEGMENT = "no-response";
     protected static final String PURL = SURL + PSEGMENT;
@@ -89,7 +89,8 @@ public class BaseTest {
     private static SelectorThread threadSelector = null;
 
     private static HttpServer grizzlyServer;
-    private static final boolean useSpdyWithGrizzly = Boolean.getBoolean("rts.usespdy");  // NB: only configured for use with grizzly
+    protected static final String USE_SPDY_PROP = "rts.usespdy";
+    private static final boolean useSpdyWithGrizzly = Boolean.getBoolean(USE_SPDY_PROP);  // NB: only configured for use with grizzly
 
     protected static void setTxnMgrUrl(String txnMgrUrl) {
         TXN_MGR_URL = txnMgrUrl;
@@ -129,6 +130,9 @@ public class BaseTest {
 
         try {
             if (useSpdyWithGrizzly) {
+                if (!TXN_MGR_URL.contains("https"))
+                    TxSupport.setTxnMgrUrl(TXN_MGR_URL.replace("http", "https"));
+
                 String trustStoreFile = System.getProperty("javax.net.ssl.trustStore");
                 String trustStorePswd = System.getProperty("javax.net.ssl.trustStorePassword");
 
