@@ -108,12 +108,6 @@ public class AtomicObjectLog extends LockManager
             printDebug = true;
     }
 
-    public void finalize () throws Throwable
-    {
-        super.terminate();
-        super.finalize();
-    }
-
     public AppendLogTransaction getTransaction ()
     {
         return (AppendLogTransaction) act;
