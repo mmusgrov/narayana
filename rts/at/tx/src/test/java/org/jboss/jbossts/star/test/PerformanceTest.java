@@ -20,7 +20,7 @@ public class PerformanceTest extends BaseTest {
     @Test
     public void measureThroughput() throws Exception {
         PerformanceTester<String> tester = new PerformanceTester<String>(1, 10);
-        Result<String> opts = new Result<String>(1, 10);
+        Result<String> opts = new Result<String>(1, 1000);
 
         try {
             tester.measureThroughput(new RTSWorker(), opts);
