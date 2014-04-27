@@ -31,6 +31,10 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.build.timestamp.format>yyyyMMdd'T'HHmmss</maven.build.timestamp.format>
     <javaee6.with.tools.version>1.0.0.M7</javaee6.with.tools.version>
+	<!-- ssl debug: http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#Debug
+    <spdy.args>-Xbootclasspath/p:${project.build.directory}/../grizzly-npn-bootstrap-1.0.jar -Djavax.net.debug=ssl:handshake -Drts.usespdy=true -Djavax.net.ssl.trustStore=keystore.jks -Djavax.net.ssl.trustStorePassword=123456</spdy.args>
+		 -->
+    <spdy.args>-Drts.usespdy=true -Xbootclasspath/p:grizzly-npn-bootstrap-1.0.jar -Djavax.net.ssl.trustStore=keystore.jks -Djavax.net.ssl.trustStorePassword=123456</spdy.args>
   </properties>
 
   <repositories>
@@ -97,6 +101,7 @@
       <version>${version.asm}</version>
       <scope>test</scope>
     </dependency>
+	<!--
     <dependency>
       <groupId>com.sun.jersey</groupId>
       <artifactId>jersey-server</artifactId>
@@ -108,13 +113,14 @@
       <artifactId>jersey-test-framework-grizzly</artifactId>
       <version>${version.com.sun.jersey}</version>
       <scope>test</scope>
-    </dependency>
+    </dependency> -->
     <dependency>
       <groupId>com.sun.grizzly</groupId>
       <artifactId>grizzly-servlet-webserver</artifactId>
       <version>${version.com.sun.grizzly}</version>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>org.jboss.narayana</groupId>
       <artifactId>test-utils</artifactId>
@@ -187,35 +193,35 @@
       <version>${version.com.h2database}</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${version.junit}</version>
+      <scope>test</scope>
+    </dependency>
 
-<!--
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.0.1</version>
-            <scope>test</scope>
-        </dependency>
--->
-        <dependency>
-            <groupId>org.glassfish.jersey.containers</groupId>
-            <artifactId>jersey-container-grizzly2-servlet</artifactId>
-            <version>2.7</version>
-            <scope>test</scope>
-        </dependency>
 
-        <dependency>
-            <groupId>org.glassfish.grizzly</groupId>
-            <artifactId>grizzly-spdy</artifactId>
-            <version>2.3.11</version>
-            <scope>test</scope>
-        </dependency>
+	<!-- grizzly with SPDY -->
+          <dependency>
+              <groupId>org.glassfish.jersey.containers</groupId>
+              <artifactId>jersey-container-grizzly2-servlet</artifactId>
+              <version>2.7</version>
+              <scope>test</scope>
+          </dependency>
 
-        <dependency>
-            <groupId>org.glassfish.grizzly</groupId>
-            <artifactId>grizzly-npn-bootstrap</artifactId>
-            <version>1.0</version>
-            <scope>test</scope>
-        </dependency>
+          <dependency>
+              <groupId>org.glassfish.grizzly</groupId>
+              <artifactId>grizzly-spdy</artifactId>
+              <version>2.3.11</version>
+              <scope>test</scope>
+          </dependency>
+
+          <dependency>
+              <groupId>org.glassfish.grizzly</groupId>
+              <artifactId>grizzly-npn-bootstrap</artifactId>
+              <version>1.0</version>
+              <scope>test</scope>
+          </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -263,17 +269,49 @@
           </execution>
         </executions>
       </plugin>
+	  <!--
           <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
               <configuration>
-                  <!-- Sets the VM argument line used when unit tests are run. -->
                   <argLine>${surefireArgLine}</argLine>
               </configuration>
           </plugin>
+		  -->
     </plugins>
   </build>
   <profiles>
+    <profile>
+        <id>spdy</id>
+        <activation>
+          <activeByDefault>false</activeByDefault>
+        </activation>
+
+        <dependencies>
+<!--
+          <dependency>
+              <groupId>javax.servlet</groupId>
+              <artifactId>javax.servlet-api</artifactId>
+              <version>3.0.1</version>
+              <scope>test</scope>
+          </dependency>
+-->
+        </dependencies>
+        <build>  
+          <plugins>
+            <plugin>
+              <artifactId>maven-surefire-plugin</artifactId>
+              <configuration>
+			  <!--
+                <argLine>${spdy.args} ${surefireArgLine}</argLine>
+				-->
+                <argLine>${spdy.args}</argLine>
+              </configuration>
+            </plugin>
+          </plugins>
+
+        </build>
+    </profile>
     <profile>
         <id>release</id>
         <build>

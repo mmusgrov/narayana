@@ -21,11 +21,11 @@
 package org.jboss.jbossts.star.test;
 
 import com.arjuna.ats.internal.jta.transaction.arjunacore.AtomicAction;
-import junit.framework.Assert;
 import org.jboss.jbossts.star.provider.HttpResponseException;
 import org.jboss.jbossts.star.util.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.Assert;
 
 import java.net.HttpURLConnection;
 import java.util.*;

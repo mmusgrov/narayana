@@ -11,16 +11,14 @@ import org.junit.Test;
 public class PerformanceTest extends BaseTest {
     @BeforeClass
     public static void beforeClass() throws Exception {
-        System.setProperty(USE_SPDY_PROP, "false");
-
         startContainer(TXN_MGR_URL);
     }
 
     // 2PC commit
     @Test
     public void measureThroughput() throws Exception {
-        PerformanceTester<String> tester = new PerformanceTester<String>(1, 10);
-        Result<String> opts = new Result<String>(1, 1000);
+        PerformanceTester<String> tester = new PerformanceTester<String>(1, 10000);
+        Result<String> opts = new Result<String>(1, 10000);
 
         try {
             tester.measureThroughput(new RTSWorker(), opts);
@@ -28,14 +26,17 @@ public class PerformanceTest extends BaseTest {
             System.out.printf("Test performance: %d calls/sec (%d invocations using %d threads with %d errors. Total time %d ms)%n",
                     opts.getThroughput(), opts.getNumberOfCalls(), opts.getThreadCount(),
                     opts.getErrorCount(), opts.getTotalMillis());
+
+            Assert.assertEquals(0, opts.getErrorCount());
         } finally {
             tester.fini();
         }
     }
 
     private class RTSWorker implements Worker<String> {
-        private String run2PC(String context) {
-            TxSupport txn = new TxSupport();
+        private TxSupport txn;
+
+        private String run2PC(String context) throws Exception {
             String pUrl = PURL;
             String[] pid = new String[2];
             String[] pVal = new String[2];
@@ -68,17 +69,29 @@ public class PerformanceTest extends BaseTest {
             return context;
         }
 
+        private void emptyTxn() throws Exception {
+            txn.startTx();
+            txn.commitTx();
+        }
 
         @Override
         public String doWork(String context, int niters, Result<String> opts) {
-            for (int i = 0; i < niters; i++)
-                run2PC(context);
+            for (int i = 0; i < niters; i++) {
+                try {
+                    emptyTxn();
+                    //run2PC(context);
+                } catch (Exception e) {
+                    System.out.printf("workload %d failed with %s%n", i, e.getMessage());
+                    opts.incrementErrorCount();
+                }
+            }
 
             return context;
         }
 
         @Override
         public void init() {
+            txn = new TxSupport();
         }
 
         @Override

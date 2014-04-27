@@ -130,11 +130,14 @@ public class PerformanceTester<T> {
                 };
             }));
 
-        long start = System.nanoTime();
-
         try {
             cyclicBarrier.await(); // wait for each thread to arrive at the barrier
+            long start = System.nanoTime();
             cyclicBarrier.await(); // wait for each thread to finish
+            long end = System.nanoTime();
+
+            opts.setTotalMillis((end - start) / 1000000L);
+
 
             worker.fini();
         } catch (InterruptedException e) {
@@ -143,9 +146,6 @@ public class PerformanceTester<T> {
             throw new RuntimeException(e);
         }
 
-        long end = System.nanoTime();
-
-        opts.setTotalMillis(0L);
         opts.setErrorCount(0);
 
         for (Future<Result<T>> t : tasks) {
@@ -161,8 +161,6 @@ public class PerformanceTester<T> {
                 opts.setErrorCount(opts.getErrorCount() + BATCH_SIZE);
             }
         }
-
-        opts.setTotalMillis((end - start) / 1000000L);
 
         return opts;
     }
