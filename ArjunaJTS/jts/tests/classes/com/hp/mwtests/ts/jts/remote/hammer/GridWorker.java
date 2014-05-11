@@ -27,6 +27,7 @@ import com.arjuna.orbportability.ORB;
 import com.hp.mwtests.ts.jts.TestModule.grid;
 import com.hp.mwtests.ts.jts.TestModule.gridHelper;
 import com.hp.mwtests.ts.jts.resources.TestUtility;
+import io.narayana.perf.Measurement;
 import io.narayana.perf.Result;
 import io.narayana.perf.Worker;
 import org.omg.CosTransactions.NoTransaction;
@@ -60,10 +61,10 @@ class GridWorker implements Worker {
     }
 
     @Override
-    public Object doWork(Object context, int niters, Result opts) {
+    public Object doWork(Object context, int batchSize, Measurement opts) {
         boolean running = false;
         try {
-            for (int i = 0; i < niters; i++) {
+            for (int i = 0; i < batchSize; i++) {
                 current.begin();
                 running = true;
                 gridVar.set(2, 4, newValue, current.get_control());
@@ -74,12 +75,46 @@ class GridWorker implements Worker {
         } catch (Exception sysEx) {
             sysEx.printStackTrace(System.err);
             opts.setInfo("work exception " + sysEx.getMessage());
-            opts.incrementErrorCount();
+            opts.incrementErrorCount(1);
             TestUtility.fail(sysEx.toString());
         } finally {
             if (running) {
-                opts.incrementErrorCount();
+                opts.incrementErrorCount(1);
                 opts.setInfo("work exception txn should have finished");
+                TestUtility.fail("work exception txn should have finished");
+
+                try {
+                    current.rollback();
+                } catch (NoTransaction noTransaction) {
+                    // ignore
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public Object doWork(Object context, int batchSize, Result config) {
+        boolean running = false;
+        try {
+            for (int i = 0; i < batchSize; i++) {
+                current.begin();
+                running = true;
+                gridVar.set(2, 4, newValue, current.get_control());
+                current.commit(false);
+                running = false;
+                config.setInfo("grid[2,4] should be " + initialValue);
+            }
+        } catch (Exception sysEx) {
+            sysEx.printStackTrace(System.err);
+            config.setInfo("work exception " + sysEx.getMessage());
+            config.incrementErrorCount();
+            TestUtility.fail(sysEx.toString());
+        } finally {
+            if (running) {
+                config.incrementErrorCount();
+                config.setInfo("work exception txn should have finished");
                 TestUtility.fail("work exception txn should have finished");
 
                 try {
@@ -118,9 +153,10 @@ class GridWorker implements Worker {
                 TestUtility.fail("final value not equal to target value: " + declaringClassName);
             }
         } catch (Exception e) {
-            String declaringClassName = this.getClass().getDeclaringClass().getSimpleName();
+/*            String declaringClassName = this.getClass().getDeclaringClass().getSimpleName();
             System.err.printf("%s: Exception reading final value: %s%n", declaringClassName, e.getMessage());
-            TestUtility.fail("Exception reading final value: " + declaringClassName);
+            TestUtility.fail("Exception reading final value: " + declaringClassName);*/
+            TestUtility.fail("Exception reading final value: " + e);
         }
     }
 

@@ -36,6 +36,7 @@ import com.arjuna.orbportability.OA;
 import com.arjuna.orbportability.ORB;
 import com.arjuna.orbportability.ORBInfo;
 import com.arjuna.orbportability.RootOA;
+import io.narayana.perf.Measurement;
 import io.narayana.perf.PerformanceTester;
 import io.narayana.perf.Result;
 
@@ -61,21 +62,35 @@ public class PerfHammer
         ORBManager.setORB(myORB);
         ORBManager.setPOA(myOA);
 
-        PerformanceTester tester = new PerformanceTester(threadCount, batchSize);
         GridWorker worker = new GridWorker(myORB, gridReference);
-        Result opts = new Result(threadCount, numberOfCalls);
 
-        try {
-            tester.measureThroughput(worker, opts);
-
-            System.out.printf("Test performance (for orb type %s): %d calls/sec (%d invocations using %d threads with %d errors. Total time %d ms)%n",
-                    ORBInfo.getOrbName(), opts.getThroughput(), opts.getNumberOfCalls(), opts.getThreadCount(),
-                    opts.getErrorCount(), opts.getTotalMillis());
-        } finally {
-            tester.fini();
-        }
+        measure(true, new GridWorker(myORB, gridReference), numberOfCalls, threadCount, batchSize);
+        measure(false, new GridWorker(myORB, gridReference), numberOfCalls, threadCount, batchSize);
+        measure(true, new GridWorker(myORB, gridReference), numberOfCalls, threadCount, batchSize);
+        measure(false, new GridWorker(myORB, gridReference), numberOfCalls, threadCount, batchSize);
 
         System.out.println("Passed");
+    }
+
+    private static void measure(boolean oldWay, GridWorker worker, int numberOfCalls, int threadCount, int batchSize) {
+        if (oldWay) {
+            Result measurement = new Result(worker, threadCount, numberOfCalls, batchSize);
+            measurement = measurement.measureThroughput();
+
+            System.out.printf("Test performance (for orb type %s - %s way): %d calls/sec (%d invocations using %d threads with %d errors. Total time %d ms)%n",
+                    oldWay ? "old" : "new",
+                    ORBInfo.getOrbName(), measurement.getThroughput(), measurement.getNumberOfCalls(), measurement.getThreadCount(),
+                    measurement.getErrorCount(), measurement.getTotalMillis());
+        }  else {
+            Measurement measurement = new Measurement(worker, numberOfCalls, threadCount, batchSize);
+
+            measurement.measure();
+
+            System.out.printf("Test performance (for orb type %s - %s way): %d calls/sec (%d invocations using %d threads with %d errors. Total time %d ms)%n",
+                    oldWay ? "old" : "new",
+                    ORBInfo.getOrbName(), measurement.getThroughput(), measurement.getNumberOfCalls(), measurement.getThreadCount(),
+                    measurement.getErrorCount(), measurement.getTotalMillis());
+        }
     }
 }
 

@@ -124,10 +124,9 @@ public class TestGroup_jtsremote  extends TestGroupBase
     }
 
     @Test public void JTSRemote_PerfTest() {
-        String numberOfCalls = System.getProperty("testgroup.jtsremote.perftest.numberOfCalls", "10000");
-        String threadCount = System.getProperty("testgroup.jtsremote.perftest.numberOfThreads", "20");
-        String batchSize = System.getProperty("testgroup.jtsremote.perftest.batchSize", "100");
-
+        String numberOfCalls = "10000"; //"100000";
+        String threadCount = "20"; //"10";
+        String batchSize = "20"; //"10";
 
         Task server1 = createTask("server1", com.hp.mwtests.ts.jts.remote.servers.GridServer.class, Task.TaskType.EXPECT_READY, 960);
         server1.start("$(1)");

@@ -28,25 +28,43 @@ import java.util.*;
  * @author <a href="mailto:mmusgrov@redhat.com">M Musgrove</a>
  *
  * Config data for running a work load (@see PerformanceTester and @see Worker)
+ *
  */
 public class Result<T> implements Serializable {
     int threadCount = 1;
     int numberOfCalls;
+    int batchSize;
     int errorCount;
     long totalMillis;
     int one; // time in msecs to do one call
     int throughput; // calls per second
     private T context;
+    private PerformanceTester<T> tester;
+    private Worker<T> worker;
 
     private final Set<T> contexts = new HashSet<T>();
 
     private String info;
+    private boolean cancelled;
+    private boolean mayInterruptIfRunning;
 
-    public Result(int threadCount, int numberOfCalls) {
-        this.threadCount = threadCount;
+    public Result(Worker<T> worker, int numberOfThreads, int numberOfCalls) {
+        this(worker, numberOfThreads, numberOfCalls, numberOfCalls / numberOfThreads);
+    }
+
+    public Result(Worker<T> worker, int numberOfThreads, int numberOfCalls, int batchSize) {
+        this.threadCount = numberOfThreads;
         this.numberOfCalls = numberOfCalls;
         this.totalMillis = this.throughput = 0;
         this.errorCount = 0;
+        this.batchSize = batchSize;
+        this.worker = worker;
+
+        tester = new PerformanceTester<T>(threadCount, batchSize);
+    }
+
+    Result(int numberOfThreads, int numberOfCalls, int batchSize) {
+        this(null, numberOfThreads, numberOfCalls, batchSize);
     }
 
     public void setContext(T value) {
@@ -66,7 +84,7 @@ public class Result<T> implements Serializable {
     }
 
     public Result(Result result) {
-        this(result.threadCount, result.numberOfCalls);
+        this(result.threadCount, result.numberOfCalls, result.getBatchSize());
 
         this.totalMillis = result.totalMillis;
         this.throughput = result.throughput;
@@ -135,4 +153,40 @@ public class Result<T> implements Serializable {
         return info;
     }
 
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    public synchronized Result<T>  measureThroughput() {
+        return tester.measureThroughput(worker, this);
+    }
+
+    /**
+     * Cancel the measurement.
+     *
+     * A worker may cancel a measurement by invoking this method on the Measurement object it was
+     * passed in its @see Worker#doWork(T, int, Measurement) method
+     * @param mayInterruptIfRunning if false then any running calls to @see Worker#doWork will be allowed to finish
+     *                              before the the measurement is cancelled.
+     */
+    public void cancel(boolean mayInterruptIfRunning) {
+        this.cancelled = true;
+        this.mayInterruptIfRunning = mayInterruptIfRunning;
+    }
+
+    void setCancelled(boolean cancelled) {
+        this.cancelled = cancelled;
+    }
+
+    public boolean isCancelled() {
+        return cancelled;
+    }
+
+    public boolean isMayInterruptIfRunning() {
+        return mayInterruptIfRunning;
+    }
 }

@@ -24,12 +24,14 @@ package io.narayana.perf;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author <a href="mailto:mmusgrov@redhat.com">M Musgrove</a>
  *
  * Workload runner for measuring the maximum throughput of an instance of @see Worker
+ *
  */
 public class PerformanceTester<T> {
     private static int DEF_WORK_BATCH_SZ = 32;
@@ -76,15 +78,18 @@ public class PerformanceTester<T> {
     private Result<T> doWork(final Worker<T> worker, final Result<T> opts)  {
         int threadCount = opts.getThreadCount();
         int callCount = opts.getNumberOfCalls();
+        BATCH_SIZE = opts.getBatchSize();
 
         if (threadCount > POOL_SIZE) {
-            System.err.println("Updating thread count (request size exceeds thread pool size)");
+            System.err.printf("Updating thread count (request size %d exceeds thread pool size %d)%n",
+                    threadCount, POOL_SIZE);
             threadCount = POOL_SIZE;
             opts.setThreadCount(POOL_SIZE);
         }
 
         if (callCount < BATCH_SIZE) {
-            System.err.println("Updating call count (request size less than batch size)");
+            System.err.printf("Updating call count (request size %d less than batch size %d)%n",
+                    callCount, BATCH_SIZE);
             callCount = BATCH_SIZE;
             opts.setNumberOfCalls(callCount);
         }
@@ -92,19 +97,21 @@ public class PerformanceTester<T> {
         int batchCount =  callCount/BATCH_SIZE;
 
         if (batchCount < threadCount) {
-            System.err.println("Reducing thread count (request number greater than the number of batches)");
+            System.err.printf("Reducing thread count (request number %d greater than the number of batches %d)%n",
+                    batchCount, threadCount);
             threadCount = batchCount;
             opts.setThreadCount(threadCount);
         }
 
         final AtomicInteger count = new AtomicInteger(callCount/BATCH_SIZE);
+        final AtomicBoolean aborted = new AtomicBoolean(false);
 
-        Collection<Future<Result<T>>> tasks = new ArrayList<Future<Result<T>>>();
+        final Collection<Future<Result<T>>> tasks = new ArrayList<Future<Result<T>>>();
         final CyclicBarrier cyclicBarrier = new CyclicBarrier(threadCount + 1); // workers + self
 
         worker.init();
 
-        for (int i = 0; i < opts.getThreadCount(); i++)
+        for (int i = 0; i < opts.getThreadCount(); i++) {
             tasks.add(executor.submit(new Callable<Result<T>>() {
                 public Result<T> call() throws Exception {
                     Result<T> res = new Result<T>(opts);
@@ -119,6 +126,19 @@ public class PerformanceTester<T> {
                         // ask the worker to do BATCH_SIZE units or work
                         res.setContext(worker.doWork(res.getContext(), BATCH_SIZE, res));
                         errorCount += res.getErrorCount();
+
+                        if (res.isCancelled()) {
+                            if (!aborted.getAndSet(true)) {
+                                opts.setContext(res.getContext());
+
+                                for (Future<Result<T>> task : tasks) {
+                                    if (!task.equals(this))
+                                        task.cancel(res.isMayInterruptIfRunning());
+                                }
+                            }
+
+                            break;
+                        }
                     }
 
                     cyclicBarrier.await();
@@ -129,24 +149,36 @@ public class PerformanceTester<T> {
                     return res;
                 };
             }));
-
-        long start = System.nanoTime();
+        }
 
         try {
+            long start = System.nanoTime();
+
             cyclicBarrier.await(); // wait for each thread to arrive at the barrier
             cyclicBarrier.await(); // wait for each thread to finish
 
-            worker.fini();
+            long tot = System.nanoTime() - start;
+
+            if (tot < 0) // nanoTime is reckoned from an arbitrary origin which may be in the future
+                tot = -tot;
+
+            opts.setTotalMillis(tot / 1000000L);
+
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (BrokenBarrierException e) {
-            throw new RuntimeException(e);
+            opts.setCancelled(true);
+        } finally {
+            worker.fini();
         }
 
-        long end = System.nanoTime();
+        if (aborted.get())
+            opts.setCancelled(true);
 
-        opts.setTotalMillis(0L);
         opts.setErrorCount(0);
+        opts.setBatchSize(BATCH_SIZE);
+        opts.setNumberOfCalls(callCount);
+        opts.setThreadCount(threadCount);
 
         for (Future<Result<T>> t : tasks) {
             try {
@@ -161,8 +193,6 @@ public class PerformanceTester<T> {
                 opts.setErrorCount(opts.getErrorCount() + BATCH_SIZE);
             }
         }
-
-        opts.setTotalMillis((end - start) / 1000000L);
 
         return opts;
     }
