@@ -220,10 +220,12 @@ public class RecoveryManager
     {
         if (_theImple == null)
         {
+            boolean isHA = recoveryPropertyManager.getRecoveryEnvironmentBean().isHA();
+
             if ((_mode == RecoveryManager.INDIRECT_MANAGEMENT) && !delayRecoveryManagerThread)
-                _theImple = new RecoveryManagerImple(true);
+                _theImple = new RecoveryManagerImple(true, isHA);
             else
-                _theImple = new RecoveryManagerImple(false);
+                _theImple = new RecoveryManagerImple(false, isHA);
         }
     }
 
@@ -261,6 +263,9 @@ public class RecoveryManager
     public RecoveryManagerStatus trySuspend(boolean async) {
         checkState();
 
+        if (resumableService !=  null)
+            resumableService.suspendService();
+
         PeriodicRecovery.Mode mode = _theImple.trySuspendScan(async);
 
         switch (mode) {
@@ -282,6 +287,9 @@ public class RecoveryManager
     public void resume ()
     {
         checkState();
+
+        if (resumableService !=  null)
+            resumableService.resumeService();
 
         _theImple.resumeScan();
     }
@@ -469,12 +477,18 @@ public class RecoveryManager
         }
     }
 
+    public void register(ResumableService resumableService) {
+        this.resumableService = resumableService;
+    }
+
     private RecoveryManager (int mode)
     {
+    boolean isHA = recoveryPropertyManager.getRecoveryEnvironmentBean().isHA();
+
 	if ((mode == RecoveryManager.INDIRECT_MANAGEMENT) && !delayRecoveryManagerThread)
-	    _theImple = new RecoveryManagerImple(true);
+	    _theImple = new RecoveryManagerImple(true, isHA);
 	else
-	    _theImple = new RecoveryManagerImple(false);
+	    _theImple = new RecoveryManagerImple(false, isHA);
 
 	_mode = mode;
     }
@@ -485,6 +499,7 @@ public class RecoveryManager
             throw new IllegalStateException();
     }
 
+    private ResumableService resumableService = null;
     private RecoveryManagerImple _theImple = null;
     private int _mode;
 
