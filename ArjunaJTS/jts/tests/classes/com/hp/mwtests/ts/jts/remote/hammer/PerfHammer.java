@@ -69,6 +69,9 @@ public class PerfHammer
         measure(true, new GridWorker(myORB, gridReference), numberOfCalls, threadCount, batchSize);
         measure(false, new GridWorker(myORB, gridReference), numberOfCalls, threadCount, batchSize);
 
+        myOA.destroy();
+        myORB.shutdown();
+
         System.out.println("Passed");
     }
 

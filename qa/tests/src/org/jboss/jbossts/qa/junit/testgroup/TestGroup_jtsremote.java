@@ -124,7 +124,7 @@ public class TestGroup_jtsremote  extends TestGroupBase
     }
 
     @Test public void JTSRemote_PerfTest() {
-        String numberOfCalls = "10000"; //"100000";
+        String numberOfCalls = "100;//00"; //"100000";
         String threadCount = "20"; //"10";
         String batchSize = "20"; //"10";
 
