@@ -20,11 +20,15 @@
  */
 package com.hp.mwtests.ts.jta.common;
 
+import com.arjuna.ats.jta.resources.LastResourceCommitOptimisation;
+import org.jboss.tm.ConnectableResource;
+import org.jboss.tm.XAResourceWrapper;
+
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
-
-public class FailureXAResource implements XAResource
+          // com.arjuna.ats.internal.jta.resources.arjunacore.XAResource
+public class FailureXAResource implements XAResource, XAResourceWrapper
 {
     public enum FailLocation { none, prepare, commit, rollback, end, prepare_and_rollback };
     public enum FailType { normal, timeout, heurcom, nota, inval, proto, rmfail, rollback, XA_RBCOMMFAIL };
@@ -154,6 +158,32 @@ public class FailureXAResource implements XAResource
     {
     }
 
+    @Override
+    public XAResource getResource() {
+        return this;
+    }
+
+    @Override
+    public String getProductName() {
+        return "XYZ";
+    }
+
+    @Override
+    public String getProductVersion() {
+        return "1.2.3";
+    }
+
+    @Override
+    public String getJndiName() {
+        return "jndiName";
+    }
+
     private FailLocation _locale;
     private FailType _type;
+
+    private String productName;
+
+    private String productVersion;
+
+    private String jndiName;
 }

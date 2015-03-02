@@ -17,20 +17,23 @@
  * (C) 2013
  * @author JBoss Inc.
  */
-package com.arjuna.ats.internal.jta.tools.osb.mbean.jta;
-
-import javax.transaction.xa.XAResource;
+package com.arjuna.ats.jta.tools.mbeans;
 
 import com.arjuna.ats.arjuna.common.Uid;
 import com.arjuna.ats.arjuna.coordinator.AbstractRecord;
 import com.arjuna.ats.arjuna.state.InputObjectState;
-import com.arjuna.ats.arjuna.tools.osb.mbean.*;
+import com.arjuna.ats.arjuna.tools.osb.mbean.HeuristicStatus;
+
 import com.arjuna.ats.internal.arjuna.tools.osb.Activatable;
+import com.arjuna.ats.internal.arjuna.tools.osb.BasicActionAccessor;
+import com.arjuna.ats.internal.arjuna.tools.osb.mbeans.LogRecordBean;
+import com.arjuna.ats.internal.arjuna.tools.osb.mbeans.NamedOSEntryBeanMXBean;
+import com.arjuna.ats.internal.arjuna.tools.osb.mbeans.ParticipantStatus;
 import com.arjuna.ats.internal.jta.resources.arjunacore.XAResourceRecord;
-import com.arjuna.ats.internal.jta.xa.XID;
 import com.arjuna.ats.jta.xa.XATxConverter;
 import com.arjuna.ats.jta.xa.XidImple;
 
+import javax.transaction.xa.XAResource;
 import java.io.IOException;
 
 /**
@@ -38,12 +41,13 @@ import java.io.IOException;
  *
  * @author Mike Musgrove
  */
+
 /**
  * @deprecated as of 5.0.5.Final In a subsequent release we will change packages names in order to 
  * provide a better separation between public and internal classes.
  */
 @Deprecated // in order to provide a better separation between public and internal classes.
-public class XAResourceRecordBean extends LogRecordWrapper implements XAResourceRecordBeanMBean {
+public class XAResourceRecordBean extends LogRecordBean implements XAResourceRecordBeanMBean, NamedOSEntryBeanMXBean, Activatable {
     String className = "unavailable";
     String eisProductName = "unavailable";
     String eisProductVersion = "unavailable";
@@ -53,16 +57,8 @@ public class XAResourceRecordBean extends LogRecordWrapper implements XAResource
     XidImple xidImple;
     int heuristic;
 
-    public XAResourceRecordBean(UidWrapper w) {
-        super(w.getUid());
-        init();
-        xares = new JTAXAResourceRecordWrapper(w.getUid());
-        xidImple = new XidImple(new XID());
-        heuristic = -1;
-    }
-
-    public XAResourceRecordBean(ActionBean parent, AbstractRecord rec, ParticipantStatus listType) {
-        super(parent, rec, listType);
+    public XAResourceRecordBean(String beanName, BasicActionAccessor aa, AbstractRecord rec, ParticipantStatus listType) {
+        super(beanName, aa, rec, listType);
         init();
         xares = new JTAXAResourceRecordWrapper(rec.order());
         xidImple = xares.xidImple;
@@ -70,7 +66,7 @@ public class XAResourceRecordBean extends LogRecordWrapper implements XAResource
     }
 
     private void init() {
-        jndiName = getUid().stringForm();
+        jndiName = getRecord().order().stringForm();
         className = "unavailable";
         eisProductName = "unavailable";
         eisProductVersion = "unavailable";
@@ -78,7 +74,8 @@ public class XAResourceRecordBean extends LogRecordWrapper implements XAResource
     }
 
     public boolean activate() {
-        boolean ok = super.activate();
+        boolean ok = true; // TODO super.activate();
+        AbstractRecord rec = getRecord();
         XAResource xares = (XAResource) rec.value();
 
         className = rec.getClass().getName();
@@ -138,7 +135,7 @@ public class XAResourceRecordBean extends LogRecordWrapper implements XAResource
     /**
      * Extension of an XAResource record for exposing the underlying XAResource which is protected
      */
-    public class JTAXAResourceRecordWrapper extends com.arjuna.ats.internal.jta.resources.arjunacore.XAResourceRecord {
+    public class JTAXAResourceRecordWrapper extends XAResourceRecord {
         XidImple xidImple = null;
         int heuristic = -1;
 

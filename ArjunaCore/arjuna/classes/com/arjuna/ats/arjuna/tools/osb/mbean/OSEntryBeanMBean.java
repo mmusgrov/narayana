@@ -13,6 +13,6 @@ public interface OSEntryBeanMBean extends ObjStoreItemMBean {
 	String getType();
 	String getId();
 
-	@MXBeanPropertyDescription("Tell the Transaction Manager to remove this record")
+	@MXBeanPropertyDescription("Tell the Transaction Manager to remove this record. This has the side effect of destroying this associated MBean")
 	String remove();
 }

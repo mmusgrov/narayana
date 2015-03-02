@@ -18,39 +18,20 @@
  * (C) 2009,
  * @author Red Hat Middleware LLC.
  */
-package com.arjuna.ats.arjuna.tools.osb.util;
+package com.hp.mwtests.ts.jta.jts.tools.mgmt;
 
+import com.arjuna.ats.arjuna.common.Uid;
+import com.arjuna.ats.arjuna.logging.tsLogger;
+import com.arjuna.ats.arjuna.tools.osb.mbean.ObjStoreItemMBean;
+
+import javax.management.*;
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Set;
 
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-import javax.management.QueryExp;
-
-import com.arjuna.ats.arjuna.common.Uid;
-import com.arjuna.ats.arjuna.logging.tsLogger;
-import com.arjuna.ats.arjuna.tools.osb.mbean.ObjStoreItemMBean;
-
-/**
- * Simple wrapper for accessing the JMX server
- *
- * @deprecated as of 5.0.5.Final In a subsequent release we will change packages names in order to 
- * provide a better separation between public and internal classes.
- *
- * @author Mike Musgrove
- */
-@Deprecated // in order to provide a better separation between public and internal classes.
-public class JMXServer
-{
+public class JMXServer {
 	public static final String STORE_MBEAN_NAME = "jboss.jta:type=ObjectStore";
 
 	public static String JTS_INITIALISER_CNAME = "com.arjuna.ats.internal.jta.tools.osb.mbean.jts.ToolsInitialiser";
@@ -158,11 +139,24 @@ public class JMXServer
     public Set<ObjectName> findMatchingBeans(Uid parentUid, Uid childUid, String typeName) throws MalformedObjectNameException {
         MBeanServer mbs = JMXServer.getAgent().getServer();
 
-        String objectName = String.format(GenericARMXBean.AR_BEAN_NAME_FMT, ObjStoreMgmt.STORE_MBEAN_NAME, typeName, parentUid.fileStringForm());
+        String objectName = String.format(GenericARMXBean.AR_BEAN_NAME_FMT, STORE_MBEAN_NAME, typeName, parentUid.fileStringForm());
 
         if (childUid != null)
             objectName = objectName + ",puid=" + childUid.fileStringForm();
 
         return mbs.queryNames(new ObjectName(objectName), null);
     }
+
+
+	public static String canonicalType(String type) {
+		if (type == null)
+			return "";
+
+		type = type.replace(File.separator, "/");
+
+		while (type.startsWith("/"))
+			type = type.substring(1);
+
+		return type;
+	}
 }
