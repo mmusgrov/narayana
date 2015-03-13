@@ -118,6 +118,8 @@
     <copy file="${org.jboss.jbossts.qa.ts.home}/narayana-full-${narayana.version}/lib/jts/narayana-jts-${orbtype}.jar" tofile="${org.jboss.jbossts.qa.ts.home}/narayana-full-${narayana.version}/lib/jbossjts.jar"/>
   </target>
 
+  <!--target name="dist" depends="clean, init, buildtype">
+-->
   <target name="dist" depends="clean, init, buildtype">
     <!-- build the test suite -->
     <ant dir="tests" antfile="build-${buildtype}.xml">

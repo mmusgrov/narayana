@@ -59,7 +59,7 @@
   <property name="working.dir" location="build"/>
   <property name="testoutput.zipname" value="testoutput.zip"/>
   <property name="testoutput.zip.includes" value="testoutput/**,TEST*"/>
-  <property name="profile" value=""/>
+  <property name="profile" value="jesper"/>
 
   <!-- handy utility space where you can copy one or more test groups if you want to run something ad-hoc -->
   <target name="scratch">
@@ -242,6 +242,14 @@
         Plus copies of the db drivers of course (try 'ant get.drivers' if inside the redhat network).
         And a set of servers to run against. Did I mention it was complicated :-)
     -->
+  <target name="jesper">
+    <install-dbdriver files="pgjdbc-ng-0.5-SNAPSHOT-complete.jar"/>
+    <junit-tests tests="jdbcresources01_pgsql_jndi"/>
+<!--
+    <install-dbdriver files="postgresql-8.3-605.jdbc4.jar"/>
+    <junit-tests tests="jdbcresources02_pgsql_jndi"/>
+-->
+  </target>
   <target name="junit-jdbc" depends="junit-jdbc-testsuite">
     <fail if="failed-tests" message="some tests failed"/>
   </target>
@@ -258,6 +266,7 @@
     <junit-tests tests="jdbcresources01_mssqlserver_jndi"/>
     <junit-tests tests="jdbcresources02_mssqlserver_jndi"/>
     <install-dbdriver files="postgresql-8.3-605.jdbc4.jar"/>
+    <install-dbdriver files="pgjdbc-ng-0.5-SNAPSHOT-complete.jar"/>
     <junit-tests tests="jdbcresources01_pgsql_jndi"/>
     <junit-tests tests="jdbcresources02_pgsql_jndi"/>
     <install-dbdriver files="mysql-connector-java-5.1.8-bin.jar"/>
@@ -282,6 +291,7 @@
     <junit-tests tests="jdbcresources01_mysql_jndi"/>
     <junit-tests tests="jdbcresources02_mysql_jndi"/>
     <install-dbdriver files="postgresql-8.3-605.jdbc4.jar"/>
+    <install-dbdriver files="pgjdbc-ng-0.5-SNAPSHOT-complete.jar"/>
     <junit-tests tests="jdbcresources01_pgsql_jndi"/>
     <junit-tests tests="jdbcresources02_pgsql_jndi"/>
   </target>
@@ -419,6 +429,19 @@
           <property name="jdbc.db.port" value="5432" />
           <property name="jdbc.db.properties" value="" />
         </then>
+      <elseif>
+        <equals arg1="${profile}" arg2="jesper" />
+        <then>
+          <property name="jdbcstore-profile" value="true" />
+          <property name="jdbc.datasource.class" value="com.impossibl.postgres.jdbc.PGDataSource" />
+          <property name="jdbc.db.url" value="localhost.localdomain" />
+          <property name="jdbc.db.name" value="jts-quickstart-database" />
+          <property name="jdbc.db.user" value="sa" />
+          <property name="jdbc.db.password" value="sa" />
+          <property name="jdbc.db.port" value="5432" />
+          <property name="jdbc.db.properties" value="" />
+        </then>
+      </elseif>
       <elseif>
         <equals arg1="${profile}" arg2="mysql" />
         <then>

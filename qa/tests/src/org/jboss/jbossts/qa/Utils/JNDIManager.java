@@ -118,6 +118,15 @@ public class JNDIManager
 
                 xaDataSourceToBind = wrapper.getWrappedXADataSource();
 			}
+			else if( driver.equals("com.impossibl.postgres.jdbc.PGDriver")) {
+
+				XADataSourceReflectionWrapper wrapper = new XADataSourceReflectionWrapper("com.impossibl.postgres.jdbc.xa.PGXADataSource");
+
+				wrapper.setProperty("database", databaseName);
+				wrapper.setProperty("host", host);
+
+				xaDataSourceToBind = wrapper.getWrappedXADataSource();
+			}
 			else if( driver.equals("com.mysql.jdbc.Driver")) {
 
 				// Note: MySQL XA only works on InnoDB tables.
