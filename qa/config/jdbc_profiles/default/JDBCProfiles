@@ -34,7 +34,7 @@
 
 DB_PGSQL_JNDI_NumberOfDrivers=2
 # the 'native' driver must come first. xa not required
-DB_PGSQL_JNDI_Driver0=org.postgresql.Driver
+DB_PGSQL_JNDI_Driver0=com.impossibl.postgres.jdbc.PGDriver
 DB_PGSQL_JNDI_Driver1=com.arjuna.ats.jdbc.TransactionalDriver
 # the uniq JNDI name
 DB_PGSQL_JNDI_Binding=pgsql
@@ -57,7 +57,7 @@ DB_PGSQL_JNDI_Host=localhost.localdomain
 ######################################################################
 
 DB1_PGSQL_JNDI_NumberOfDrivers=2
-DB1_PGSQL_JNDI_Driver0=org.postgresql.Driver
+DB1_PGSQL_JNDI_Driver0=com.impossibl.postgres.jdbc.PGDriver
 DB1_PGSQL_JNDI_Driver1=com.arjuna.ats.jdbc.TransactionalDriver
 DB1_PGSQL_JNDI_Binding=pgsql1
 DB1_PGSQL_JNDI_DatabaseURL=jdbc:arjuna:pgsql1
@@ -67,7 +67,7 @@ DB1_PGSQL_JNDI_DatabaseName=jts-quickstart-database
 DB1_PGSQL_JNDI_Host=localhost.localdomain
 
 DB2_PGSQL_JNDI_NumberOfDrivers=2
-DB2_PGSQL_JNDI_Driver0=org.postgresql.Driver
+DB2_PGSQL_JNDI_Driver0=com.impossibl.postgres.jdbc.PGDriver
 DB2_PGSQL_JNDI_Driver1=com.arjuna.ats.jdbc.TransactionalDriver
 DB2_PGSQL_JNDI_Binding=pgsql2
 DB2_PGSQL_JNDI_DatabaseURL=jdbc:arjuna:pgsql2

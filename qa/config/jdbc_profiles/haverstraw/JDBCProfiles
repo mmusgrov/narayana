@@ -29,7 +29,7 @@
 # GRANT ALL ON DATABASE jbossts TO dtf11;
 
 DB1_PGSQL_JNDI_NumberOfDrivers=2
-DB1_PGSQL_JNDI_Driver0=org.postgresql.Driver
+DB1_PGSQL_JNDI_Driver0=com.impossibl.postgres.jdbc.PGDriver
 DB1_PGSQL_JNDI_Driver1=com.arjuna.ats.jdbc.TransactionalDriver
 DB1_PGSQL_JNDI_Binding=pgsql1
 DB1_PGSQL_JNDI_DatabaseURL=jdbc:arjuna:pgsql1
@@ -39,7 +39,7 @@ DB1_PGSQL_JNDI_DatabaseName=jbossts
 DB1_PGSQL_JNDI_Host=tywin.eng.hst.ams2.redhat.com
 
 DB2_PGSQL_JNDI_NumberOfDrivers=2
-DB2_PGSQL_JNDI_Driver0=org.postgresql.Driver
+DB2_PGSQL_JNDI_Driver0=com.impossibl.postgres.jdbc.PGDriver
 DB2_PGSQL_JNDI_Driver1=com.arjuna.ats.jdbc.TransactionalDriver
 DB2_PGSQL_JNDI_Binding=pgsql2
 DB2_PGSQL_JNDI_DatabaseURL=jdbc:arjuna:pgsql2
