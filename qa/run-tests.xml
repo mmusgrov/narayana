@@ -59,7 +59,7 @@
   <property name="working.dir" location="build"/>
   <property name="testoutput.zipname" value="testoutput.zip"/>
   <property name="testoutput.zip.includes" value="testoutput/**,TEST*"/>
-  <property name="profile" value="jesper"/>
+  <property name="profile" value=""/>
 
   <!-- handy utility space where you can copy one or more test groups if you want to run something ad-hoc -->
   <target name="scratch">
@@ -243,8 +243,16 @@
         And a set of servers to run against. Did I mention it was complicated :-)
     -->
   <target name="jesper">
-    <install-dbdriver files="pgjdbc-ng-0.5-SNAPSHOT-complete.jar"/>
+    <install-dbdriver files="postgresql-8.3-605.jdbc4.jar"/>
     <junit-tests tests="jdbcresources01_pgsql_jndi"/>
+    <junit-tests tests="jdbcresources02_pgsql_jndi"/>
+<!--
+    <junit-tests tests="crashrecovery11_pgsql_jndi"/> these all timeout
+    <install-dbdriver files="pgjdbc-ng-0.5-SNAPSHOT-complete.jar"/>
+    <junit-tests tests="jdbclocals01_pgsql_jndi"/>
+    <junit-tests tests="jdbcresources01_pgsql_jndi"/>
+    <junit-tests tests="jdbcresources02_pgsql_jndi"/>
+-->
 <!--
     <install-dbdriver files="postgresql-8.3-605.jdbc4.jar"/>
     <junit-tests tests="jdbcresources02_pgsql_jndi"/>
