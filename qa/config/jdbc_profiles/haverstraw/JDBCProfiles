@@ -36,7 +36,7 @@ DB1_PGSQL_JNDI_DatabaseURL=jdbc:arjuna:pgsql1
 DB1_PGSQL_JNDI_DatabaseUser=dtf11
 DB1_PGSQL_JNDI_DatabasePassword=dtf11
 DB1_PGSQL_JNDI_DatabaseName=jbossts
-DB1_PGSQL_JNDI_Host=tywin.eng.hst.ams2.redhat.com
+DB1_PGSQL_JNDI_Host=172.17.130.10
 
 DB2_PGSQL_JNDI_NumberOfDrivers=2
 DB2_PGSQL_JNDI_Driver0=com.impossibl.postgres.jdbc.PGDriver
@@ -46,7 +46,7 @@ DB2_PGSQL_JNDI_DatabaseURL=jdbc:arjuna:pgsql2
 DB2_PGSQL_JNDI_DatabaseUser=dtf12
 DB2_PGSQL_JNDI_DatabasePassword=dtf12
 DB2_PGSQL_JNDI_DatabaseName=jbossts
-DB2_PGSQL_JNDI_Host=tywin.eng.hst.ams2.redhat.com
+DB2_PGSQL_JNDI_Host=172.17.130.10
 
 ######################################################################
 # MySQL JNDI Pair
