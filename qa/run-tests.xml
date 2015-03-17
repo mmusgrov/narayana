@@ -244,10 +244,10 @@
     -->
   <target name="jesper">
     <install-dbdriver files="pgjdbc-ng-0.5-SNAPSHOT-complete.jar"/>
-    <junit-tests tests="jdbcresources01_pgsql_jndi"/>
     <junit-tests tests="jdbcresources02_pgsql_jndi"/>
     <junit-tests tests="crashrecovery11_pgsql_jndi"/>
     <junit-tests tests="jdbclocals01_pgsql_jndi"/>
+    <junit-tests tests="jdbcresources01_pgsql_jndi"/>
 <!--
     <install-dbdriver files="postgresql-8.3-605.jdbc4.jar"/>
     <install-dbdriver files="pgjdbc-ng-0.5-SNAPSHOT-complete.jar"/>
