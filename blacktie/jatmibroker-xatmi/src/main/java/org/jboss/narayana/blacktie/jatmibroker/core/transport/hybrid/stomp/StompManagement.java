@@ -66,6 +66,8 @@ public class StompManagement {
         return socket;
     }
 
+    static final String EOM = "\000\n\n";
+
     public static void send(Message message, OutputStream outputStream) throws IOException {
         log.trace("Writing on: " + outputStream);
         StringBuffer toSend = new StringBuffer(message.getCommand().toString());
@@ -81,13 +83,16 @@ public class StompManagement {
             toSend.append("\n");
         }
         toSend.append("\n");
-        outputStream.write(toSend.toString().getBytes());
 
         if (message.getBody() != null) {
-            outputStream.write(message.getBody());
+            toSend.append(message.getBody());
         }
 
-        outputStream.write("\000\n\n".getBytes());
+        toSend.append(EOM.getBytes());
+
+        synchronized (outputStream) {
+            outputStream.write(toSend.toString().getBytes());
+        }
         log.trace("Wrote on: " + outputStream);
     }
 
