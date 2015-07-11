@@ -1,70 +1,80 @@
 package com.hp.mwtests.ts.jta.jts.tools.mgmt;
 
+import com.arjuna.ats.arjuna.common.Uid;
 import com.arjuna.ats.arjuna.coordinator.AbstractRecord;
 import com.arjuna.ats.arjuna.coordinator.HeuristicInformation;
 import com.arjuna.ats.arjuna.tools.osb.mbean.HeuristicStatus;
 import com.arjuna.ats.arjuna.tools.osb.mbean.LogRecordWrapperMXBean;
 import com.arjuna.ats.internal.arjuna.tools.osb.mbeans.NamedOSEntryBeanMBeanImpl;
 
+import javax.management.InstanceNotFoundException;
+
 public class LogRecordBean implements LogRecordWrapperMXBean {
-   // public class LogRecordBean extends NamedOSEntryBeanMBeanImpl implements NamedOSEntryBeanMXBean, LogRecordWrapperMXBean {
+    // public class LogRecordBean extends NamedOSEntryBeanMBeanImpl implements NamedOSEntryBeanMXBean, LogRecordWrapperMXBean {
     private BasicActionMXBean parent;
     private AbstractRecord ar;
     private ParticipantStatus listType;
     private NamedOSEntryBeanMBeanImpl impl;
 
     public LogRecordBean(String type, String name, String id) {
-        //super(type, name, id);
         impl = new NamedOSEntryBeanMBeanImpl(type, name, id);
     }
 
     public LogRecordBean(BasicActionMXBean baa, AbstractRecord ar, ParticipantStatus listType) {
-        this(ar.type(), baa.getName() + ",puid=" + ar.order().fileStringForm(), ar.order().stringForm());
+        this(ar.type(), getON(baa, ar), ar.order().fileStringForm());
+
         this.parent = baa;
         this.ar = ar;
         this.listType = listType;
     }
 
-    @Override
-    public String getStatus() {
-  		if (isHeuristic()) {
-			String type = getHeuristicStatus();
+    private static String getON(BasicActionMXBean baa, AbstractRecord ar) {
+        String type = ar.type();
+        Uid pUid = new Uid(baa.getId());
 
-			if (!type.equals(HeuristicStatus.UNKNOWN.name()))
-				return type;
-		}
-
-		return listType.toString();
+        return JMXServer.generateParticipantObjectName(type, pUid, ar.order());
     }
 
-	@Override
+    @Override
+    public String getStatus() {
+        if (isHeuristic()) {
+            String type = getHeuristicStatus();
+
+            if (!type.equals(HeuristicStatus.UNKNOWN.name()))
+                return type;
+        }
+
+        return listType.toString();
+    }
+
+    @Override
     public void setStatus(String newState) {
-		doSetStatus(newState);
-	}
+        doSetStatus(newState);
+    }
 
     @Override
     public String clearHeuristic() {
         return doSetStatus("PREPARED");
     }
 
-	public String doSetStatus(String newState) {
-		try {
-			return setStatus(Enum.valueOf(ParticipantStatus.class, newState.toUpperCase()));
-		} catch (IllegalArgumentException e) {
-			StringBuilder sb = new StringBuilder("Valid status values are: ");
+    public String doSetStatus(String newState) {
+        try {
+            return setStatus(Enum.valueOf(ParticipantStatus.class, newState.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            StringBuilder sb = new StringBuilder("Valid status values are: ");
 
-			for (ParticipantStatus lt : ParticipantStatus.values()) {
-				sb.append(lt.name()).append(", ");
-			}
+            for (ParticipantStatus lt : ParticipantStatus.values()) {
+                sb.append(lt.name()).append(", ");
+            }
 
-			sb.append(" and only HEURISTIC and PREPARED will persist after JVM restart.");
+            sb.append(" and only HEURISTIC and PREPARED will persist after JVM restart.");
 
-			return sb.toString();
-		}
-	}
+            return sb.toString();
+        }
+    }
 
     public String setStatus(ParticipantStatus newState) {
-        if (getListType().equals(newState))
+        if (getListType().equals(newState) && newState.equals(ParticipantStatus.PREPARED))
             return "participant is prepared for recovery";
 
 		/*
@@ -77,25 +87,28 @@ public class LogRecordBean implements LogRecordWrapperMXBean {
                     heuristicStatus.equals(HeuristicStatus.HEURISTIC_ROLLBACK)) {
                 return "participant has already committed or rolled back";
             }
+
+            if (parent != null) {
+                try {
+                    parent.moveHeuristicToPrepared(new Uid(parent.getId()), new Uid(getId()));
+                    listType = newState;
+                    return "participant recovery will be attempted during the next recovery pass";
+                } catch (InstanceNotFoundException |IndexOutOfBoundsException e) {
+                    return "participant status change failed";
+                }
+            }
         }
 
-        // if this record has a parent ask it to update the status
-//      return "TODO";
-        if (parent != null && parent.setStatus(this, newState)) {
-            listType = newState;
+        listType = newState;
 
-            if (newState.equals(ParticipantStatus.PREPARED))
-                return "participant recovery will be attempted during the next recovery pass";
+        if (newState.equals(ParticipantStatus.PREPARED))
+            return "participant recovery will be attempted during the next recovery pass";
 
-            return "participant status change was successful";
-        } else {
-            // TODO what about records without a parent eg CosTransaction records
-            return "participant status change failed";
-        }
+        return "participant status change was successful";
     }
 
     public String getType() {
-        return ar == null ? "uninitialised" : ar.type();
+        return impl.getType();
     }
 
     @Override
@@ -114,44 +127,6 @@ public class LogRecordBean implements LogRecordWrapperMXBean {
 
     public ParticipantStatus getListType() {
         return listType;
-    }
-
-/*    public boolean activate() {
-        if (!activated && ar != null)
-            try {
-                activated = ar.activate();
-            } catch (Exception e) {
-                activated = false;
-                tsLogger.logger.warn("Activate of " + rec + " failed: " + e.getMessage());
-            }
-
-        return activated;
-    }*/
-
-/*    public StringBuilder toString(String prefix, StringBuilder sb) {
-        prefix += "\t";
-        if (parent != null && ar != null) {
-            sb.append('\n').append(prefix).append(parent.getUid(ar));
-            sb.append('\n').append(prefix).append(listType.toString());
-            sb.append('\n').append(prefix).append(ar.type());
-            sb.append('\n').append(prefix).append(parent.getCreationTime());
-            sb.append('\n').append(prefix).append(parent.getAgeInSeconds());
-        } else {
-            sb.append('\n').append(prefix).append(_uidWrapper.getName());
-        }
-
-        return sb;
-    }*/
-
-    public String callMethod(Object object, String mName)
-    {
-        try {
-            return (String) object.getClass().getMethod(mName).invoke(object);
-        } catch (NoSuchMethodException e) {
-            return "Not supported";
-        } catch (Exception e) {
-            return "Error: " + e.getMessage();
-        }
     }
 
     public boolean isHeuristic() {

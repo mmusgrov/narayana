@@ -1,13 +1,17 @@
 package com.hp.mwtests.ts.jta.jts.tools.mgmt;
 
 import com.arjuna.ats.arjuna.ObjectType;
+import com.arjuna.ats.arjuna.common.Uid;
 import com.arjuna.ats.arjuna.coordinator.*;
 import com.arjuna.ats.arjuna.state.InputObjectState;
+import com.arjuna.ats.internal.arjuna.tools.log.EditableAtomicAction;
+import com.arjuna.ats.internal.arjuna.tools.log.EditableTransaction;
 import com.arjuna.ats.internal.arjuna.tools.osb.mbeans.NamedOSEntryBeanMXBean;
 
+import javax.management.InstanceNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Map;
 
 public class BasicActionMXBean implements NamedOSEntryBeanMXBean {
 
@@ -28,7 +32,7 @@ public class BasicActionMXBean implements NamedOSEntryBeanMXBean {
     public BasicActionMXBean(String type, String id) {
         this.type = type;
         this.id = id;
-        name = GenericARMXBean.generateObjectName(type, id);
+        name = JMXServer.generateObjectName(type, id);
         record_type = RecordType.NONE_RECORD;
         actionStatus = ActionStatus.INVALID;
         actionType = ActionType.TOP_LEVEL;
@@ -47,7 +51,7 @@ public class BasicActionMXBean implements NamedOSEntryBeanMXBean {
 
     @Override
     public String getId() {
-        return null;
+        return id;
     }
 
     @Override
@@ -131,8 +135,64 @@ public class BasicActionMXBean implements NamedOSEntryBeanMXBean {
             createBeans(participants, heuristicList, ParticipantStatus.HEURISTIC);
     }
 
-    public boolean setStatus(LogRecordBean logRecordBean, ParticipantStatus newState) {
-        // TODO
-        return false;
+    public Pair<Integer, AbstractRecord> getHeuristicRecord(Uid uid) {
+        RecordListIterator iter = new RecordListIterator(heuristicList);
+        AbstractRecord rec;
+        int i = 0;
+
+        while (((rec = iter.iterate()) != null)) {
+            if (rec.order().equals(uid))
+                return new Pair<>(i, rec);
+
+            i += 1;
+        }
+
+        return null;
+    }
+
+    // similar to EditableTransaction#moveHeuristicToPrepared
+    public void moveHeuristicToPrepared(Uid actionUid, Uid heuristicUid) throws InstanceNotFoundException, IndexOutOfBoundsException {
+        Pair<Integer, AbstractRecord> item = getHeuristicRecord(heuristicUid);
+
+        if (item == null)
+            throw new InstanceNotFoundException(heuristicUid.fileStringForm());
+
+        EditableTransaction et = new EditableAtomicAction(actionUid);
+
+        et.moveHeuristicToPrepared(item.getKey());
+
+        heuristicList.remove(item.getVal());
+        preparedList.insert(item.getVal());
+    }
+
+    // similar to EditableTransaction#deleteHeuristicParticipant
+    public void deleteHeuristicParticipant(Uid uid) throws InstanceNotFoundException, IndexOutOfBoundsException {
+        Pair<Integer, AbstractRecord> item = getHeuristicRecord(uid);
+
+        if (item == null)
+            throw new InstanceNotFoundException(uid.fileStringForm());
+
+        EditableTransaction et = new EditableAtomicAction(uid);;
+
+        et.deleteHeuristicParticipant(item.getKey());
+        heuristicList.remove(item.getVal());
+    }
+
+    static class Pair<K, V> {
+        K key;
+        V val;
+
+        public Pair(K key, V val) {
+            this.key = key;
+            this.val = val;
+        }
+
+        public K getKey() {
+            return key;
+        }
+
+        public V getVal() {
+            return val;
+        }
     }
 }

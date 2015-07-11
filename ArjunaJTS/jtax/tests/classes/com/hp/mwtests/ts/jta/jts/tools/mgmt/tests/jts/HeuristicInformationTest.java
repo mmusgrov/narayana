@@ -19,17 +19,14 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package com.hp.mwtests.ts.jta.jts.tools.mgmt;
+package com.hp.mwtests.ts.jta.jts.tools.mgmt.tests.jts;
 
-import com.arjuna.ats.arjuna.common.Uid;
-import com.arjuna.ats.arjuna.common.arjPropertyManager;
 import com.arjuna.ats.arjuna.coordinator.AbstractRecord;
 import com.arjuna.ats.arjuna.coordinator.RecordType;
 import com.arjuna.ats.arjuna.coordinator.TwoPhaseOutcome;
 import com.arjuna.ats.arjuna.coordinator.abstractrecord.RecordTypeManager;
 import com.arjuna.ats.arjuna.coordinator.abstractrecord.RecordTypeMap;
 import com.arjuna.ats.arjuna.tools.osb.mbean.HeuristicStatus;
-import com.arjuna.ats.arjuna.tools.osb.mbean.OSBTypeHandler;
 import com.arjuna.ats.internal.arjuna.thread.ThreadActionData;
 import com.arjuna.ats.internal.arjuna.tools.osb.ARTypeHandler;
 import com.arjuna.ats.internal.arjuna.tools.osb.ARTypeHandlerImpl;
@@ -38,12 +35,14 @@ import com.arjuna.ats.internal.arjuna.tools.osb.mbeans.NamedOSEntryBeanMXBean;
 import com.arjuna.ats.internal.jta.tools.osb.mbean.jts.osb.JTSARHandler;
 import com.arjuna.ats.internal.jts.orbspecific.coordinator.ArjunaTransactionImple;
 import com.hp.mwtests.ts.jta.jts.tools.UserExtendedCrashRecord;
+import com.hp.mwtests.ts.jta.jts.tools.mgmt.JMXServer;
+import com.hp.mwtests.ts.jta.jts.tools.mgmt.ObjStoreMgmt;
+import com.hp.mwtests.ts.jta.jts.tools.mgmt.tests.common.TestBase;
 import org.junit.Before;
 import org.junit.Test;
 import org.omg.CosTransactions.HeuristicHazard;
 
 import javax.management.*;
-import java.io.File;
 import java.util.Collection;
 import java.util.Set;
 
@@ -53,13 +52,7 @@ import static org.junit.Assert.*;
  *
  * @author Mike Musgrove
  */
-
-/**
- * @deprecated as of 5.0.5.Final In a subsequent release we will change packages names in order to 
- * provide a better separation between public and internal classes.
- */
-@Deprecated // in order to provide a better separation between public and internal classes.
-public class HeuristicInformationTest {//
+public class HeuristicInformationTest extends TestBase {//
 
     static class UserARTypeHandler extends ARTypeHandlerImpl {
 
@@ -71,23 +64,6 @@ public class HeuristicInformationTest {//
         public Collection<NamedOSEntryBeanMXBean> createRelatedMBeans(NamedOSEntryBeanMXBean bean) {
             return super.createRelatedMBeans(bean);
         }
-    }
-
-    @Before
-    public void setup() {
-        clearObjectStore();
-    }
-
-    public ObjStoreMgmt getOSB() {
-        ARTypeHandler th = new UserARTypeHandler(UserExtendedCrashRecord.record_type());
-
-        TypeRepository.registerTypeHandler(th, new JTSARHandler());
-
-        ObjStoreMgmt osb = new ObjStoreMgmt();
-
-        osb.start();
-
-        return osb;
     }
 
     @Test
@@ -119,7 +95,7 @@ public class HeuristicInformationTest {//
             // expected
         }
 
-        ObjStoreMgmt osb = getOSB();
+        ObjStoreMgmt osb = getOSB(new UserARTypeHandler(UserExtendedCrashRecord.record_type()), new JTSARHandler());
 
         osb.setExposeAllRecordsAsMBeans(true);
         osb.probe();
@@ -148,26 +124,4 @@ public class HeuristicInformationTest {//
             }
         }
     }
-
-    private void clearObjectStore() {
-        final String objectStorePath = arjPropertyManager.getObjectStoreEnvironmentBean().getObjectStoreDir();
-        final File objectStoreDirectory = new File(objectStorePath);
-
-        clearDirectory(objectStoreDirectory);
-    }
-
-    private void clearDirectory(final File directory) {
-        final File[] files = directory.listFiles();
-
-        if (files != null) {
-            for (final File file : files) {
-                if (file.isDirectory()) {
-                    clearDirectory(file);
-                }
-
-                file.delete();
-            }
-        }
-    }
-
 }

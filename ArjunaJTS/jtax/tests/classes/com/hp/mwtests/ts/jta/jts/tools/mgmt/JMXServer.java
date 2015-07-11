@@ -20,7 +20,9 @@
  */
 package com.hp.mwtests.ts.jta.jts.tools.mgmt;
 
+import com.arjuna.ats.arjuna.StateManager;
 import com.arjuna.ats.arjuna.common.Uid;
+import com.arjuna.ats.arjuna.coordinator.TwoPhaseCoordinator;
 import com.arjuna.ats.arjuna.logging.tsLogger;
 import com.arjuna.ats.arjuna.tools.osb.mbean.ObjStoreItemMBean;
 
@@ -33,6 +35,11 @@ import java.util.Set;
 
 public class JMXServer {
 	public static final String STORE_MBEAN_NAME = "jboss.jta:type=ObjectStore";
+	public static String ARP_BEAN_NAME_FMT = "%s,itype=%s,uid=%s";
+	public static String ARC_BEAN_NAME_FMT = "%s,itype=%s,uid=%s,puid=%s";
+
+	public static String ARP_WC_BEAN_NAME_FMT = "%s,itype=%s,uid=%s,*";
+	public static String ARC_WC_BEAN_NAME_FMT = "%s,itype=%s,uid=%s,puid=%s,*";
 
 	public static String JTS_INITIALISER_CNAME = "com.arjuna.ats.internal.jta.tools.osb.mbean.jts.ToolsInitialiser";
 	public static String AJT_RECORD_TYPE = "CosTransactions/XAResourceRecord";
@@ -76,6 +83,19 @@ public class JMXServer {
 		} catch (Exception e) {
 		}
 	}
+
+	public static String generateObjectName(String type, String id) {
+        return String.format(ARP_BEAN_NAME_FMT, STORE_MBEAN_NAME, JMXServer.canonicalType(type), id);
+    }
+
+	public static String generateObjectName(String type, Uid uid) {
+        return String.format(ARP_BEAN_NAME_FMT, STORE_MBEAN_NAME, JMXServer.canonicalType(type), uid.fileStringForm());
+    }
+
+	public static String generateParticipantObjectName(String type, Uid parentUid, Uid childUid) {
+        return String.format(ARC_BEAN_NAME_FMT, STORE_MBEAN_NAME,
+				JMXServer.canonicalType(type), parentUid.fileStringForm(), childUid.fileStringForm());
+    }
 
 	public MBeanServer getServer()
 	{
@@ -138,11 +158,13 @@ public class JMXServer {
 
     public Set<ObjectName> findMatchingBeans(Uid parentUid, Uid childUid, String typeName) throws MalformedObjectNameException {
         MBeanServer mbs = JMXServer.getAgent().getServer();
+		String uidStr = parentUid != null ? parentUid.fileStringForm() : "*";
+        String objectName;
 
-        String objectName = String.format(GenericARMXBean.AR_BEAN_NAME_FMT, STORE_MBEAN_NAME, typeName, parentUid.fileStringForm());
-
-        if (childUid != null)
-            objectName = objectName + ",puid=" + childUid.fileStringForm();
+        if (childUid == null)
+			 objectName = String.format(ARP_WC_BEAN_NAME_FMT, STORE_MBEAN_NAME, typeName, uidStr);
+		else
+		     objectName = String.format(ARC_WC_BEAN_NAME_FMT, STORE_MBEAN_NAME, typeName, uidStr, childUid.fileStringForm());
 
         return mbs.queryNames(new ObjectName(objectName), null);
     }
@@ -158,5 +180,9 @@ public class JMXServer {
 			type = type.substring(1);
 
 		return type;
+	}
+
+	public static String getType(StateManager record) {
+		return canonicalType(record.type());
 	}
 }
