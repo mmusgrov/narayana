@@ -14,7 +14,7 @@ public class GenericARMXBean implements NamedOSEntryBeanMXBean, NotificationBroa
     private long notificationId = 0;
 
     public GenericARMXBean(String type, String id) {
-        this.name = JMXServer.generateObjectName(type, id);
+        this.name = ObjStoreMBeanON.generateObjectName(type, id);
         this.type = type;
         this.id = id;
     }

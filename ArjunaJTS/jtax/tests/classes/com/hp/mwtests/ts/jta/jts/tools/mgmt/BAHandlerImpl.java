@@ -14,7 +14,7 @@ public class BAHandlerImpl implements ARHandler {
 
     public BAHandlerImpl(String typeName) {
         this.type = typeName;
-        canonicalType = JMXServer.canonicalType(typeName);
+        canonicalType = ObjStoreMBeanON.canonicalType(typeName);
     }
 
     public BAHandlerImpl() {
@@ -37,9 +37,8 @@ public class BAHandlerImpl implements ARHandler {
     @Override
     public NamedOSEntryBeanMXBean createBean(Uid uid, InputObjectState os, String type) {
         BasicActionMXBean bean = new BasicActionMXBean(type, uid.fileStringForm());
-        HeaderStateReader headerStateReader = BAHandlerImpl.lookupHeaderStateReader(type);
 
-        bean.updateState(os, canonicalType, headerStateReader);
+        bean.updateState(os, canonicalType, getHeaderStateReader(type));
 
         return bean;
     }
@@ -55,7 +54,7 @@ public class BAHandlerImpl implements ARHandler {
         }
     }
 
-    public static HeaderStateReader lookupHeaderStateReader(String typeName) {
+    public HeaderStateReader getHeaderStateReader(String typeName) {
         return new HeaderStateReader();
     }
 }

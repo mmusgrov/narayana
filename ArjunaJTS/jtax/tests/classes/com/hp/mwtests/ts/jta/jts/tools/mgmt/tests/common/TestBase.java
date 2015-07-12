@@ -8,13 +8,13 @@ import com.arjuna.ats.internal.arjuna.common.UidHelper;
 import com.arjuna.ats.internal.arjuna.tools.osb.ARTypeHandler;
 import com.arjuna.ats.internal.arjuna.tools.osb.TypeRepository;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.JMXServer;
+import com.hp.mwtests.ts.jta.jts.tools.mgmt.ObjStoreMBeanON;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.ObjStoreMgmt;
 import org.junit.After;
 import org.junit.Before;
 
 import javax.management.*;
 import java.io.File;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,7 +46,7 @@ public class TestBase {
     }
 
     public ObjStoreMgmt getOSB(boolean exposeAllLogs, boolean useJMX) throws OperationsException, ReflectionException, MBeanException {
-        ObjectName storeMBeanName = new ObjectName(JMXServer.STORE_MBEAN_NAME);
+        ObjectName storeMBeanName = new ObjectName(ObjStoreMBeanON.STORE_MBEAN_NAME);
         ObjStoreMgmt browser = new ObjStoreMgmt();
 
         browser.start();

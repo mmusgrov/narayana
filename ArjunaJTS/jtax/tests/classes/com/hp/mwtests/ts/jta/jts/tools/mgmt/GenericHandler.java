@@ -12,7 +12,7 @@ public class GenericHandler implements ARHandler {
 
     public GenericHandler(String type) {
         this.type = type;
-        canonicalType = JMXServer.canonicalType(type);
+        canonicalType = ObjStoreMBeanON.canonicalType(type);
     }
 
     @Override

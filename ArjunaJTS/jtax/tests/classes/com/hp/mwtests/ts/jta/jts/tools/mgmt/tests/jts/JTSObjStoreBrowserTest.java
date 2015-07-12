@@ -22,7 +22,6 @@
 package com.hp.mwtests.ts.jta.jts.tools.mgmt.tests.jts;
 
 import com.arjuna.ats.arjuna.AtomicAction;
-import com.arjuna.ats.arjuna.common.arjPropertyManager;
 import com.arjuna.ats.arjuna.common.recoveryPropertyManager;
 import com.arjuna.ats.arjuna.coordinator.*;
 import com.arjuna.ats.arjuna.coordinator.abstractrecord.RecordTypeManager;
@@ -31,7 +30,6 @@ import com.arjuna.ats.arjuna.objectstore.StoreManager;
 import com.arjuna.ats.arjuna.recovery.RecoveryDriver;
 import com.arjuna.ats.arjuna.recovery.RecoveryManager;
 
-import com.arjuna.ats.arjuna.tools.osb.mbean.HeuristicStatus;
 import com.arjuna.ats.internal.arjuna.recovery.AtomicActionRecoveryModule;
 import com.arjuna.ats.internal.arjuna.thread.ThreadActionData;
 
@@ -44,18 +42,17 @@ import com.arjuna.orbportability.OA;
 import com.arjuna.orbportability.ORB;
 import com.hp.mwtests.ts.jta.jts.common.ExtendedCrashRecord;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.JMXServer;
+import com.hp.mwtests.ts.jta.jts.tools.mgmt.ObjStoreMBeanON;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.ParticipantStatus;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.tests.common.TestBase;
 import org.omg.CORBA.ORBPackage.InvalidName;
 import org.omg.CosTransactions.HeuristicHazard;
 
 import javax.management.*;
-import java.io.File;
 import java.lang.reflect.Field;
 import java.util.Properties;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 import org.junit.*;
 import static org.junit.Assert.*;
@@ -97,7 +94,6 @@ public class JTSObjStoreBrowserTest extends TestBase {
 	@Before
 	public void setUp () throws Exception
 	{
-		clearObjectStore();
 		recoveryPropertyManager.getRecoveryEnvironmentBean().setRecoveryListener(true);
 		recoveryPropertyManager.getRecoveryEnvironmentBean().setPeriodicRecoveryPeriod(1);
 		recoveryPropertyManager.getRecoveryEnvironmentBean().setRecoveryBackoffPeriod(1);
@@ -120,8 +116,6 @@ public class JTSObjStoreBrowserTest extends TestBase {
 		Field f = RecoveryManager.class.getDeclaredField("_recoveryManager");
         f.setAccessible(true);
         f.set(rcm, null);
-
-		osb.stop();
 	}
 
 	/*
@@ -242,13 +236,12 @@ public class JTSObjStoreBrowserTest extends TestBase {
 	private void finishTest(TwoPhaseCoordinator A, boolean replay, ExtendedCrashRecord heuristicRecord) throws Exception {
 		osb.probe();
 
-		/**********/
         Set<ObjectName> matchingBeans = JMXServer.getAgent().findMatchingBeans(null, null, "*");
 
         assertTrue(matchingBeans.size() > 1); // make sure there are at least 2 beans
 
-        String parentName = JMXServer.generateObjectName(A.type(), A.get_uid());
-        String participantName= JMXServer.generateParticipantObjectName(heuristicRecord.type(), A.get_uid(), heuristicRecord.order());
+        String parentName = ObjStoreMBeanON.generateObjectName(A.type(), A.get_uid());
+        String participantName= ObjStoreMBeanON.generateParticipantObjectName(heuristicRecord.type(), A.get_uid(), heuristicRecord.order());
 		ObjectName parentON = new ObjectName(parentName);
 		ObjectName participantObjectNameON = new ObjectName(participantName);
 
@@ -258,7 +251,6 @@ public class JTSObjStoreBrowserTest extends TestBase {
         assertTrue(matchingBeans.contains(parentON));
 		// and an entry for the ExtendedCrashRecord that got the heuristic
         assertTrue(matchingBeans.contains(participantObjectNameON));
-		/**********/
 
 		Object status = mbs.getAttribute(participantObjectNameON, "Status");
 

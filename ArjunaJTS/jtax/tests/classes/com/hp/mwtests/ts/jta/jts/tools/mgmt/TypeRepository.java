@@ -21,12 +21,12 @@ public class TypeRepository {
 
     public static void registerTypeHandler(ARHandler... newHandlers) {
         for (ARHandler handler : newHandlers) {
-            handlers.put(JMXServer.canonicalType(handler.getType()), handler);
+            handlers.put(ObjStoreMBeanON.canonicalType(handler.getType()), handler);
         }
     }
 
     public static void registerTypeHandler(String typeName, ARHandler handler) {
-        handlers.put(typeName, handler);
+        handlers.put(ObjStoreMBeanON.canonicalType(typeName), handler);
     }
 
     public ARHandler lookupType(String typeName) {
@@ -44,7 +44,7 @@ public class TypeRepository {
 
                 while (true) {
                     try {
-                        String typeName = JMXServer.canonicalType(types.unpackString());
+                        String typeName = ObjStoreMBeanON.canonicalType(types.unpackString());
 
                         if (typeName.length() == 0)
                             break;

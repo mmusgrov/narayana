@@ -36,6 +36,10 @@ import java.io.IOException;
  * @author Mike Musgrove
  */
 
+/**
+ * Read state packed before BasicAction state is packed. Note that most record types pack super class state
+ * before more concrete state but there are one or two exceptions, hence the need for a HeaderStateReader
+ */
 public class HeaderStateReader {
     protected HeaderState unpackHeader(InputObjectState os) throws IOException {
         HeaderState hs = null;

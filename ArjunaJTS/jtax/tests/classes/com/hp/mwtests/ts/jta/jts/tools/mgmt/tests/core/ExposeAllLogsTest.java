@@ -27,6 +27,7 @@ import com.arjuna.ats.arjuna.objectstore.StoreManager;
 import com.arjuna.ats.arjuna.state.OutputObjectState;
 import com.arjuna.ats.internal.arjuna.tools.osb.MBeanHelper;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.JMXServer;
+import com.hp.mwtests.ts.jta.jts.tools.mgmt.ObjStoreMBeanON;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.ObjStoreMgmt;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.tests.common.TestBase;
 import org.junit.Test;
@@ -85,7 +86,7 @@ public class ExposeAllLogsTest extends TestBase {
             // check that the record is not exposed
             browser.probe();
             // lookup all MBeans
-            getUids(uids2, agent.queryNames(JMXServer.STORE_MBEAN_NAME + ",*", null));
+            getUids(uids2, agent.queryNames(ObjStoreMBeanON.STORE_MBEAN_NAME + ",*", null));
 
             // and validate that there is no MBean corresponding to u
             assertFalse(uids2.containsKey(u));
@@ -98,7 +99,7 @@ public class ExposeAllLogsTest extends TestBase {
 
             // and get the uids for log record MBeans
             uids2.clear();
-            getUids(uids2, agent.queryNames(JMXServer.STORE_MBEAN_NAME + ",*", null));
+            getUids(uids2, agent.queryNames(ObjStoreMBeanON.STORE_MBEAN_NAME + ",*", null));
 
             // and validate that there is now an MBean corresponding to u
             assertTrue(uids2.containsKey(u));
@@ -112,7 +113,7 @@ public class ExposeAllLogsTest extends TestBase {
             assertFalse(uids.contains(u));
 
             uids2.clear();
-            MBeanHelper.getUids(uids2, agent.queryNames(JMXServer.STORE_MBEAN_NAME + ",*", null));
+            MBeanHelper.getUids(uids2, agent.queryNames(ObjStoreMBeanON.STORE_MBEAN_NAME + ",*", null));
             assertFalse(uids2.containsKey(u));
         } finally {
             browser.stop();

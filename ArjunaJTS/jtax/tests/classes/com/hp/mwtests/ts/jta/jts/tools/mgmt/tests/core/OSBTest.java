@@ -7,6 +7,7 @@ import com.arjuna.ats.arjuna.coordinator.RecordType;
 import com.arjuna.ats.arjuna.coordinator.abstractrecord.RecordTypeManager;
 import com.arjuna.ats.arjuna.coordinator.abstractrecord.RecordTypeMap;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.JMXServer;
+import com.hp.mwtests.ts.jta.jts.tools.mgmt.ObjStoreMBeanON;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.tests.common.CrashRecord;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.tests.common.TestBase;
 import org.junit.Test;
@@ -58,8 +59,8 @@ public class OSBTest extends TestBase {
 
         assertTrue(matchingBeans.size() > 1); // make sure ther are at least 2 beans
 
-        String parentON = JMXServer.generateObjectName(A.type(), A.get_uid());
-        String participantObjectNameON = JMXServer.generateParticipantObjectName(recs[1].type(), A.get_uid(), recs[1].get_uid());
+        String parentON = ObjStoreMBeanON.generateObjectName(A.type(), A.get_uid());
+        String participantObjectNameON = ObjStoreMBeanON.generateParticipantObjectName(recs[1].type(), A.get_uid(), recs[1].get_uid());
 
         assertTrue(matchingBeans.contains(new ObjectName(parentON)));
         assertTrue(matchingBeans.contains(new ObjectName(participantObjectNameON)));

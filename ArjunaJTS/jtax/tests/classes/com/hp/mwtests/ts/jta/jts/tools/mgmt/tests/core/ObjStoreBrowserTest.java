@@ -34,10 +34,9 @@ import com.arjuna.ats.arjuna.tools.osb.mbean.OSEntryBean;
 import com.arjuna.ats.arjuna.tools.osb.mbean.ObjStoreItemMBean;
 import com.arjuna.ats.internal.arjuna.recovery.AtomicActionRecoveryModule;
 import com.arjuna.ats.internal.arjuna.recovery.RecoveryManagerImple;
-import com.arjuna.ats.internal.arjuna.tools.log.EditableAtomicAction;
-import com.arjuna.ats.internal.arjuna.tools.log.EditableTransaction;
 import com.arjuna.ats.internal.arjuna.tools.osb.mbeans.ParticipantStatus;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.JMXServer;
+import com.hp.mwtests.ts.jta.jts.tools.mgmt.ObjStoreMBeanON;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.tests.common.CrashRecord;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.tests.common.TestBase;
 import org.junit.After;
@@ -165,8 +164,8 @@ public class ObjStoreBrowserTest extends TestBase {
 
         assertTrue(matchingBeans.size() > 1); // make sure there are at least 2 beans
 
-        String parentName = JMXServer.generateObjectName(A.type(), A.get_uid());
-        String participantName= JMXServer.generateParticipantObjectName(recs[1].type(), A.get_uid(), recs[1].order());
+        String parentName = ObjStoreMBeanON.generateObjectName(A.type(), A.get_uid());
+        String participantName= ObjStoreMBeanON.generateParticipantObjectName(recs[1].type(), A.get_uid(), recs[1].order());
 		ObjectName parentON = new ObjectName(parentName);
 		ObjectName participantObjectNameON = new ObjectName(participantName);
 

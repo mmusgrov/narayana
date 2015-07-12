@@ -11,7 +11,6 @@ import com.arjuna.ats.internal.arjuna.tools.osb.mbeans.NamedOSEntryBeanMXBean;
 import javax.management.InstanceNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
 
 public class BasicActionMXBean implements NamedOSEntryBeanMXBean {
 
@@ -32,11 +31,14 @@ public class BasicActionMXBean implements NamedOSEntryBeanMXBean {
     public BasicActionMXBean(String type, String id) {
         this.type = type;
         this.id = id;
-        name = JMXServer.generateObjectName(type, id);
+        name = ObjStoreMBeanON.generateObjectName(type, id);
         record_type = RecordType.NONE_RECORD;
         actionStatus = ActionStatus.INVALID;
         actionType = ActionType.TOP_LEVEL;
         heuristicDecision = TwoPhaseOutcome.PREPARE_OK;
+
+        preparedList = new RecordList();
+        heuristicList = new RecordList();
     }
 
     @Override
@@ -79,8 +81,6 @@ public class BasicActionMXBean implements NamedOSEntryBeanMXBean {
             // TODO expose headerState
             os.unpackBoolean(); // read pastFirstParticipant
 
-            preparedList = new RecordList();
-            heuristicList = new RecordList();
             restored = true;
 
             while ((record = unpackRecord(os)) != null)

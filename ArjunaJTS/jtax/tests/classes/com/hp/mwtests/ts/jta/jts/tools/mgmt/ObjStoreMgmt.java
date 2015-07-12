@@ -26,7 +26,7 @@ public class ObjStoreMgmt implements ObjStoreBrowserMXBean, NotificationListener
 
     public void start()
     {
-        JMXServer.getAgent().registerMBean(JMXServer.STORE_MBEAN_NAME, this);
+        JMXServer.getAgent().registerMBean(ObjStoreMBeanON.STORE_MBEAN_NAME, this);
     }
 
     public ObjStoreMgmt() {
@@ -123,7 +123,7 @@ public class ObjStoreMgmt implements ObjStoreBrowserMXBean, NotificationListener
         for (NamedOSEntryBeanMXBean bean : mbeans.values())
             server.unregisterMBean(bean.getName());
 
-        server.unregisterMBean(JMXServer.STORE_MBEAN_NAME);
+        server.unregisterMBean(ObjStoreMBeanON.STORE_MBEAN_NAME);
 
         clear();
     }

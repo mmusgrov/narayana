@@ -32,7 +32,7 @@ public class LogRecordBean implements LogRecordWrapperMXBean {
         String type = ar.type();
         Uid pUid = new Uid(baa.getId());
 
-        return JMXServer.generateParticipantObjectName(type, pUid, ar.order());
+        return ObjStoreMBeanON.generateParticipantObjectName(type, pUid, ar.order());
     }
 
     @Override
