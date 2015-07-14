@@ -28,6 +28,7 @@ import com.arjuna.ats.internal.jts.orbspecific.coordinator.ArjunaTransactionImpl
 import com.arjuna.ats.internal.jts.resources.ExtendedResourceRecord;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.JMXServer;
 import com.hp.mwtests.ts.jta.jts.tools.mgmt.ObjStoreMBeanON;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.management.*;
@@ -36,6 +37,7 @@ import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAException;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -49,6 +51,14 @@ import com.arjuna.ats.internal.jta.transaction.jts.TransactionManagerImple;
  * @author Mike Musgrove
  */
 public class JTSXARTest extends JTSOSBTestBase {
+    @Before
+    public void before() {
+        super.before();
+
+        // register a handler for ExtendedResourceRecord types
+        osb.registerTypeHandler(new ExtendedResourceRecordHandler());
+    }
+
     void injectCommitException(String exceptionType) throws Exception {
         XAFailureSpec fault = new XAFailureSpec(
                 "JTSXARTest", XAFailureMode.XAEXCEPTION, XAFailureType.XARES_COMMIT, exceptionType, 0);
@@ -91,6 +101,7 @@ public class JTSXARTest extends JTSOSBTestBase {
         // and validate they have the correct heuristic status
         osb.probe();
 
+        MBeanServer mbs = JMXServer.getAgent().getServer();
         Set<ObjectName> matchingBeans = JMXServer.getAgent().findMatchingBeans(null, null, "*");
 
         String parentType = ArjunaTransactionImple.typeName();
@@ -99,75 +110,36 @@ public class JTSXARTest extends JTSOSBTestBase {
         assertTrue(matchingBeans.contains(parentON));
         // there should be an MBean for the transaction
         try {
-            JMXServer.getAgent().getServer().getObjectInstance(parentON);
+            mbs.getObjectInstance(parentON);
         } catch (InstanceNotFoundException e) {
             fail("transaction MBean was not created");
         }
 
         // There should be a JTS participant of type ExtendedResourceRecord corresponding to the XAFailureResource
-        String childType = ObjStoreMBeanON.canonicalType(new ExtendedResourceRecord().type());
-        Set<ObjectName> childBeans = JMXServer.getAgent().findMatchingBeans(txn.get_uid(), null, childType);
-        assertEquals(1, childBeans.size());
+        String inlineXARType = ObjStoreMBeanON.canonicalType(new ExtendedResourceRecord().type());
+        Set<ObjectName> inlineXARBeans = JMXServer.getAgent().findMatchingBeans(txn.get_uid(), null, inlineXARType);
+        assertEquals(1, inlineXARBeans.size());
 
-        ObjectName childObjectName = childBeans.iterator().next();
-        ObjStoreMBeanON childON = ObjStoreMBeanON.fromObjStoreMBeanON(childObjectName);
+        ObjectName inlineXARON = inlineXARBeans.iterator().next();
+        ObjStoreMBeanON childON = ObjStoreMBeanON.fromObjStoreMBeanON(inlineXARON);
 
         // and there should be a JTS XAResourceRecord
-        String childJTSType = XAResourceRecord.typeName();
-        ObjStoreMBeanON  childJTSON = new ObjStoreMBeanON(childJTSType, childON.getParticipantUid());
+        String otsXARType = XAResourceRecord.typeName();
+        ObjStoreMBeanON  otsXARName = new ObjStoreMBeanON(otsXARType, childON.getParticipantUid());
+        ObjectName otsXARON = new ObjectName(otsXARName.getObjectName());
 
-        assertTrue(matchingBeans.contains(new ObjectName(childJTSON.getObjectName())));
+        assertTrue(matchingBeans.contains(otsXARON));
 
-        //"jboss.jta:type=ObjectStore,itype=StateManager/AbstractRecord/ExtendedResourceRecord,uid=0_ffff7f000001_a3c7_55a2cd49_3,puid=0_ffff7f000001_a3c7_55a2cd49_9"
+        List<Attribute> attributes1 = getProperties(mbs, inlineXARON);
+        List<Attribute> attributes2 = getProperties(mbs, otsXARON);
 
-        // JTS participants are of type ExtendedResourceRecord
-//        String participantName= JMXServer.generateParticipantObjectName(childType, txn.get_uid(), failureResource.getUid());
-//        ObjectName participantObjectNameON = new ObjectName(participantName);
-
-        // there should now be an entry in the object store corresponding to the transaction
-//        assertTrue(matchingBeans.contains(parentON));
-        // and an entry for the ExtendedCrashRecord that got the heuristic
-//        assertTrue(matchingBeans.contains(participantObjectNameON));
-
+        for (Attribute a: attributes1) {
+            System.out.printf("%s=%s%n", a.getName(), a.getValue());
+        }
 
 //        validateChildBeans(osb, w.getName(), 1, expectedXAE);
 
     }
-
-    class ObjStoreMBeanKVPairs {
-        public static final String OSB_BEAN_TYPE = "jboss.jta:type=ObjectStore";
-        public static final String OSB_INST_KEY = "itype";
-        public static final String OSB_UID_KEY = "itype";
-        public static final String OSB_PARTICIPANT_KEY = "puid";
-
-        private String type;
-        private String uid;
-        private String pUid;
-
-        public boolean isOSBeanType(String objectName) {
-            return objectName.startsWith(OSB_BEAN_TYPE);
-        }
-
-        public ObjStoreMBeanKVPairs(String objectName) throws MalformedObjectNameException {
-            if (!isOSBeanType(objectName))
-                throw new MalformedObjectNameException(objectName);
-
-            for (String pair : objectName.split(",")) {
-                String[] kv = pair.split("=");
-
-                if (kv.length != 2)
-                    throw new MalformedObjectNameException(objectName);
-
-                if (OSB_INST_KEY.equals(kv[0]))
-                    type = kv[1];
-                else if (OSB_UID_KEY.equals(kv[0]))
-                    uid = kv[1];
-                else if (OSB_PARTICIPANT_KEY.equals(kv[0]))
-                    pUid = kv[1];
-            }
-        }
-    }
-
 
     @Test
     public void testXAR() throws Exception {

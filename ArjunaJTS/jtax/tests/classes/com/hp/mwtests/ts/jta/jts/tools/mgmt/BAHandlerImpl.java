@@ -45,12 +45,12 @@ public class BAHandlerImpl implements ARHandler {
 
     //   private boolean restoreRecord()
     @Override
-    public void createRelatedMBeans(Collection<NamedOSEntryBeanMXBean> beans, NamedOSEntryBeanMXBean bean) {
+    public void createRelatedMBeans(TypeRepository typeHandlers, Collection<NamedOSEntryBeanMXBean> beans, NamedOSEntryBeanMXBean bean) {
         if (bean instanceof BasicActionMXBean) {
             BasicActionMXBean mxBean = (BasicActionMXBean) bean;
 
-            mxBean.getParticipants(beans, ParticipantStatus.PREPARED);
-            mxBean.getParticipants(beans, ParticipantStatus.HEURISTIC);
+            mxBean.getParticipants(typeHandlers, beans, ParticipantStatus.PREPARED);
+            mxBean.getParticipants(typeHandlers, beans, ParticipantStatus.HEURISTIC);
         }
     }
 

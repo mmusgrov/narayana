@@ -105,7 +105,7 @@ public class JTSObjStoreBrowserTest extends TestBase {
 				recoveryPropertyManager.getRecoveryEnvironmentBean().getRecoveryAddress(), 100000);
 
 		osb.setExposeAllRecordsAsMBeans(true);
-//TODO 		TypeRepository.registerTypeHandler(new JTSARHandler());
+//TODO 		osb.registerTypeHandler(new JTSARHandler());
 	}
 
 	@After

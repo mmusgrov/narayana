@@ -31,6 +31,6 @@ public class GenericHandler implements ARHandler {
     }
 
     @Override
-    public void createRelatedMBeans(Collection<NamedOSEntryBeanMXBean> beans, NamedOSEntryBeanMXBean bean) {
+    public void createRelatedMBeans(TypeRepository typeHandlers, Collection<NamedOSEntryBeanMXBean> beans, NamedOSEntryBeanMXBean bean) {
     }
 }

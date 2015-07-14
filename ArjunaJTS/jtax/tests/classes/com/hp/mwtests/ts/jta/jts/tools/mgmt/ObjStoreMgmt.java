@@ -10,6 +10,7 @@ import com.arjuna.ats.arjuna.state.InputObjectState;
 import com.arjuna.ats.arjuna.tools.osb.mbean.ObjStoreBrowserMXBean;
 import com.arjuna.ats.internal.arjuna.tools.osb.mbeans.NamedOSEntryBeanMXBean;
 import com.arjuna.common.internal.util.propertyservice.BeanPopulator;
+import com.hp.mwtests.ts.jta.jts.tools.mgmt.tests.jts.NewTypeTest;
 
 import javax.management.ListenerNotFoundException;
 import javax.management.Notification;
@@ -39,7 +40,7 @@ public class ObjStoreMgmt implements ObjStoreBrowserMXBean, NotificationListener
 
     @Override
     public void viewSubordinateAtomicActions(boolean enable) {
-        ; //TODO
+        //TODO
     }
 
     @Override
@@ -92,7 +93,7 @@ public class ObjStoreMgmt implements ObjStoreBrowserMXBean, NotificationListener
 
                         Collection<NamedOSEntryBeanMXBean> participants = new ArrayList<>();
 
-                        th.createRelatedMBeans(participants, bean);
+                        th.createRelatedMBeans(handlers, participants, bean);
 
                         for (NamedOSEntryBeanMXBean pbean : participants)
                             registerMBean(removedUids, getUid(pbean), pbean);
@@ -100,7 +101,7 @@ public class ObjStoreMgmt implements ObjStoreBrowserMXBean, NotificationListener
                 } catch (ObjectStoreException e) {
                     e.printStackTrace();
                 }
-            };
+            }
         }
 
         // anything left in registeredUids needs unregistering
@@ -187,5 +188,17 @@ public class ObjStoreMgmt implements ObjStoreBrowserMXBean, NotificationListener
         }
 
         return true;
+    }
+
+    public void registerTypeHandler(ARHandler handler) {
+        TypeRepository.registerTypeHandler(handler);
+    }
+
+    public void registerTypeHandler(String typeName, ARHandler handler) {
+        TypeRepository.registerTypeHandler(typeName, handler);
+    }
+
+    public void registerTypeHandler(ARPHandler handler) {
+        TypeRepository.registerTypeHandler(handler);
     }
 }

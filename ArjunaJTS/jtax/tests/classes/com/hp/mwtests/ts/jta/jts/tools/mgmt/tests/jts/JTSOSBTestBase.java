@@ -101,11 +101,10 @@ public class JTSOSBTestBase extends TestBase {
 		osb.viewSubordinateAtomicActions(true);
 		osb.setExposeAllRecordsAsMBeans(true);
 
-		TypeRepository.registerTypeHandler(new ServerTransactionHandler(AssumedCompleteHeuristicServerTransaction.typeName()));
-		TypeRepository.registerTypeHandler(new ServerTransactionHandler(AssumedCompleteServerTransaction.typeName()));
-		TypeRepository.registerTypeHandler(new ServerTransactionHandler(ServerTransaction.typeName()));
-		TypeRepository.registerTypeHandler(new BAHandlerImpl(ArjunaTransactionImple.typeName()));
-
+		osb.registerTypeHandler(new ServerTransactionHandler(AssumedCompleteHeuristicServerTransaction.typeName()));
+		osb.registerTypeHandler(new ServerTransactionHandler(AssumedCompleteServerTransaction.typeName()));
+		osb.registerTypeHandler(new ServerTransactionHandler(ServerTransaction.typeName()));
+		osb.registerTypeHandler(new BAHandlerImpl(ArjunaTransactionImple.typeName()));
 	}
 
 	protected void assertBeanWasCreated(ArjunaTransactionImple txn) throws MalformedObjectNameException {

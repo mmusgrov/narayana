@@ -5,6 +5,7 @@ import com.arjuna.ats.arjuna.common.Uid;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
 import java.io.File;
+import java.util.Hashtable;
 
 public class ObjStoreMBeanON {
     public static final String OSB_INST_KEY = "itype";
@@ -45,11 +46,15 @@ public class ObjStoreMBeanON {
         if (!isObjStoreBeanType(objectName))
             throw new MalformedObjectNameException(objectName);
 
-        String type = null;
-        String uid = null;
-        String pUid = null;
+        ObjectName on = new ObjectName(objectName);
 
-        for (String pair : objectName.split(",")) {
+        Hashtable<String, String> propertyList = on.getKeyPropertyList();
+
+        String type = propertyList.get(OSB_INST_KEY);
+        String uid = propertyList.get(OSB_UID_KEY);
+        String pUid = propertyList.get(OSB_PARTICIPANT_KEY);
+
+/*        for (String pair : objectName.split(",")) {
             String[] kv = pair.split("=");
 
             if (kv.length != 2)
@@ -61,7 +66,7 @@ public class ObjStoreMBeanON {
                 uid = kv[1];
             else if (OSB_PARTICIPANT_KEY.equals(kv[0]))
                 pUid = kv[1];
-        }
+        }*/
 
         if (type == null || uid == null)
             throw new MalformedObjectNameException("Object name is missing an instant type or uid");

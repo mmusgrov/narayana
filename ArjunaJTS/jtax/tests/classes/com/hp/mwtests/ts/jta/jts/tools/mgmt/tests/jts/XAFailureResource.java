@@ -38,11 +38,6 @@ import java.util.Set;
  * @author Mike Musgrove
  */
 
-/**
- * @deprecated as of 5.0.5.Final In a subsequent release we will change packages names in order to 
- * provide a better separation between public and internal classes.
- */
-@Deprecated // in order to provide a better separation between public and internal classes.
 public class XAFailureResource implements Synchronization, XAResource, Serializable
 {
     private static final Map<String, XAException> xaCodeMap = new HashMap<String, XAException>();
@@ -73,7 +68,7 @@ public class XAFailureResource implements Synchronization, XAResource, Serializa
 
         if (spec == null)
             throw new IllegalArgumentException("Invalid XA resource failure injection specification");
-        
+
         setFailureMode(spec.getMode(), spec.getModeArg());
         setFailureType(spec.getType());
         setRecoveryAttempts(spec.getRecoveryArg());
@@ -210,13 +205,13 @@ public class XAFailureResource implements Synchronization, XAResource, Serializa
 
     public void rollback(Xid xid) throws XAException
     {
-       if (_xaFailureType.equals(XAFailureType.XARES_ROLLBACK))
+        if (_xaFailureType.equals(XAFailureType.XARES_ROLLBACK))
             applySpec("xa rollback");
 
         _isPrepared = false;
         _xids.remove(xid);
     }
-    
+
     public void end(Xid xid, int i) throws XAException
     {
         if (_xaFailureType.equals(XAFailureType.XARES_END))
@@ -245,7 +240,7 @@ public class XAFailureResource implements Synchronization, XAResource, Serializa
     public int prepare(Xid xid) throws XAException
     {
         _isPrepared = true;
-        
+
         if (_xaFailureType.equals(XAFailureType.XARES_PREPARE))
             applySpec("xa prepare");
 
@@ -270,7 +265,7 @@ public class XAFailureResource implements Synchronization, XAResource, Serializa
     public boolean setTransactionTimeout(int txTimeout) throws XAException
     {
         this.txTimeout = txTimeout;
-        
+
         return true;    // set was successfull
     }
 
@@ -278,13 +273,15 @@ public class XAFailureResource implements Synchronization, XAResource, Serializa
     {
         _xids.add(xid);
 
-       if (_xaFailureType.equals(XAFailureType.XARES_START))
+        if (_xaFailureType.equals(XAFailureType.XARES_START))
             applySpec("xa start");
     }
 
-    public String getEISProductName() { return "Test XAResouce";}
-    
-    public String getEISProductVersion() { return "v666.0";}
+    public String getProductName() { return "Test XAResouce";}
+
+    public String getProductVersion() { return "v666.0";}
+
+    public String getJndiName() { return "Test XAResouce jndi name";}
 
     public static XAException getXAExceptionType(String type) {
         return xaCodeMap.get(type);

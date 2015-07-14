@@ -42,7 +42,7 @@ public class NewTypeTest extends JTSOSBTestBase {
 
     @Test
     public void testInstrumentNewType() {
-        TypeRepository.registerTypeHandler(RecoveringSubordinateServerTransaction.typeName(),
+        osb.registerTypeHandler(RecoveringSubordinateServerTransaction.typeName(),
                 new RecoveringSubordinateServerTransactionHandler());
 
         generatedHeuristicHazard(new RecoveringSubordinateServerTransaction(new Uid()));

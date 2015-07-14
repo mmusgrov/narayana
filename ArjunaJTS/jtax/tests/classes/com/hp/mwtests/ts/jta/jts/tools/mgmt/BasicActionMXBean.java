@@ -122,17 +122,23 @@ public class BasicActionMXBean implements NamedOSEntryBeanMXBean {
         return res;
     }
 
-    private void createBeans(Collection<NamedOSEntryBeanMXBean> participants, RecordList list, ParticipantStatus listType) {
+    private void createBeans(TypeRepository typeHandlers, Collection<NamedOSEntryBeanMXBean> participants, RecordList list, ParticipantStatus listType) {
         for (AbstractRecord rec = list.peekFront(); rec != null; rec = list.peekNext(rec)) {
-            participants.add(new LogRecordBean(this, rec, listType));
+            ARPHandler handler = typeHandlers.lookupPType(rec.type());
+            LogRecordBean pBean = handler.createParticipantBean(this, rec, listType);
+
+            if (pBean == null)
+                pBean = new LogRecordBean(this, rec, listType);
+
+            participants.add(pBean);
         }
     }
 
-    public void getParticipants(Collection<NamedOSEntryBeanMXBean> participants, ParticipantStatus participantStatus) {
+    public void getParticipants(TypeRepository typeHandlers, Collection<NamedOSEntryBeanMXBean> participants, ParticipantStatus participantStatus) {
         if (participantStatus.equals(ParticipantStatus.PREPARED))
-            createBeans(participants, preparedList, ParticipantStatus.PREPARED);
+            createBeans(typeHandlers, participants, preparedList, ParticipantStatus.PREPARED);
         else if (participantStatus.equals(ParticipantStatus.HEURISTIC))
-            createBeans(participants, heuristicList, ParticipantStatus.HEURISTIC);
+            createBeans(typeHandlers, participants, heuristicList, ParticipantStatus.HEURISTIC);
     }
 
     public Pair<Integer, AbstractRecord> getHeuristicRecord(Uid uid) {
@@ -178,7 +184,7 @@ public class BasicActionMXBean implements NamedOSEntryBeanMXBean {
         heuristicList.remove(item.getVal());
     }
 
-    static class Pair<K, V> {
+    static private class Pair<K, V> {
         K key;
         V val;
 

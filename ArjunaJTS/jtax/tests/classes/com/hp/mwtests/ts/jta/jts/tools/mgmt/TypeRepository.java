@@ -12,6 +12,8 @@ import java.util.Set;
 
 public class TypeRepository {
     static Map<String, ARHandler> handlers = new HashMap<> ();
+    static Map<String, ARPHandler> phandlers = new HashMap<> ();
+
     private RecoveryStore store;
 
     public TypeRepository(RecoveryStore store) {
@@ -25,13 +27,33 @@ public class TypeRepository {
         }
     }
 
+    // TODO why are these static
+    public static void registerTypeHandler(ARHandler handler) {
+        handlers.put(ObjStoreMBeanON.canonicalType(handler.getType()), handler);
+    }
+
     public static void registerTypeHandler(String typeName, ARHandler handler) {
         handlers.put(ObjStoreMBeanON.canonicalType(typeName), handler);
     }
 
+    public static void registerTypeHandler(ARPHandler handler) {
+        phandlers.put(ObjStoreMBeanON.canonicalType(handler.getType()), handler);
+    }
+
     public ARHandler lookupType(String typeName) {
+        typeName = ObjStoreMBeanON.canonicalType(typeName);
+
         if (handlers.containsKey(typeName))
             return handlers.get(typeName);
+
+        return null;
+    }
+
+    public ARPHandler lookupPType(String typeName) {
+        typeName = ObjStoreMBeanON.canonicalType(typeName);
+
+        if (phandlers.containsKey(typeName))
+            return phandlers.get(typeName);
 
         return null;
     }
@@ -82,5 +104,6 @@ public class TypeRepository {
 
     public void clear() {
         handlers.clear();
+        phandlers.clear();
     }
 }
