@@ -40,14 +40,17 @@ import java.util.concurrent.TimeUnit;
 
 import javax.transaction.InvalidTransactionException;
 import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 
 import com.arjuna.ats.arjuna.AtomicAction;
 import com.arjuna.ats.arjuna.coordinator.TxControl;
+import com.arjuna.ats.arjuna.recovery.ResumableService;
 import com.arjuna.ats.jta.common.jtaPropertyManager;
 import com.arjuna.ats.jta.logging.jtaLogger;
 
-public class BaseTransaction
+public class BaseTransaction implements ResumableService
 {
+	public static final int SUSPENDED = 1;
 
 	public void begin() throws javax.transaction.NotSupportedException,
 			javax.transaction.SystemException
@@ -55,6 +58,10 @@ public class BaseTransaction
 		if (jtaLogger.logger.isTraceEnabled()) {
             jtaLogger.logger.trace("BaseTransaction.begin");
         }
+
+		if (_suspended) {
+			throw new SystemException(SUSPENDED);
+		}
 
 		/*
 		 * We can supported subtransactions, so should have the option to let
@@ -267,6 +274,23 @@ public class BaseTransaction
 	}
 
 
+	@Override
+	public void resumeService() {
+		_suspended = false;
+	}
+
+	@Override
+	public ResumableService suspendService() {
+		_suspended = true;
+		return this;
+	}
+
+	@Override
+	public boolean isSuspended() {
+		// TODO this creates a new map - add a new method to TransactionImple instead
+		return _suspended && TransactionImple.getTransactions().size() == 0;
+	}
+
 	public Future<Void> commitAsync() {
 		final TransactionImple theTransaction = TransactionImple
 				.getTransaction();
@@ -310,4 +334,5 @@ public class BaseTransaction
 
 	private static final ThreadPoolExecutor tpe = new ThreadPoolExecutor(1, _asyncCommitPoolSize, 10, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(3));
 
+	private static boolean _suspended;
 }

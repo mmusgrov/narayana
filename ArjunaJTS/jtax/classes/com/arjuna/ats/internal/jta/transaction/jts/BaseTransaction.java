@@ -32,7 +32,9 @@
 package com.arjuna.ats.internal.jta.transaction.jts;
 
 import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
 
+import com.arjuna.ats.arjuna.recovery.ResumableService;
 import org.omg.CORBA.TRANSACTION_UNAVAILABLE;
 import org.omg.CosTransactions.Control;
 import org.omg.CosTransactions.Coordinator;
@@ -50,7 +52,7 @@ import com.arjuna.ats.jts.OTSManager;
  * @since JTS 2.1.
  */
 
-public class BaseTransaction
+public class BaseTransaction implements ResumableService
 {
 
 	public void begin () throws javax.transaction.NotSupportedException,
@@ -59,6 +61,10 @@ public class BaseTransaction
 		if (jtaxLogger.logger.isTraceEnabled()) {
             jtaxLogger.logger.trace("BaseTransaction.begin");
         }
+
+		if (_suspended) {
+			throw new SystemException(com.arjuna.ats.internal.jta.transaction.arjunacore.BaseTransaction.SUSPENDED);
+		}
 
 		/*
 		 * We can supported subtransactions, so should have the option to let
@@ -302,6 +308,26 @@ public class BaseTransaction
 		}
 	}
 
+	@Override
+	public void resumeService() {
+		_suspended = false;
+	}
+
+	@Override
+	public ResumableService suspendService() {
+		 _suspended = true;
+
+		return this;
+	}
+
+	@Override
+	public boolean isSuspended() {
+		// TODO this creates a new map - add a new method to TransactionImple instead
+		return _suspended && TransactionImple.getTransactions().size() == 0;
+	}
+
 	private static boolean _supportSubtransactions = jtaPropertyManager.getJTAEnvironmentBean()
             .isSupportSubtransactions();
+
+	private static boolean _suspended;
 }

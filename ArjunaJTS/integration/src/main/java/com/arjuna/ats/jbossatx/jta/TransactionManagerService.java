@@ -30,6 +30,7 @@
  */
 package com.arjuna.ats.jbossatx.jta;
 
+import com.arjuna.ats.arjuna.recovery.ResumableService;
 import org.jboss.tm.*;
 
 import com.arjuna.ats.arjuna.coordinator.TransactionReaper;
@@ -153,5 +154,20 @@ public class TransactionManagerService implements TransactionManagerServiceMBean
     public void unregisterXAExceptionFormatter(Class c)
     {
         // Ignore
+    }
+
+    @Override
+    public ResumableService suspendService() {
+        javax.transaction.TransactionManager tm = getTransactionManager();
+
+        if (tm instanceof ResumableService) {
+            ResumableService rs = ((ResumableService) tm);
+
+            rs.suspendService();
+
+            return rs;
+        }
+
+        return null;
     }
 }

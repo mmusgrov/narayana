@@ -220,8 +220,9 @@ public class RecoveryManagerService implements XAResourceRecoveryRegistry, Resum
     }
 
     @Override
-    public void suspendService() {
+    public ResumableService suspendService() {
         suspended = true;
+        return this;
     }
 
     @Override

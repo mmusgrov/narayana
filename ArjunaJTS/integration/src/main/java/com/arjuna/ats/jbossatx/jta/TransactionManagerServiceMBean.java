@@ -31,6 +31,7 @@
 
 package com.arjuna.ats.jbossatx.jta;
 
+import com.arjuna.ats.arjuna.recovery.ResumableService;
 import org.jboss.tm.JBossXATerminator;
 import org.jboss.tm.XAExceptionFormatter;
 
@@ -86,5 +87,7 @@ public interface TransactionManagerServiceMBean
      * As we do not support exception formatters just display a warning for the moment.
      */
     public void unregisterXAExceptionFormatter(Class c);
+
+    ResumableService suspendService();
 }
 

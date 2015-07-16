@@ -30,6 +30,7 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.Status;
 
+import com.arjuna.ats.arjuna.recovery.ResumableService;
 import org.jboss.tm.listener.TransactionTypeNotSupported;
 import org.jboss.tm.TransactionLocal;
 import org.jboss.tm.TransactionLocalDelegate;
@@ -51,7 +52,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * Delegate for JBoss TransactionManager/TransactionLocalDelegate.
  * @author kevin
  */
-public abstract class BaseTransactionManagerDelegate implements TransactionManager, TransactionLocalDelegate, TransactionTimeoutConfiguration, TransactionListenerRegistry
+public abstract class BaseTransactionManagerDelegate implements TransactionManager, TransactionLocalDelegate, TransactionTimeoutConfiguration, TransactionListenerRegistry, ResumableService
 {
     private static final String LISTENER_MAP_KEY = "__TX_LISTENERS";
 
@@ -60,6 +61,8 @@ public abstract class BaseTransactionManagerDelegate implements TransactionManag
      */
     private final TransactionManager transactionManager ;
 
+    private final ResumableService resumableService;
+
     /**
      * Construct the delegate using the specified transaction manager.
      * @param transactionManager The delegate transaction manager.
@@ -67,6 +70,23 @@ public abstract class BaseTransactionManagerDelegate implements TransactionManag
     protected BaseTransactionManagerDelegate(final TransactionManager transactionManager)
     {
         this.transactionManager = transactionManager ;
+
+        this.resumableService = (transactionManager instanceof ResumableService) ? (ResumableService) transactionManager : new ResumableService() {
+            @Override
+            public void resumeService() {
+
+            }
+
+            @Override
+            public ResumableService suspendService() {
+                 return this;
+            }
+
+            @Override
+            public boolean isSuspended() {
+                return false;
+            }
+        };
     }
 
     /**
@@ -465,5 +485,20 @@ public abstract class BaseTransactionManagerDelegate implements TransactionManag
                 }
             }
         }
+    }
+
+    @Override
+    public void resumeService() {
+         resumableService.resumeService();
+    }
+
+    @Override
+    public ResumableService suspendService() {
+         return resumableService.suspendService();
+    }
+
+    @Override
+    public boolean isSuspended() {
+        return resumableService.isSuspended();
     }
 }
