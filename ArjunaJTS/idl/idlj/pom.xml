@@ -27,6 +27,7 @@
 
   <build>
     <plugins>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
@@ -39,6 +40,7 @@
         </execution>
       </executions>
       </plugin>
+
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
         <version>1.7</version>
@@ -56,7 +58,10 @@
                   <arg value="-i"/>
                   <arg value="${project.build.directory}/../../src/main/idl"/>
                   <arg value="-td"/>
-                  <arg value="${project.build.directory}/generated-sources/idl"/>
+                  <!-- TODO figure out why the compiler does not pick up these sources
+                  <arg value="${project.build.directory}/generated-test-sources/idl"/>
+                  -->
+                  <arg value="${project.build.directory}/../src/test/java"/>
                   <arg value="-pkgPrefix"/>
                   <arg value="CosTransactions"/>
                   <arg value="org.omg"/>
@@ -77,10 +82,6 @@
                   <arg value="${project.build.directory}/../../src/main/idl/omg/CosTransactions.idl"/>
                   <classpath>
                     <pathelement location="${env.JAVA_HOME}/lib/tools.jar"/>
-                    <!--
-                    <pathelement location="${env.JAVA_HOME}/lib/ibmorbtools.jar"/>
-                    <pathelement location="${env.JAVA_HOME}/jre/lib/ibmorb.jar"/>
-                    -->
                   </classpath>
                 </java>
 
@@ -88,7 +89,10 @@
                   <arg value="-i"/>
                   <arg value="${project.build.directory}/../../src/main/idl"/>
                   <arg value="-td"/>
-                  <arg value="${project.build.directory}/generated-sources/idl"/>
+                  <!--  TODO figure out why the compiler does not pick up these sources
+                  <arg value="${project.build.directory}/generated-test-sources/idl"/>
+                  -->
+                  <arg value="${project.build.directory}/../src/test/java"/>
                   <arg value="-pkgPrefix"/>
                   <arg value="CosTransactions"/>
                   <arg value="org.omg"/>
@@ -116,7 +120,10 @@
                   <arg value="-i"/>
                   <arg value="${project.build.directory}/../../src/main/idl"/>
                   <arg value="-td"/>
-                  <arg value="${project.build.directory}/generated-sources/idl"/>
+                  <!-- TODO figure out why the compiler does not pick up these sources
+                  <arg value="${project.build.directory}/generated-test-sources/idl"/>
+                  -->
+                  <arg value="${project.build.directory}/../src/test/java"/>
                   <arg value="-pkgPrefix"/>
                   <arg value="CosTransactions"/>
                   <arg value="org.omg"/>
@@ -154,7 +161,10 @@
                   <arg value="-i"/>
                   <arg value="${project.build.directory}/../../src/test/idl"/>
                   <arg value="-td"/>
+                  <!-- TODO figure out why the compiler does not pick up these sources
                   <arg value="${project.build.directory}/generated-test-sources/idl"/>
+                  -->
+                  <arg value="${project.build.directory}/../src/test/java"/>
                   <arg value="-pkgPrefix"/>
                   <arg value="TestModule"/>
                   <arg value="com.hp.mwtests.ts.jts"/>
@@ -181,7 +191,10 @@
                   <arg value="-i"/>
                   <arg value="${project.build.directory}/../../src/test/idl"/>
                   <arg value="-td"/>
+                  <!-- TODO figure out why the compiler does not pick up these sources
                   <arg value="${project.build.directory}/generated-test-sources/idl"/>
+                  -->
+                  <arg value="${project.build.directory}/../src/test/java"/>
                   <arg value="-pkgPrefix"/>
                   <arg value="TestModule"/>
                   <arg value="com.hp.mwtests.ts.jts"/>
@@ -209,7 +222,10 @@
                   <arg value="-i"/>
                   <arg value="${project.build.directory}/../../src/test/idl"/>
                   <arg value="-td"/>
+                  <!-- TODO figure out why the compiler does not pick up these sources
                   <arg value="${project.build.directory}/generated-test-sources/idl"/>
+                  -->
+                  <arg value="${project.build.directory}/../src/test/java"/>
                   <arg value="-pkgPrefix"/>
                   <arg value="TestModule"/>
                   <arg value="com.hp.mwtests.ts.jts"/>
@@ -237,6 +253,131 @@
           </execution>
         </executions>
       </plugin>
+
+
+      <!-- this one does not seem to work either
+           <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>build-helper-maven-plugin</artifactId>
+              <executions>
+                <execution>
+                  <phase>generate-test-sources</phase>
+                  <goals>
+                    <goal>add-source</goal>
+                  </goals>
+                  <configuration>
+                    <sources>
+                      <source>${project.build.directory}/generated-test-sources/idl</source>
+                    </sources>
+                  </configuration>
+                </execution>
+              </executions>
+            </plugin>-->
+
+<!--      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>idlj-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-sources</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <compiler>idlj</compiler>
+              <sourceDirectory>${project.parent.basedir}/src/main/idl</sourceDirectory>
+              <outputDirectory>${project.build.directory}/generated-sources/idl</outputDirectory>
+              <sources>
+                <source>
+                  <includes>
+                    <include>omg/CosTransactions.idl</include>
+                    <include>arjuna/ArjunaOTS.idl</include>
+                    <include>omg/XA.idl</include>
+                  </includes>
+                  <compatible>false</compatible>
+                  <packagePrefixes>
+                    <packagePrefix>
+                      <type>CosTransactions</type>
+                      <prefix>org.omg</prefix>
+                    </packagePrefix>
+                    <packagePrefix>
+                      <type>XA</type>
+                      <prefix>org.omg</prefix>
+                    </packagePrefix>
+                    <packagePrefix>
+                      <type>ArjunaOTS</type>
+                      <prefix>com.arjuna</prefix>
+                    </packagePrefix>
+                  </packagePrefixes>
+                  <additionalArguments>
+                    <additionalArgument>-i</additionalArgument>
+                    <additionalArgument>${project.parent.basedir}/src/main/idl/omg</additionalArgument>
+                    <additionalArgument>-i</additionalArgument>
+                    <additionalArgument>${env.JAVA_HOME}/lib</additionalArgument>
+
+                    <additionalArgument>-d</additionalArgument>
+                    <additionalArgument>ORB_CURRENT_SUPPORT=1</additionalArgument>
+                    <additionalArgument>-fallTIE</additionalArgument>
+                  </additionalArguments>
+                </source>
+              </sources>
+              <includeDirs>
+              </includeDirs>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>generate-test-sources</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>generate-test</goal>
+            </goals>
+            <configuration>
+              <compiler>idlj</compiler>
+              <sourceDirectory>${project.parent.basedir}/src/test/idl/</sourceDirectory>
+              <outputDirectory>${project.build.directory}/generated-test-sources/idl</outputDirectory>
+              <sources>
+                <source>
+                  <includes>
+                    <include>TestModule.idl</include>
+                    <include>test.idl</include>
+                    <include>orbtests.idl</include>
+                  </includes>
+                  <compatible>false</compatible>
+                  <packagePrefixes>
+                    <packagePrefix>
+                      <type>TestModule</type>
+                      <prefix>com.hp.mwtests.ts.jts</prefix>
+                    </packagePrefix>
+                    <packagePrefix>
+                      <type>CosTransactions</type>
+                      <prefix>org.omg</prefix>
+                    </packagePrefix>
+                    <packagePrefix>
+                      <type>orbtests</type>
+                      <prefix>com.hp.mwtests.orbportability.orbspecific</prefix>
+                    </packagePrefix>
+                  </packagePrefixes>
+                  <additionalArguments>
+                    <additionalArgument>-i</additionalArgument>
+                    <additionalArgument>${project.parent.basedir}/src/main/idl/omg</additionalArgument>
+                    <additionalArgument>-i</additionalArgument>
+                    <additionalArgument>${env.JAVA_HOME}/lib</additionalArgument>
+
+                    <additionalArgument>-d</additionalArgument>
+                    <additionalArgument>ORB_CURRENT_SUPPORT=1</additionalArgument>
+                    <additionalArgument>-fallTIE</additionalArgument>
+                  </additionalArguments>
+                </source>
+              </sources>
+              <includeDirs>
+              </includeDirs>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>-->
+
     </plugins>
   </build>
 </project>
