@@ -59,9 +59,9 @@
                   <arg value="${project.build.directory}/../../src/main/idl"/>
                   <arg value="-td"/>
                   <!-- TODO figure out why the compiler does not pick up these sources
-                  <arg value="${project.build.directory}/generated-test-sources/idl"/>
-                  -->
                   <arg value="${project.build.directory}/../src/test/java"/>
+                  -->
+                  <arg value="${project.build.directory}/generated-sources/idl"/>
                   <arg value="-pkgPrefix"/>
                   <arg value="CosTransactions"/>
                   <arg value="org.omg"/>
@@ -90,9 +90,9 @@
                   <arg value="${project.build.directory}/../../src/main/idl"/>
                   <arg value="-td"/>
                   <!--  TODO figure out why the compiler does not pick up these sources
-                  <arg value="${project.build.directory}/generated-test-sources/idl"/>
-                  -->
                   <arg value="${project.build.directory}/../src/test/java"/>
+                  -->
+                  <arg value="${project.build.directory}/generated-sources/idl"/>
                   <arg value="-pkgPrefix"/>
                   <arg value="CosTransactions"/>
                   <arg value="org.omg"/>
@@ -121,9 +121,9 @@
                   <arg value="${project.build.directory}/../../src/main/idl"/>
                   <arg value="-td"/>
                   <!-- TODO figure out why the compiler does not pick up these sources
-                  <arg value="${project.build.directory}/generated-test-sources/idl"/>
-                  -->
                   <arg value="${project.build.directory}/../src/test/java"/>
+                  -->
+                  <arg value="${project.build.directory}/generated-sources/idl"/>
                   <arg value="-pkgPrefix"/>
                   <arg value="CosTransactions"/>
                   <arg value="org.omg"/>
@@ -162,9 +162,9 @@
                   <arg value="${project.build.directory}/../../src/test/idl"/>
                   <arg value="-td"/>
                   <!-- TODO figure out why the compiler does not pick up these sources
-                  <arg value="${project.build.directory}/generated-test-sources/idl"/>
-                  -->
                   <arg value="${project.build.directory}/../src/test/java"/>
+                  -->
+                  <arg value="${project.build.directory}/generated-test-sources/idl"/>
                   <arg value="-pkgPrefix"/>
                   <arg value="TestModule"/>
                   <arg value="com.hp.mwtests.ts.jts"/>
@@ -192,9 +192,9 @@
                   <arg value="${project.build.directory}/../../src/test/idl"/>
                   <arg value="-td"/>
                   <!-- TODO figure out why the compiler does not pick up these sources
-                  <arg value="${project.build.directory}/generated-test-sources/idl"/>
-                  -->
                   <arg value="${project.build.directory}/../src/test/java"/>
+                  -->
+                  <arg value="${project.build.directory}/generated-test-sources/idl"/>
                   <arg value="-pkgPrefix"/>
                   <arg value="TestModule"/>
                   <arg value="com.hp.mwtests.ts.jts"/>
@@ -223,9 +223,9 @@
                   <arg value="${project.build.directory}/../../src/test/idl"/>
                   <arg value="-td"/>
                   <!-- TODO figure out why the compiler does not pick up these sources
-                  <arg value="${project.build.directory}/generated-test-sources/idl"/>
-                  -->
                   <arg value="${project.build.directory}/../src/test/java"/>
+                  -->
+                  <arg value="${project.build.directory}/generated-test-sources/idl"/>
                   <arg value="-pkgPrefix"/>
                   <arg value="TestModule"/>
                   <arg value="com.hp.mwtests.ts.jts"/>
@@ -254,6 +254,41 @@
         </executions>
       </plugin>
 
+
+      <plugin> 
+        <groupId>org.codehaus.mojo</groupId> 
+        <artifactId>build-helper-maven-plugin</artifactId> 
+          <executions> 
+            <execution> 
+              <id>add-source</id> 
+              <phase>generate-sources</phase> 
+              <goals> 
+                <goal>add-source</goal> 
+              </goals> 
+              <configuration> 
+                <sources> 
+                  <source> 
+                    ${project.build.directory}/generated-sources/idl
+                  </source> 
+                </sources> 
+              </configuration> 
+            </execution> 
+            <execution> 
+              <id>add-test-source</id> 
+              <phase>generate-test-sources</phase> 
+              <goals> 
+                <goal>add-test-source</goal> 
+              </goals> 
+              <configuration> 
+                <sources> 
+                  <source> 
+                    ${project.build.directory}/generated-test-sources/idl
+                  </source> 
+                </sources> 
+              </configuration> 
+            </execution> 
+          </executions> 
+      </plugin>
 
       <!-- this one does not seem to work either
            <plugin>
