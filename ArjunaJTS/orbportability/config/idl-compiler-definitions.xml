@@ -90,7 +90,7 @@
 	    <param name="classpath" required="true" delimiter=";" classpath="true"/>
 	</in-parameters>
 
-	<idl-executable>java -cp ${classpath} com.ibm.idl.toJavaPortable.Compile</idl-executable>
+	<idl-executable>idlj</idl-executable>
 
 	<out-parameters>
 	    <param>-td</param>

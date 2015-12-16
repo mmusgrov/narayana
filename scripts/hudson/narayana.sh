@@ -525,7 +525,7 @@ function add_qa_xargs {
   XARGS=
   IFS=' ' read -ra ADDR <<< "$1"
   for j in "${ADDR[@]}"; do
-    XARGS="${XARGS}COMMAND_LINE_$i=$j"
+    XARGS="${XARGS}\nCOMMAND_LINE_$i=$j"
     let i=i+1
   done
 
@@ -573,6 +573,12 @@ function qa_tests_once {
     openjdkjar="dist/narayana-full-${NARAYANA_CURRENT_VERSION}/lib/ext/openjdk-orb.jar"
     EXTRA_QA_SYSTEM_PROPERTIES="-Xbootclasspath/p:$openjdkjar $EXTRA_QA_SYSTEM_PROPERTIES"
     orbtype="idlj"
+  fi
+
+  if [ $orbtype = "ibmorb" ]; then
+    EXTRA_QA_SYSTEM_PROPERTIES="-Dcom.sun.CORBA.ORBDynamicStubFactoryFactoryClass=com.sun.corba.se.impl.presentation.rmi.StubFactoryFactoryStaticImpl -DOrbPortabilityEnvironmentBean.orbImpleClassName=com.arjuna.orbportability.internal.orbspecific.ibmorb.orb.implementations.ibmorb_7_1 -DOrbPortabilityEnvironmentBean.poaImpleClassName=com.arjuna.orbportability.internal.orbspecific.ibmorb.oa.implementations.ibmorb_7_1 -DOrbPortabilityEnvironmentBean.orbDataClassName=com.arjuna.orbportability.internal.orbspecific.versions.ibmorb_7_1 $EXTRA_QA_SYSTEM_PROPERTIES"
+  elif [ $orbtype = "idlj" ] || [ $orbtype = "openjdk" ]; then
+    EXTRA_QA_SYSTEM_PROPERTIES="-DOrbPortabilityEnvironmentBean.orbImpleClassName=com.arjuna.orbportability.internal.orbspecific.javaidl.orb.implementations.javaidl_1_4 -DOrbPortabilityEnvironmentBean.poaImpleClassName=com.arjuna.orbportability.internal.orbspecific.javaidl.oa.implementations.javaidl_1_4 -DOrbPortabilityEnvironmentBean.orbDataClassName=com.arjuna.orbportability.internal.orbspecific.versions.javaidl_1_4 $EXTRA_QA_SYSTEM_PROPERTIES"
   fi
 
   if [ $QA_TRACE ]; then

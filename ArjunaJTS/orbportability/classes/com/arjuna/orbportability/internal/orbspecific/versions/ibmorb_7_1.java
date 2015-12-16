@@ -38,6 +38,7 @@ public class ibmorb_7_1 implements ORBData
     public String getORBdata()
     {
         // the lib/orb.idl refers to V2.3 - not sure about the ibmorb jars though
-        return "<orb-data><name>" + ORBType.ibmorb+"</name><version><major>7</major><minor>2</minor></version><corba-version><major>2</major><minor>3</minor></corba-version></orb-data>";
+        //return "<orb-data><name>" + ORBType.ibmorb+"</name><version><major>7</major><minor>2</minor></version><corba-version><major>2</major><minor>3</minor></corba-version></orb-data>";
+        return "<orb-data><name>" + ORBType.javaidl +"</name><version><major>1</major><minor>3</minor></version><corba-version><major>2</major><minor>3</minor></corba-version></orb-data>";
     }
 }

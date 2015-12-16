@@ -36,10 +36,9 @@ public class ibmorb_7_1 extends ORBBase
 {
     public ibmorb_7_1()
     {
-//    System.setProperty("org.omg.CORBA.ORBClass", "com.sun.corba.se.impl.orb.ORBImpl");
-//    System.setProperty("org.omg.CORBA.ORBSingletonClass", "com.sun.corba.se.impl.orb.ORBSingleton");
-
-      System.setProperty("org.omg.CORBA.ORBClass", "com.ibm.CORBA.iiop.ORB");
-      System.setProperty("org.omg.CORBA.ORBSingletonClass", "com.ibm.rmi.corba.ORBSingleton");
+        System.setProperty("org.omg.CORBA.ORBClass", "com.sun.corba.se.internal.Interceptors.PIORB");
+        System.setProperty("org.omg.CORBA.ORBSingletonClass", "com.sun.corba.se.internal.corba.ORBSingleton");
+//      System.setProperty("org.omg.CORBA.ORBClass", "com.ibm.CORBA.iiop.ORB");
+//      System.setProperty("org.omg.CORBA.ORBSingletonClass", "com.ibm.rmi.corba.ORBSingleton");
     }
 }

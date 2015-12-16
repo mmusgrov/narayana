@@ -566,7 +566,6 @@
                 </goals>
                 <configuration>
                   <testExcludes>
-                    <exclude>**/GenericRecoveryCreatorUnitTest.java</exclude>
                     <exclude>**/jacorb/**</exclude>
                     <exclude>**/javaidl/**</exclude>
                     <exclude>**/JacORB*/**</exclude>
@@ -594,6 +593,7 @@
                     <exclude>**/RecoveredTransactionUnitTest.java</exclude>
 
                     <!-- not sure why these are excluded -->
+<!--
                     <exclude>**/common/**</exclude>
                     <exclude>**/exceptions/**</exclude>
                     <exclude>**/orbspecific/resources/**</exclude>
@@ -605,7 +605,7 @@
                     <exclude>**/GridTest.java</exclude>
                     <exclude>**/remote/**</exclude>
                     <exclude>**/DefaultTimeout.java</exclude>
-
+-->
                     <!-- disable JacORB and JdkORB specific tests -->
                     <exclude>**/jacorb/**</exclude>
                     <exclude>**/javaidl/**</exclude>
