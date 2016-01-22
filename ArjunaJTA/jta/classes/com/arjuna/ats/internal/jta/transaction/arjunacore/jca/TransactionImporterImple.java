@@ -89,9 +89,6 @@ public class TransactionImporterImple implements TransactionImporter
 		if (xid == null)
 			throw new IllegalArgumentException();
 
-		/*
-		 * Check to see if we haven't already imported this thing.
-		 */
 		return addImportedTransaction(xid, timeout);
 	}
 
@@ -115,6 +112,14 @@ public class TransactionImporterImple implements TransactionImporter
 		if (recovered.baseXid() == null)
 		    throw new IllegalArgumentException();
 
+		return addImportedTransaction(recovered);
+	}
+
+	private TransactionImple addImportedTransaction(TransactionImple importedTransaction) throws XAException {
+		SubordinateXidImple importedXid = new SubordinateXidImple(importedTransaction.baseXid());
+		TransactionImpleHolder holder = new TransactionImpleHolder();
+		TransactionImpleHolder prevHolder = _transactions.putIfAbsent(importedXid, holder);
+
 		/*
 		 * Is the transaction already in the list? This may be the case because
 		 * we scan the object store periodically and may get Uids to recover for
@@ -122,48 +127,33 @@ public class TransactionImporterImple implements TransactionImporter
 		 * recovery. In which case, we need to ignore them.
 		 */
 
-		return addImportedTransaction(recovered);
-	}
-
-	private TransactionImple addImportedTransaction(TransactionImple importedTransaction)
-	{
-		SubordinateXidImple importedXid = new SubordinateXidImple(importedTransaction.baseXid());
-		TransactionImpleHolder holder = new TransactionImpleHolder();
-		TransactionImpleHolder prevHolder = _transactions.putIfAbsent(importedXid, holder);
-
 		if (prevHolder == null) {
-			holder.setImported(importedTransaction);
 			importedTransaction.recordTransaction();
+			// this imported transaction has not been seen before
+			holder.setImported(importedTransaction);
 
 			return importedTransaction;
 		} else {
-			try {
-				return prevHolder.getImported();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				throw new RuntimeException(e);  // TODO
-			}
+			return prevHolder.getImported();
 		}
 	}
 
-	private TransactionImple addImportedTransaction(Xid xid, int timeout)
-	{
+	private TransactionImple addImportedTransaction(Xid xid, int timeout) throws XAException {
 		SubordinateXidImple importedXid = new SubordinateXidImple(convertXid(xid));
 		TransactionImpleHolder holder = new TransactionImpleHolder();
 		TransactionImpleHolder prevHolder = _transactions.putIfAbsent(importedXid, holder);
 
+		/*
+		 * Check to see if we haven't already imported this thing.
+		 */
 		if (prevHolder == null) {
 			// this imported transaction has not been seen before
 			TransactionImple importedTransaction = new TransactionImple(timeout, xid);
 			holder.setImported(importedTransaction);
+
 			return importedTransaction;
 		} else {
-			try {
-				return prevHolder.getImported();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				throw new RuntimeException(e);  // TODO
-			}
+			return prevHolder.getImported();
 		}
 	}
 
@@ -192,12 +182,10 @@ public class TransactionImporterImple implements TransactionImporter
 		if (holder == null)
 			return null;
 
-		SubordinateTransaction tx = null;
-		try {
-			tx = holder.getImported();
-		} catch (InterruptedException e) {
-			throw new RuntimeException(e);  // TODO
-		}
+		SubordinateTransaction tx = holder.getImported();
+
+		if (tx == null)
+			return null;
 
 		// https://issues.jboss.org/browse/JBTM-927
 		try {
@@ -243,11 +231,13 @@ public class TransactionImporterImple implements TransactionImporter
 		while (iterator.hasNext()) {
 			TransactionImpleHolder next = iterator.next();
 			TransactionImple imported = null;
+
 			try {
 				imported = next.getImported();
-			} catch (InterruptedException e) {
-				throw new RuntimeException(e);
+			} catch (XAException e) {
+				// ignore since getImported will have logged a warning
 			}
+
 			if (imported != null && imported.getParentNodeName().equals(parentNodeName)) {
 				toReturn.add(imported.baseXid());
 			}

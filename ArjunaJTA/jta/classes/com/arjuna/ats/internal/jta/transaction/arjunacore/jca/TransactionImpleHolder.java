@@ -22,21 +22,47 @@
 package com.arjuna.ats.internal.jta.transaction.arjunacore.jca;
 
 import com.arjuna.ats.internal.jta.transaction.arjunacore.subordinate.jca.TransactionImple;
+import com.arjuna.ats.jta.logging.jtaLogger;
 
-import java.util.concurrent.CountDownLatch;
+import javax.transaction.xa.XAException;
 
+/**
+ * This TransactionImple holder is a performance optimisation to avoid having to synchronize on the imported
+ * transaction map in {@link com.arjuna.ats.internal.jta.transaction.arjunacore.jca.TransactionImporterImple}
+ */
 public class TransactionImpleHolder {
-    private TransactionImple imported;
-    private CountDownLatch latch = new CountDownLatch(1);
+    private volatile TransactionImple imported;
 
-    public TransactionImple getImported() throws InterruptedException {
-        latch.await();
+    public TransactionImple getImported() throws XAException {
+        TransactionImple imported = this.imported;
 
-        return imported;
+        if (imported != null) {
+            return imported;
+        }
+
+        synchronized (this) {
+            for (;;) {
+                imported = this.imported;
+
+                if (imported != null) {
+                    return imported;
+                }
+
+                try {
+                    wait();
+                } catch (InterruptedException e) {
+                    jtaLogger.i18NLogger.warn_transaction_import_interrupted(e);
+                    Thread.currentThread().interrupt();
+                    throw new XAException(XAException.XA_RETRY);
+                }
+            }
+        }
     }
 
     public void setImported(TransactionImple imported) {
-        this.imported = imported;
-        latch.countDown();
+        synchronized (this) {
+            this.imported = imported;
+            notifyAll();
+        }
     }
 }

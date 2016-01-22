@@ -470,6 +470,10 @@ public interface jtaI18NLogger {
     @LogMessage(level = WARN)
     public void warn_could_not_access_object_store(@Cause() Exception e);
 
+    @Message(id = 16116, value = "Could not set imported transaction", format = MESSAGE_FORMAT)
+    @LogMessage(level = WARN)
+    void warn_transaction_import_interrupted(@Cause() InterruptedException e);
+
     /*
         Allocate new messages directly above this notice.
           - id: use the next id number in sequence. Don't reuse ids.
