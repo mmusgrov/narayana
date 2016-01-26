@@ -83,7 +83,7 @@ public class TransactionImporterImple implements TransactionImporter
 	 *             thrown if there are any errors.
 	 */
 
- 	public SubordinateTransaction importTransaction(Xid xid, int timeout)
+	public SubordinateTransaction importTransaction(Xid xid, int timeout)
 			throws XAException
 	{
 		if (xid == null)
@@ -111,7 +111,7 @@ public class TransactionImporterImple implements TransactionImporter
 
 		if (recovered.baseXid() == null)
 		    throw new IllegalArgumentException();
-
+		
 		return addImportedTransaction(recovered);
 	}
 
@@ -128,9 +128,12 @@ public class TransactionImporterImple implements TransactionImporter
 		 */
 
 		if (prevHolder == null) {
-			importedTransaction.recordTransaction();
-			// this imported transaction has not been seen before
-			holder.setImported(importedTransaction);
+			try {
+				importedTransaction.recordTransaction();
+			} finally {
+				// this imported transaction has not been seen before
+				holder.setImported(importedTransaction);
+			}
 
 			return importedTransaction;
 		} else {
@@ -139,6 +142,11 @@ public class TransactionImporterImple implements TransactionImporter
 	}
 
 	private TransactionImple addImportedTransaction(Xid xid, int timeout) throws XAException {
+		/*
+		 * the imported transaction map is keyed by xid and the xid used is the one created inside
+		 * the TransactionImple ctor (it encodes the node name of this transaction manager) and is
+		 * the one returned by TransactionImple#baseXid().
+		 */
 		SubordinateXidImple importedXid = new SubordinateXidImple(convertXid(xid));
 		TransactionImpleHolder holder = new TransactionImpleHolder();
 		TransactionImpleHolder prevHolder = _transactions.putIfAbsent(importedXid, holder);
@@ -148,8 +156,13 @@ public class TransactionImporterImple implements TransactionImporter
 		 */
 		if (prevHolder == null) {
 			// this imported transaction has not been seen before
-			TransactionImple importedTransaction = new TransactionImple(timeout, xid);
-			holder.setImported(importedTransaction);
+			TransactionImple importedTransaction = null;
+
+			try {
+				importedTransaction = new TransactionImple(timeout, xid);
+			} finally {
+				holder.setImported(importedTransaction);
+			}
 
 			return importedTransaction;
 		} else {
@@ -183,9 +196,6 @@ public class TransactionImporterImple implements TransactionImporter
 			return null;
 
 		SubordinateTransaction tx = holder.getImported();
-
-		if (tx == null)
-			return null;
 
 		// https://issues.jboss.org/browse/JBTM-927
 		try {

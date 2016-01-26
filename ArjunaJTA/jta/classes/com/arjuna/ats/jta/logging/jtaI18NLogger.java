@@ -474,6 +474,10 @@ public interface jtaI18NLogger {
     @LogMessage(level = WARN)
     void warn_transaction_import_interrupted(@Cause() InterruptedException e);
 
+	@Message(id = 16117, value = "Timed out waiting imported transaction", format = MESSAGE_FORMAT)
+	@LogMessage(level = WARN)
+	void warn_transaction_import_timedout();
+
     /*
         Allocate new messages directly above this notice.
           - id: use the next id number in sequence. Don't reuse ids.

@@ -38,6 +38,7 @@ import static org.junit.Assert.fail;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import com.arjuna.ats.arjuna.common.Uid;
@@ -49,6 +50,14 @@ import com.arjuna.ats.jta.xa.XidImple;
 import com.hp.mwtests.ts.jta.common.FailureXAResource;
 import com.hp.mwtests.ts.jta.common.FailureXAResource.FailLocation;
 import com.hp.mwtests.ts.jta.common.FailureXAResource.FailType;
+
+import java.util.ArrayList;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 public class XATerminatorUnitTest
 {
@@ -373,5 +382,68 @@ public class XATerminatorUnitTest
         catch (IllegalArgumentException ex)
         {
         }
+    }
+
+    private AtomicInteger completionCount;
+
+    @Before
+    public void setup() {
+        completionCount = new AtomicInteger(0);
+    }
+
+    @Test
+    public void testConcurrentImport () throws Exception {
+        XidImple xid = new XidImple(new Uid());
+
+        final int TASK_COUNT = 400;
+        final int THREAD_COUNT = 200;
+        final CyclicBarrier gate = new CyclicBarrier(THREAD_COUNT + 1);
+
+        ArrayList<CompletableFuture<SubordinateTransaction>> futures = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
+
+        for (int i = 0; i < TASK_COUNT; i++)
+            futures.add(doAsync(gate, i < THREAD_COUNT, executor, xid));
+
+        gate.await();
+
+        SubordinateTransaction prevStx = null;
+
+        for (CompletableFuture<SubordinateTransaction> future : futures) {
+            SubordinateTransaction stx = future.get();
+            if (stx == null) {
+                fail("transaction import returned null for future ");
+            } else {
+                if (prevStx != null)
+                    assertEquals("transaction import for same xid returned a different instance", stx, prevStx);
+                else
+                    prevStx = stx;
+            }
+        }
+
+        assertEquals("some transaction import futures did not complete", completionCount.get(), TASK_COUNT);
+    }
+
+    /*
+     * import a transaction asynchronously to maximise the opportunity for concurrency errors in TransactionImporterImple
+     */
+    private CompletableFuture<SubordinateTransaction> doAsync(
+            final CyclicBarrier gate, final boolean wait, ExecutorService executor, final XidImple xid) {
+        return CompletableFuture.supplyAsync(new Supplier<SubordinateTransaction>() {
+            @Override
+            public SubordinateTransaction get() {
+                try {
+                    if (wait)
+                        gate.await();
+                    SubordinateTransaction stx = SubordinationManager.getTransactionImporter().importTransaction(xid);
+                    completionCount.incrementAndGet();
+
+                    return stx;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
+            }
+        }, executor);
     }
 }

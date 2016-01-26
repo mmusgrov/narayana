@@ -31,13 +31,26 @@ import javax.transaction.xa.XAException;
  * transaction map in {@link com.arjuna.ats.internal.jta.transaction.arjunacore.jca.TransactionImporterImple}
  */
 public class TransactionImpleHolder {
-    private volatile TransactionImple imported;
+    private volatile Object imported;
 
+    private TransactionImple checkValue(Object imported) throws XAException {
+        if (imported instanceof XAException)
+            throw (XAException) imported;
+
+        return (TransactionImple) imported;
+    }
+
+    /**
+     * Wait for the current value of this holder to be updated.
+     *
+     * @return the non null value held in this holder object
+     * @throws XAException with the value XA_RETRY if the thread is interrupted
+     */
     public TransactionImple getImported() throws XAException {
-        TransactionImple imported = this.imported;
+        Object imported = this.imported;
 
         if (imported != null) {
-            return imported;
+            return checkValue(imported);
         }
 
         synchronized (this) {
@@ -45,7 +58,7 @@ public class TransactionImpleHolder {
                 imported = this.imported;
 
                 if (imported != null) {
-                    return imported;
+                    return checkValue(imported);
                 }
 
                 try {
@@ -53,6 +66,7 @@ public class TransactionImpleHolder {
                 } catch (InterruptedException e) {
                     jtaLogger.i18NLogger.warn_transaction_import_interrupted(e);
                     Thread.currentThread().interrupt();
+                    // throw XA_RETRY since once the interrupting condition has been cleared a retry may be possible
                     throw new XAException(XAException.XA_RETRY);
                 }
             }
@@ -61,7 +75,11 @@ public class TransactionImpleHolder {
 
     public void setImported(TransactionImple imported) {
         synchronized (this) {
-            this.imported = imported;
+            if (imported == null)
+                this.imported = new XAException(XAException.XA_RETRY);
+            else
+                this.imported = imported;
+
             notifyAll();
         }
     }
