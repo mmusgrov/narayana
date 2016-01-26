@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.transaction.SystemException;
 import javax.transaction.xa.XAException;
@@ -89,7 +90,12 @@ public class TransactionImporterImple implements TransactionImporter
 		if (xid == null)
 			throw new IllegalArgumentException();
 
-		return addImportedTransaction(xid, timeout);
+		/*
+		 * the imported transaction map is keyed by xid and the xid used is the one created inside
+		 * the TransactionImple ctor (it encodes the node name of this transaction manager) and is
+		 * the one returned by TransactionImple#baseXid() so pass in the converted value.
+		 */
+		return addImportedTransaction(null, convertXid(xid), xid, timeout);
 	}
 
 	/**
@@ -111,63 +117,48 @@ public class TransactionImporterImple implements TransactionImporter
 
 		if (recovered.baseXid() == null)
 		    throw new IllegalArgumentException();
-		
-		return addImportedTransaction(recovered);
-	}
-
-	private TransactionImple addImportedTransaction(TransactionImple importedTransaction) throws XAException {
-		SubordinateXidImple importedXid = new SubordinateXidImple(importedTransaction.baseXid());
-		TransactionImpleHolder holder = new TransactionImpleHolder();
-		TransactionImpleHolder prevHolder = _transactions.putIfAbsent(importedXid, holder);
 
 		/*
-		 * Is the transaction already in the list? This may be the case because
+		 * Is the transaction already in the map? This may be the case because
 		 * we scan the object store periodically and may get Uids to recover for
 		 * transactions that are progressing normally, i.e., do not need
-		 * recovery. In which case, we need to ignore them.
+		 * recovery. In which case, we need to ignore them:
+		 *
+		 * ie calling addImportedTransaction with a non null value for recovered will
+		 * call recovered.recordTransaction()
 		 */
 
-		if (prevHolder == null) {
-			try {
-				importedTransaction.recordTransaction();
-			} finally {
-				// this imported transaction has not been seen before
-				holder.setImported(importedTransaction);
-			}
-
-			return importedTransaction;
-		} else {
-			return prevHolder.getImported();
-		}
+		return addImportedTransaction(recovered, recovered.baseXid(), null, 0);
 	}
 
-	private TransactionImple addImportedTransaction(Xid xid, int timeout) throws XAException {
-		/*
-		 * the imported transaction map is keyed by xid and the xid used is the one created inside
-		 * the TransactionImple ctor (it encodes the node name of this transaction manager) and is
-		 * the one returned by TransactionImple#baseXid().
-		 */
-		SubordinateXidImple importedXid = new SubordinateXidImple(convertXid(xid));
-		TransactionImpleHolder holder = new TransactionImpleHolder();
-		TransactionImpleHolder prevHolder = _transactions.putIfAbsent(importedXid, holder);
+	private TransactionImple addImportedTransaction(TransactionImple importedTransaction, Xid mapKey, Xid xid, int timeout) {
+		SubordinateXidImple importedXid = new SubordinateXidImple(mapKey);
+		AtomicReference<TransactionImple> holder = new AtomicReference<>(); // this class is an already-existing volatile field holder, might as well use it
+		AtomicReference<TransactionImple> existing;
 
-		/*
-		 * Check to see if we haven't already imported this thing.
-		 */
-		if (prevHolder == null) {
-			// this imported transaction has not been seen before
-			TransactionImple importedTransaction = null;
-
-			try {
-				importedTransaction = new TransactionImple(timeout, xid);
-			} finally {
-				holder.setImported(importedTransaction);
-			}
-
-			return importedTransaction;
-		} else {
-			return prevHolder.getImported();
+		if ((existing = _transactions.putIfAbsent(importedXid, holder)) != null) {
+			holder = existing;
 		}
+
+		TransactionImple txn = holder.get();
+
+		if (txn == null) {
+			synchronized (holder) {
+				txn = holder.get();
+				if (txn == null) {
+					if (importedTransaction != null) {
+						importedTransaction.recordTransaction();
+						txn = importedTransaction;
+					} else {
+						txn = new TransactionImple(timeout, xid);
+					}
+
+					holder.set(txn);
+				}
+			}
+		}
+
+		return txn;
 	}
 
 	/**
@@ -190,12 +181,18 @@ public class TransactionImporterImple implements TransactionImporter
 		if (xid == null)
 			throw new IllegalArgumentException();
 
-		TransactionImpleHolder holder = _transactions.get(new SubordinateXidImple(xid));
+		AtomicReference<TransactionImple> holder = _transactions.get(new SubordinateXidImple(xid));
 
 		if (holder == null)
 			return null;
 
-		SubordinateTransaction tx = holder.getImported();
+		SubordinateTransaction tx = holder.get();
+
+		if (tx == null) {
+			// another thread must be in the process of importing this transaction
+			// TODO the solution does not provide a mechanism to wait for the other thread to update the holder
+			return null;
+		}
 
 		// https://issues.jboss.org/browse/JBTM-927
 		try {
@@ -236,16 +233,15 @@ public class TransactionImporterImple implements TransactionImporter
 	}
 	
 	public Set<Xid> getInflightXids(String parentNodeName) {
-		Iterator<TransactionImpleHolder> iterator = _transactions.values().iterator();
+		Iterator<AtomicReference<TransactionImple>> iterator = _transactions.values().iterator();
 		Set<Xid> toReturn = new HashSet<Xid>();
 		while (iterator.hasNext()) {
-			TransactionImpleHolder next = iterator.next();
-			TransactionImple imported = null;
+			AtomicReference<TransactionImple> next = iterator.next();
+			TransactionImple imported = next.get();
 
-			try {
-				imported = next.getImported();
-			} catch (XAException e) {
-				// ignore since getImported will have logged a warning
+			if (imported == null) {
+				// another thread must be in the process of importing this transaction
+				// TODO the solution does not provide a mechanism to wait for the other thread to update the holder
 			}
 
 			if (imported != null && imported.getParentNodeName().equals(parentNodeName)) {
@@ -265,6 +261,7 @@ public class TransactionImporterImple implements TransactionImporter
 		}
 	}
 
-	private static ConcurrentHashMap<SubordinateXidImple, TransactionImpleHolder> _transactions = new ConcurrentHashMap<SubordinateXidImple, TransactionImpleHolder>();
+	private static ConcurrentHashMap<SubordinateXidImple, AtomicReference<TransactionImple>> _transactions =
+			new ConcurrentHashMap<>();
 }
 
