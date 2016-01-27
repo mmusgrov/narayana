@@ -103,7 +103,7 @@ public class RemoteServerImpl implements RemoteServer {
 	}
 
 	@Override
-	public Xid[] recoverFor(String localServerName) throws XAException {
+	public Xid[] recoverFor(String localServerName) throws XAException, InterruptedException {
 		ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
 			Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
