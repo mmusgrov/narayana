@@ -131,33 +131,38 @@ public class TransactionImporterImple implements TransactionImporter
 		return addImportedTransaction(recovered, recovered.baseXid(), null, 0);
 	}
 
-	private TransactionImple addImportedTransaction(TransactionImple importedTransaction, Xid mapKey, Xid xid, int timeout) {
+	private TransactionImple addImportedTransaction(TransactionImple importedTransaction, Xid mapKey, Xid xid, int timeout) throws XAException {
 		SubordinateXidImple importedXid = new SubordinateXidImple(mapKey);
 		AtomicReference<TransactionImple> holder = new AtomicReference<>(); // this class is an already-existing volatile field holder, might as well use it
 		AtomicReference<TransactionImple> existing;
+		TransactionImple txn = null;
 
 		if ((existing = _transactions.putIfAbsent(importedXid, holder)) != null) {
 			holder = existing;
 		}
 
-		TransactionImple txn = holder.get();
+		synchronized (holder) {
+			if (existing == null) {
+				if (importedTransaction != null) {
+					importedTransaction.recordTransaction();
+					txn = importedTransaction;
+				} else {
+					txn = new TransactionImple(timeout, xid);
+				}
 
-		if (txn == null) {
-			synchronized (holder) {
-				txn = holder.get();
-				if (txn == null) {
-					if (importedTransaction != null) {
-						importedTransaction.recordTransaction();
-						txn = importedTransaction;
-					} else {
-						txn = new TransactionImple(timeout, xid);
+				holder.set(txn);
+				holder.notify();
+			} else {
+				while (txn == null) {
+					try {
+						holder.wait();
+					} catch (InterruptedException e) {
+						throw new XAException(XAException.XA_RETRY);
 					}
-
-					holder.set(txn);
+					txn = holder.get();
 				}
 			}
 		}
-
 		return txn;
 	}
 
@@ -187,11 +192,16 @@ public class TransactionImporterImple implements TransactionImporter
 			return null;
 
 		SubordinateTransaction tx = holder.get();
-
-		if (tx == null) {
-			// another thread must be in the process of importing this transaction
-			// TODO the solution does not provide a mechanism to wait for the other thread to update the holder
-			return null;
+		synchronized (holder) {
+			while (tx == null) {
+				// another thread must be in the process of importing this transaction
+				try {
+					holder.wait();
+				} catch (InterruptedException e) {
+					throw new XAException(XAException.XA_RETRY);
+				}
+				tx = holder.get();
+			}
 		}
 
 		// https://issues.jboss.org/browse/JBTM-927
@@ -232,16 +242,18 @@ public class TransactionImporterImple implements TransactionImporter
 		_transactions.remove(new SubordinateXidImple(xid));
 	}
 	
-	public Set<Xid> getInflightXids(String parentNodeName) {
+	public Set<Xid> getInflightXids(String parentNodeName) throws InterruptedException {
 		Iterator<AtomicReference<TransactionImple>> iterator = _transactions.values().iterator();
 		Set<Xid> toReturn = new HashSet<Xid>();
 		while (iterator.hasNext()) {
 			AtomicReference<TransactionImple> next = iterator.next();
-			TransactionImple imported = next.get();
-
-			if (imported == null) {
-				// another thread must be in the process of importing this transaction
-				// TODO the solution does not provide a mechanism to wait for the other thread to update the holder
+			TransactionImple imported = null;
+			synchronized (next) {
+				while (imported == null) {
+					// another thread must be in the process of importing this transaction
+					next.wait();
+					imported = next.get();
+				}
 			}
 
 			if (imported != null && imported.getParentNodeName().equals(parentNodeName)) {

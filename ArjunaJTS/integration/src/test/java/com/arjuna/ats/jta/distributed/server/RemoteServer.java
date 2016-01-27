@@ -37,6 +37,6 @@ public interface RemoteServer {
 
 	public void beforeCompletion(Xid xid) throws SystemException;
 
-	public Xid[] recoverFor(String localServerName) throws XAException;
+	public Xid[] recoverFor(String localServerName) throws XAException, InterruptedException;
 
 }
