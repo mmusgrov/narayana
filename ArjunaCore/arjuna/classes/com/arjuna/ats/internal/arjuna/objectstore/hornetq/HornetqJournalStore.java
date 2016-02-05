@@ -37,6 +37,7 @@ import org.apache.activemq.artemis.core.io.SequentialFileFactory;
 import org.apache.activemq.artemis.core.journal.TransactionFailureCallback;
 import org.apache.activemq.artemis.core.io.aio.AIOSequentialFileFactory;
 import org.apache.activemq.artemis.core.journal.impl.JournalImpl;
+import org.apache.activemq.artemis.jdbc.store.journal.JDBCJournalImpl;
 import org.apache.activemq.artemis.core.io.nio.NIOSequentialFileFactory;
 
 import com.arjuna.ats.arjuna.common.Uid;
@@ -130,7 +131,12 @@ public class HornetqJournalStore
                     envBean.isLogRates());
         }
 
-        journal = new JournalImpl(envBean.getFileSize(), envBean.getMinFiles(), envBean.getPoolSize(), envBean.getCompactMinFiles(),
+        String jdbcUrl = envBean.getJdbcUrl();
+
+        if (jdbcUrl != null)
+            journal = new JDBCJournalImpl(jdbcUrl, "TxLog");
+        else
+            journal = new JournalImpl(envBean.getFileSize(), envBean.getMinFiles(), envBean.getPoolSize(), envBean.getCompactMinFiles(),
                         envBean.getCompactPercentage(), sequentialFileFactory, envBean.getFilePrefix(),
                         envBean.getFileExtension(), envBean.getMaxIO());
     }

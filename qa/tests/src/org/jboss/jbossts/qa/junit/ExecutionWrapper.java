@@ -111,6 +111,8 @@ public class ExecutionWrapper
 
             BeanPopulator.getDefaultInstance(HornetqJournalEnvironmentBean.class)
                 .setStoreDir(hornetqStoreDir.getCanonicalPath());
+            BeanPopulator.getDefaultInstance(HornetqJournalEnvironmentBean.class)
+                .setJdbcUrl("jdbc:h2:~/data");
             BeanPopulator.getDefaultInstance(ObjectStoreEnvironmentBean.class)
                     .setObjectStoreType("com.arjuna.ats.internal.arjuna.objectstore.hornetq.HornetqObjectStoreAdaptor");
 /*

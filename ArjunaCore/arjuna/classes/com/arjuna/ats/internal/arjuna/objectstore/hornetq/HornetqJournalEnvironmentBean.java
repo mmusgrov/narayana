@@ -66,6 +66,15 @@ public class HornetqJournalEnvironmentBean implements HornetqJournalEnvironmentB
 
     private volatile boolean asyncIO = true;
 
+    public String getJdbcUrl() {
+        return jdbcUrl;
+    }
+
+    public void setJdbcUrl(String jdbcUrl) {
+        this.jdbcUrl = jdbcUrl;
+    }
+
+    private volatile String jdbcUrl;
 
     /**
      * Returns the desired size in bytes of each log file.

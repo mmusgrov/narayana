@@ -41,6 +41,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import com.arjuna.ats.internal.arjuna.common.UidHelper;
+import com.arjuna.ats.internal.arjuna.objectstore.hornetq.HornetqJournalEnvironmentBean;
+import com.arjuna.ats.internal.arjuna.objectstore.hornetq.HornetqObjectStoreAdaptor;
+import com.arjuna.common.internal.util.propertyservice.BeanPopulator;
 import org.junit.Test;
 
 import com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean;
@@ -534,6 +537,96 @@ public class ObjectStoreTest
         } catch (final Exception ex) {
             fail("testTwoVolatileStores: allTypes should have passed");
         }
+    }
+
+    @Test
+    public void testJournalStore () throws Exception
+    {
+        String storeClassName =  com.arjuna.ats.internal.arjuna.objectstore.hornetq.HornetqObjectStoreAdaptor.class.getName();
+        String storeDir = "target/HornetqStore";
+
+        File hornetqStoreDir = new File(storeDir);
+
+        BeanPopulator.getDefaultInstance(HornetqJournalEnvironmentBean.class)
+                .setStoreDir(hornetqStoreDir.getCanonicalPath());
+        BeanPopulator.getDefaultInstance(HornetqJournalEnvironmentBean.class)
+                .setJdbcUrl("jdbc:h2:~/data");  //"jdbc:derby:target/data;create=true"
+        BeanPopulator.getDefaultInstance(ObjectStoreEnvironmentBean.class).setObjectStoreType(storeClassName);
+        BeanPopulator.getNamedInstance(ObjectStoreEnvironmentBean.class, "communicationStore").setObjectStoreDir(storeDir);
+
+        BeanPopulator.getNamedInstance(ObjectStoreEnvironmentBean.class, "default").setObjectStoreType(storeClassName);
+
+        HornetqObjectStoreAdaptor as = new HornetqObjectStoreAdaptor();
+
+        as.start();
+
+        final OutputObjectState buff = new OutputObjectState();
+        final String tn = "/StateManager/junit";
+
+        for (int i = 0; i < 100; i++)
+        {
+            Uid u = new Uid();
+
+            InputObjectState ios = new InputObjectState();
+
+            try
+            {
+                as.allObjUids("", ios);
+            }
+            catch (final Exception ex)
+            {
+            }
+
+            try
+            {
+                assertTrue(as.read_uncommitted(u, tn) == null);
+            }
+            catch (final Exception ex)
+            {
+            }
+
+            try
+            {
+                as.commit_state(u, tn);
+            }
+            catch (final Exception ex)
+            {
+            }
+
+            as.write_committed(u, tn, buff);
+
+            assertTrue(as.currentState(u, tn) == StateStatus.OS_COMMITTED);
+
+            as.read_committed(u, tn);
+
+            try
+            {
+                assertTrue(as.remove_uncommitted(u, tn));
+            }
+            catch (final Exception ex)
+            {
+            }
+
+            as.remove_committed(u, tn);
+
+            try
+            {
+                assertTrue(as.hide_state(u, tn));
+            }
+            catch (final Exception ex)
+            {
+            }
+
+            try
+            {
+                assertTrue(as.reveal_state(u, tn));
+            }
+            catch (final Exception ex)
+            {
+            }
+        }
+
+        as.stop();
     }
 
     private void addType(ObjectStore store, String type) throws Exception {
