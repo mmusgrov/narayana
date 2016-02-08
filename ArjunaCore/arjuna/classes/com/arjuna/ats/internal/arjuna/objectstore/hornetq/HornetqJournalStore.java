@@ -133,12 +133,16 @@ public class HornetqJournalStore
 
         String jdbcUrl = envBean.getJdbcUrl();
 
-        if (jdbcUrl != null)
-            journal = new JDBCJournalImpl(jdbcUrl, "TxLog");
-        else
+        if (jdbcUrl != null) {
+            String driverClassName = envBean.getJdbcDriverClassName();
+            if (driverClassName == null)
+                throw new RuntimeException("JDBC backed store requires a driver class name");
+            journal = new JDBCJournalImpl(jdbcUrl, "TxLog", envBean.getJdbcDriverClassName());
+        } else {
             journal = new JournalImpl(envBean.getFileSize(), envBean.getMinFiles(), envBean.getPoolSize(), envBean.getCompactMinFiles(),
-                        envBean.getCompactPercentage(), sequentialFileFactory, envBean.getFilePrefix(),
-                        envBean.getFileExtension(), envBean.getMaxIO());
+                    envBean.getCompactPercentage(), sequentialFileFactory, envBean.getFilePrefix(),
+                    envBean.getFileExtension(), envBean.getMaxIO());
+        }
     }
 
 

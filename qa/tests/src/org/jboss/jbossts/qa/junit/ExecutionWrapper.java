@@ -112,7 +112,10 @@ public class ExecutionWrapper
             BeanPopulator.getDefaultInstance(HornetqJournalEnvironmentBean.class)
                 .setStoreDir(hornetqStoreDir.getCanonicalPath());
             BeanPopulator.getDefaultInstance(HornetqJournalEnvironmentBean.class)
-                .setJdbcUrl("jdbc:h2:~/data");
+                .setJdbcUrl("jdbc:h2:~/artemis-journal-data");
+            BeanPopulator.getDefaultInstance(HornetqJournalEnvironmentBean.class)
+                    .setJdbcDriverClassName("org.h2.Driver");
+
             BeanPopulator.getDefaultInstance(ObjectStoreEnvironmentBean.class)
                     .setObjectStoreType("com.arjuna.ats.internal.arjuna.objectstore.hornetq.HornetqObjectStoreAdaptor");
 /*

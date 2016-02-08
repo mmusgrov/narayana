@@ -65,6 +65,7 @@ public class HornetqJournalEnvironmentBean implements HornetqJournalEnvironmentB
     private volatile boolean logRates = false;
 
     private volatile boolean asyncIO = true;
+    private String jdbcDriverClassName;
 
     public String getJdbcUrl() {
         return jdbcUrl;
@@ -414,5 +415,13 @@ public class HornetqJournalEnvironmentBean implements HornetqJournalEnvironmentB
      */
     public void setAsyncIO(boolean asyncIO) {
         this.asyncIO = asyncIO;
+    }
+
+    public String getJdbcDriverClassName() {
+        return jdbcDriverClassName;
+    }
+
+    public void setJdbcDriverClassName(String jdbcDriverClassName) {
+        this.jdbcDriverClassName = jdbcDriverClassName;
     }
 }

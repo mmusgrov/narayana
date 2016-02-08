@@ -550,7 +550,10 @@ public class ObjectStoreTest
         BeanPopulator.getDefaultInstance(HornetqJournalEnvironmentBean.class)
                 .setStoreDir(hornetqStoreDir.getCanonicalPath());
         BeanPopulator.getDefaultInstance(HornetqJournalEnvironmentBean.class)
-                .setJdbcUrl("jdbc:h2:~/data");  //"jdbc:derby:target/data;create=true"
+                .setJdbcUrl("jdbc:h2:~/artemis-journal-data"); //"jdbc:derby:target/data;create=true"
+        BeanPopulator.getDefaultInstance(HornetqJournalEnvironmentBean.class)
+                .setJdbcDriverClassName("org.h2.Driver");
+
         BeanPopulator.getDefaultInstance(ObjectStoreEnvironmentBean.class).setObjectStoreType(storeClassName);
         BeanPopulator.getNamedInstance(ObjectStoreEnvironmentBean.class, "communicationStore").setObjectStoreDir(storeDir);
 
