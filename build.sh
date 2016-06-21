@@ -46,7 +46,7 @@ MAVEN_HOME=""
 
 if [ -z "$MAVEN_OPTS" ]
 then
-	MAVEN_OPTS="$MAVEN_OPTS -Xmx512M -XX:MaxPermSize=256m"
+	MAVEN_OPTS="$MAVEN_OPTS -Xmx512M" # j9 TODO XX:MaxPermSize=256m is no longer required as of Java SE 8
 	export MAVEN_OPTS
 fi
 

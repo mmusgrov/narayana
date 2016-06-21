@@ -27,13 +27,15 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-import sun.misc.Resource;
-import sun.misc.URLClassPath;
+//import sun.misc.Resource;
+//import sun.misc.URLClassPath;
+import java.net.URLClassLoader;
 
 public class IsolatableServersClassLoader extends ClassLoader {
 
 	private Map<String, Class<?>> clazzMap = new HashMap<String, Class<?>>();
-	private URLClassPath ucp;
+	//private URLClassPath ucp;
+	private URLClassLoader ucp;
 	private String ignoredPackage;
 	private String includedPackage;
 	private String otherIgnoredPackage;
@@ -55,7 +57,7 @@ public class IsolatableServersClassLoader extends ClassLoader {
 				urls[i] = new URL("file:" + url + "/");
 			}
 		}
-		this.ucp = new URLClassPath(urls);
+		this.ucp = new URLClassLoader(urls); //URLClassPath(urls);
 	}
 
 	@Override
@@ -80,8 +82,9 @@ public class IsolatableServersClassLoader extends ClassLoader {
 					|| (includedPackage != null && !name.startsWith(includedPackage))) {
 				clazz = getParent().loadClass(name);
 			} else {
-
-				String path = name.replace('.', '/').concat(".class");
+				clazzMap.put(name, ucp.loadClass(name));
+				/*
+				//String path = name.replace('.', '/').concat(".class");
 				Resource res = ucp.getResource(path, false);
 				if (res == null) {
 					throw new ClassNotFoundException(name);
@@ -93,6 +96,7 @@ public class IsolatableServersClassLoader extends ClassLoader {
 				} catch (IOException e) {
 					throw new ClassNotFoundException(name, e);
 				}
+				*/
 			}
 
 		}
