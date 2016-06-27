@@ -21,7 +21,9 @@
  */
 package com.arjuna.ats.jta.distributed.server;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -82,21 +84,31 @@ public class IsolatableServersClassLoader extends ClassLoader {
 					|| (includedPackage != null && !name.startsWith(includedPackage))) {
 				clazz = getParent().loadClass(name);
 			} else {
-				clazzMap.put(name, ucp.loadClass(name));
-				/*
-				//String path = name.replace('.', '/').concat(".class");
-				Resource res = ucp.getResource(path, false);
+				String path = name.replace('.', '/').concat(".class");
+				URL res = ucp.getResource(path);
 				if (res == null) {
 					throw new ClassNotFoundException(name);
 				}
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				InputStream is = null;
 				try {
-					byte[] classData = res.getBytes();
+					try {
+						is = res.openStream();
+						byte[] byteChunk = new byte[4096];
+						int n;
+
+						while ((n = is.read(byteChunk)) > 0) {
+							baos.write(byteChunk, 0, n);
+						}
+					} finally {
+						if (is != null) { is.close(); }
+					}
+					byte[] classData = baos.toByteArray();
 					clazz = defineClass(name, classData, 0, classData.length);
 					clazzMap.put(name, clazz);
 				} catch (IOException e) {
 					throw new ClassNotFoundException(name, e);
 				}
-				*/
 			}
 
 		}
