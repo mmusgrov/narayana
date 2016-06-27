@@ -250,8 +250,6 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
           <configuration>
-            <skipTests>true</skipTests>
-            <skip>true</skip>
             <argLine>${surefireArgLine}</argLine>
             <forkMode>pertest</forkMode>
             <workingDirectory>target/test-classes</workingDirectory>
@@ -479,8 +477,6 @@
 -->
     <version.org.sonatype.plugins.nexus-staging-maven-plugin>1.6.6</version.org.sonatype.plugins.nexus-staging-maven-plugin>
     <version.org.codehaus.plexus.plexus-archiver>3.0.3</version.org.codehaus.plexus.plexus-archiver>
-    <maven.compiler.source>1.9</maven.compiler.source>
-    <maven.compiler.target>1.9</maven.compiler.target>
   </properties>
   <modules>
     <module>tools</module>
