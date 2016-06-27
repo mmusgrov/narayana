@@ -127,7 +127,6 @@
                     <goal>test</goal>
                   </goals>
                   <configuration>
-                    <skipTests>false</skipTests>
                     <systemPropertyVariables
                       combine.children="append">
                       <OrbPortabilityEnvironmentBean.orbImpleClassName>com.arjuna.orbportability.internal.orbspecific.jacorb.orb.implementations.jacorb_2_0</OrbPortabilityEnvironmentBean.orbImpleClassName>
@@ -164,7 +163,6 @@
                     <goal>test</goal>
                   </goals>
                   <configuration>
-                    <skipTests>false</skipTests>
                     <systemPropertyVariables
                       combine.children="append">
                       <OrbPortabilityEnvironmentBean.orbImpleClassName>com.arjuna.orbportability.internal.orbspecific.javaidl.orb.implementations.javaidl_1_4</OrbPortabilityEnvironmentBean.orbImpleClassName>
@@ -201,7 +199,6 @@
                     <goal>test</goal>
                   </goals>
                   <configuration>
-                    <skipTests>false</skipTests>
                     <systemProperties combine.children="append" />
                     <systemPropertyVariables
                       combine.children="append">
