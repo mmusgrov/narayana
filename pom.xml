@@ -527,7 +527,6 @@
       </build>
     </profile>
 -->
-
       <profile>
         <id>j9</id>
         <activation>
@@ -540,7 +539,7 @@
               <artifactId>maven-surefire-plugin</artifactId>
               <executions>
                 <execution>
-                  <id>surefire-j9</id>
+                  <id>default-test</id>
                   <phase>test</phase>
                   <goals>
                     <goal>test</goal>
@@ -559,7 +558,6 @@
           <maven.compiler.target>1.9</maven.compiler.target>
         </properties>
       </profile>
-      
     <profile>
       <id>release</id>
       <build>
