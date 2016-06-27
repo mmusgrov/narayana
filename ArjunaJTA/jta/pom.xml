@@ -371,7 +371,6 @@
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
-                            <skip>false</skip>
                             <systemPropertyVariables combine.children="append">
                                 <!--
                                     Used in arquillian.xml

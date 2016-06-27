@@ -494,9 +494,7 @@
     <module>txbridge</module>
     <module>STM</module>
     <module>txframework</module>
-<!-- j9 TODO j9 javax.annotation.Priority is gone 
     <module>compensations</module>
--->
     <module>osgi</module>
     <module>narayana-full</module>
     <module>code-coverage</module>

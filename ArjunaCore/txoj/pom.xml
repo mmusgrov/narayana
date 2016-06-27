@@ -141,7 +141,6 @@
                   </goals>
                   <configuration combine.self="override">
                     <forkMode>always</forkMode>
-                    <skipTests>false</skipTests>
                     <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
                   </configuration>
                 </execution>
