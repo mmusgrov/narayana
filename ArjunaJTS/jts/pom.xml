@@ -80,6 +80,14 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>default-test</id>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </execution>
+        </executions>
         <configuration>
           <additionalClasspathElements>
             <additionalClasspathElement>${env.JAVA_HOME}/lib/tools.jar</additionalClasspathElement>

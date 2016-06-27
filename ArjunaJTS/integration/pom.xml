@@ -62,9 +62,6 @@
             <configuration>
               <argLine>-Xmx256m -XX:PermSize=256M -XX:MaxPermSize=256M -Djava.util.logging.config.file=logging.properties</argLine>
               <useManifestOnlyJar>false</useManifestOnlyJar>
-              <excludes>
-                <exclude>**/IsolatableServersClassLoader.java</exclude>
-              </excludes>
             </configuration>
           </execution>
         </executions>
