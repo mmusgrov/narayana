@@ -29,14 +29,11 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
-//import sun.misc.Resource;
-//import sun.misc.URLClassPath;
 import java.net.URLClassLoader;
 
 public class IsolatableServersClassLoader extends ClassLoader {
 
 	private Map<String, Class<?>> clazzMap = new HashMap<String, Class<?>>();
-	//private URLClassPath ucp;
 	private URLClassLoader ucp;
 	private String ignoredPackage;
 	private String includedPackage;
