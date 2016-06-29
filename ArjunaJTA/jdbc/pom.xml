@@ -202,10 +202,13 @@
                   </goals>
                   <configuration combine.self="override">
                     <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
-                    <forkMode>always</forkMode>
                     <!-- j9 TODO --> 
+                    <forkMode>once</forkMode>
                     <excludes>
                       <exclude>**/SimpleJdbcTest.java</exclude>
+                      <!-- j9 TODO due to forkMode once -->
+                      <exclude>**/JDBC2Test.java</exclude>
+                      <exclude>**/JDBC3Test.java</exclude>
                     </excludes>
                   </configuration>
                 </execution>

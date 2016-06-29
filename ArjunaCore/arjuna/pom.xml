@@ -170,6 +170,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
+              <version>3.0-SNAPSHOT</version>
               <executions>
                 <execution>
                   <id>default-test</id>
@@ -179,7 +180,10 @@
                   </goals>
                   <configuration combine.self="override">
                     <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
-                    <forkMode>always</forkMode>
+<useSystemClassLoader>false</useSystemClassLoader>
+<useManifestOnlyJar>true</useManifestOnlyJar>
+                    <forkMode>once</forkMode>
+<jvm>/usr/local/jdk-9/bin/java</jvm>
                     <!-- j9 TODO -->
                     <excludes>
                       <exclude>**/ObjectStoreTest.java</exclude>
@@ -189,6 +193,26 @@
                 </execution>
               </executions>
             </plugin>
+   <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-enforcer-plugin</artifactId>
+      <executions>
+        <execution>
+          <id>enforce-versions</id>
+          <goals>
+            <goal>enforce</goal>
+          </goals>
+          <configuration>
+            <rules>
+              <requireJavaVersion>
+                <version>1.9</version>
+              </requireJavaVersion>
+            </rules>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+
           </plugins>
         </build>
       </profile>
