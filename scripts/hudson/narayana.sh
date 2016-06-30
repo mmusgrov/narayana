@@ -143,6 +143,8 @@ function init_test_options {
     fi
 
     get_pull_xargs "$PULL_DESCRIPTION" $PROFILE # see if the PR description overrides any of the defaults 
+
+    JAVA_VERSION=$(java -version 2>&1 | grep "java version" | cut -d\  -f3 | tr -d '"')
 }
 
 function set_ulimit {
@@ -208,12 +210,16 @@ function build_narayana {
   [ $NARAYANA_TESTS = 1 ] && NARAYANA_ARGS= || NARAYANA_ARGS="-DskipTests"
   [ $CODE_COVERAGE = 1 ] && NARAYANA_ARGS="${NARAYANA_ARGS} -pl !code-coverage"
 
-  if [ $IBM_ORB = 1 ]; then
+  XPROF=
+  if [ $JAVA_VERSION="9-ea" ]; then
+    ORBARG="-Dibmorb-disabled -Djacorb-disabled -Didlj-disabled -Dopenjdk-disabled"
+    XPROF=",arq" # j9 TODO arquillian based tests fail unless the arq profile is active
+  elif [ $IBM_ORB = 1 ]; then
     ORBARG="-Dibmorb-enabled -Djacorb-disabled -Didlj-disabled -Dopenjdk-disabled"
     ${JAVA_HOME}/bin/java -version 2>&1 | grep IBM
     [ $? = 0 ] || fatal "You must use the IBM jdk to build with ibmorb"
   fi
-  ./build.sh -Prelease,community$OBJECT_STORE_PROFILE $ORBARG "$@" $NARAYANA_ARGS $IPV6_OPTS $CODE_COVERAGE_ARGS clean install
+  ./build.sh -Prelease,community${OBJECT_STORE_PROFILE}$XPROF $ORBARG "$@" $NARAYANA_ARGS $IPV6_OPTS $CODE_COVERAGE_ARGS clean install
   [ $? = 0 ] || fatal "narayana build failed"
 
   return 0
@@ -265,8 +271,12 @@ function build_as {
   git pull --rebase --ff-only upstream master
   [ $? = 0 ] || fatal "git rebase failed"
 
-  export MAVEN_OPTS="-XX:MaxPermSize=512m -XX:+UseConcMarkSweepGC $MAVEN_OPTS"
-  JAVA_OPTS="-Xms1303m -Xmx1303m -XX:MaxPermSize=512m $JAVA_OPTS" ./build.sh clean install -DskipTests -Dts.smoke=false -Dlicense.skipDownloadLicenses=true $IPV6_OPTS -Drelease=true
+  if [ $JAVA_VERSION="9-ea" ]; then
+    JAVA_OPTS="-Xms1303m -Xmx1303m $JAVA_OPTS" ./build.sh clean install -DskipTests -Dts.smoke=false -Dlicense.skipDownloadLicenses=true $IPV6_OPTS -Drelease=true
+  else
+    export MAVEN_OPTS="-XX:MaxPermSize=512m -XX:+UseConcMarkSweepGC $MAVEN_OPTS"
+    JAVA_OPTS="-Xms1303m -Xmx1303m -XX:MaxPermSize=512m $JAVA_OPTS" ./build.sh clean install -DskipTests -Dts.smoke=false -Dlicense.skipDownloadLicenses=true $IPV6_OPTS -Drelease=true
+  fi
   [ $? = 0 ] || fatal "AS build failed"
   
   #Enable remote debugger
@@ -313,7 +323,11 @@ function rts_as_tests {
 function jta_as_tests {
   echo "#-1. JTA AS Integration Test"
   cp ArjunaJTA/jta/src/test/resources/standalone-cmr.xml ${JBOSS_HOME}/standalone/configuration/
-  MAVEN_OPTS="-XX:MaxPermSize=512m -Xms1303m -Xmx1303m" ./build.sh -f ./ArjunaJTA/jta/pom.xml -Parq $CODE_COVERAGE_ARGS "$@" test
+  if [ $JAVA_VERSION="9-ea" ]; then
+    MAVEN_OPTS="-Xms1303m -Xmx1303m" ./build.sh -f ./ArjunaJTA/jta/pom.xml -Parq $CODE_COVERAGE_ARGS "$@" test
+  else
+    MAVEN_OPTS="-XX:MaxPermSize=512m -Xms1303m -Xmx1303m" ./build.sh -f ./ArjunaJTA/jta/pom.xml -Parq $CODE_COVERAGE_ARGS "$@" test
+  fi
   [ $? = 0 ] || fatal "JTA AS Integration Test failed"
   cd ${WORKSPACE}
 }
@@ -370,7 +384,11 @@ function blacktie {
 
   if [[ $# == 0 || $# > 0 && "$1" != "-DskipTests" ]]; then
     # START JBOSS
-    JBOSS_HOME=`pwd`/blacktie/wildfly-${WILDFLY_MASTER_VERSION} JAVA_OPTS="-Xmx256m -XX:MaxPermSize=256m $JAVA_OPTS" blacktie/wildfly-${WILDFLY_MASTER_VERSION}/bin/standalone.sh -c standalone-blacktie.xml -Djboss.bind.address=$JBOSSAS_IP_ADDR -Djboss.bind.address.unsecure=$JBOSSAS_IP_ADDR -Djboss.bind.address.management=$JBOSSAS_IP_ADDR&
+    if [ $JAVA_VERSION="9-ea" ]; then
+      JBOSS_HOME=`pwd`/blacktie/wildfly-${WILDFLY_MASTER_VERSION} JAVA_OPTS="-Xmx256m $JAVA_OPTS" blacktie/wildfly-${WILDFLY_MASTER_VERSION}/bin/standalone.sh -c standalone-blacktie.xml -Djboss.bind.address=$JBOSSAS_IP_ADDR -Djboss.bind.address.unsecure=$JBOSSAS_IP_ADDR -Djboss.bind.address.management=$JBOSSAS_IP_ADDR&
+    else
+      JBOSS_HOME=`pwd`/blacktie/wildfly-${WILDFLY_MASTER_VERSION} JAVA_OPTS="-Xmx256m -XX:MaxPermSize=256m $JAVA_OPTS" blacktie/wildfly-${WILDFLY_MASTER_VERSION}/bin/standalone.sh -c standalone-blacktie.xml -Djboss.bind.address=$JBOSSAS_IP_ADDR -Djboss.bind.address.unsecure=$JBOSSAS_IP_ADDR -Djboss.bind.address.management=$JBOSSAS_IP_ADDR&
+    fi
     sleep 5
   fi
 
@@ -771,8 +789,16 @@ kill_qa_suite_processes $MainClassPatterns
 export ANT_OPTS="$ANT_OPTS $IPV6_OPTS"
 
 # run the job
+# TODO
+XNARAYANA_TESTS=$NARAYANA_TESTS
+NARAYANA_TESTS=0
+
 [ $NARAYANA_BUILD = 1 ] && build_narayana "$@"
 [ $AS_BUILD = 1 ] && build_as "$@"
+if [ $XNARAYANA_TESTS = 1 ]; then
+  NARAYANA_TESTS=1
+  build_narayana "$@"
+fi
 [ $BLACKTIE = 1 ] && blacktie "$@"
 [ $OSGI_TESTS = 1 ] && osgi_tests "$@"
 [ $JTA_CDI_TESTS = 1 ] && jta_cdi_tests "$@"

@@ -155,14 +155,6 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <configuration>
                             <skip>false</skip>
-                            <systemPropertyVariables combine.children="append">
-                                <!--
-                                    Used in arquillian.xml
-                                -->
-                                <server.jvm.args>${server.jvm.args}</server.jvm.args>
-                                <node.address>127.0.0.1</node.address>
-                            </systemPropertyVariables>
-                            <redirectTestOutputToFile>true</redirectTestOutputToFile>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -259,13 +251,11 @@
                   <configuration combine.self="override">
                     <forkMode>always</forkMode>
                     <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
-                    <!-- j9 TODO --> 
-                    <excludes>
-                      <exclude>**/TransactionScopedTest.java</exclude>
-                      <exclude>**/ConcurrentTransactionalTest.java</exclude>
-                      <exclude>**/RecursiveTransactionalTest.java</exclude>
-                      <exclude>**/TransactionalImplTest.java</exclude>
-                    </excludes>
+                    <systemPropertyVariables combine.children="append">
+                        <server.jvm.args>${server.jvm.args}</server.jvm.args>
+                        <node.address>127.0.0.1</node.address>
+                    </systemPropertyVariables>
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
                   </configuration>
                 </execution>
               </executions>
