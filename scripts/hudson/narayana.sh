@@ -212,8 +212,9 @@ function build_narayana {
 
   XPROF=
   if [ $JAVA_VERSION="9-ea" ]; then
-    ORBARG="-Dibmorb-disabled -Djacorb-disabled -Didlj-disabled -Dopenjdk-disabled"
-    XPROF=",arq" # j9 TODO arquillian based tests fail unless the arq profile is active
+    ORBARG="-Djacorb-disabled -Didlj-disabled -Dopenjdk-disabled"
+    #XPROF=",arq" # j9 TODO arquillian based tests fail unless the arq profile is active
+    XPROF=",community,arq" # j9 TODO arquillian based tests fail unless the arq profile is active
   elif [ $IBM_ORB = 1 ]; then
     ORBARG="-Dibmorb-enabled -Djacorb-disabled -Didlj-disabled -Dopenjdk-disabled"
     ${JAVA_HOME}/bin/java -version 2>&1 | grep IBM
