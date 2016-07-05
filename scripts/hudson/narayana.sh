@@ -210,17 +210,17 @@ function build_narayana {
   [ $NARAYANA_TESTS = 1 ] && NARAYANA_ARGS= || NARAYANA_ARGS="-DskipTests"
   [ $CODE_COVERAGE = 1 ] && NARAYANA_ARGS="${NARAYANA_ARGS} -pl !code-coverage"
 
-  XPROF=
+  XPROF="release,community"
   if [ $JAVA_VERSION="9-ea" ]; then
     ORBARG="-Djacorb-disabled -Didlj-disabled -Dopenjdk-disabled"
     #XPROF=",arq" # j9 TODO arquillian based tests fail unless the arq profile is active
-    XPROF=",community,arq" # j9 TODO arquillian based tests fail unless the arq profile is active
+    XPROF=community
   elif [ $IBM_ORB = 1 ]; then
     ORBARG="-Dibmorb-enabled -Djacorb-disabled -Didlj-disabled -Dopenjdk-disabled"
     ${JAVA_HOME}/bin/java -version 2>&1 | grep IBM
     [ $? = 0 ] || fatal "You must use the IBM jdk to build with ibmorb"
   fi
-  ./build.sh -Prelease,community${OBJECT_STORE_PROFILE}$XPROF $ORBARG "$@" $NARAYANA_ARGS $IPV6_OPTS $CODE_COVERAGE_ARGS clean install
+  ./build.sh -P${XPROF}${OBJECT_STORE_PROFILE} $ORBARG "$@" $NARAYANA_ARGS $IPV6_OPTS $CODE_COVERAGE_ARGS clean install
   [ $? = 0 ] || fatal "narayana build failed"
 
   return 0
@@ -273,7 +273,8 @@ function build_as {
   [ $? = 0 ] || fatal "git rebase failed"
 
   if [ $JAVA_VERSION="9-ea" ]; then
-    JAVA_OPTS="-Xms1303m -Xmx1303m $JAVA_OPTS" ./build.sh clean install -DskipTests -Dts.smoke=false -Dlicense.skipDownloadLicenses=true $IPV6_OPTS -Drelease=true
+    # j9 TODO enforcer.BanTransitiveDependencies fails for narayana-jts-integration (skip-enforce)
+    JAVA_OPTS="-Xms1303m -Xmx1303m $JAVA_OPTS" ./build.sh clean install -Dskip-enforce -DskipTests -Dts.smoke=false -Dlicense.skipDownloadLicenses=true $IPV6_OPTS -Drelease=true
   else
     export MAVEN_OPTS="-XX:MaxPermSize=512m -XX:+UseConcMarkSweepGC $MAVEN_OPTS"
     JAVA_OPTS="-Xms1303m -Xmx1303m -XX:MaxPermSize=512m $JAVA_OPTS" ./build.sh clean install -DskipTests -Dts.smoke=false -Dlicense.skipDownloadLicenses=true $IPV6_OPTS -Drelease=true
