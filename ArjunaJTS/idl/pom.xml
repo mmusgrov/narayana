@@ -24,6 +24,10 @@
   <description>Narayana: ArjunaJTS idl</description>
   <packaging>pom</packaging>
 
+  <properties>
+    <otsVersion>1.2</otsVersion>
+  </properties>
+
   <build>
     <plugins>
       <plugin>
@@ -37,6 +41,24 @@
         <configuration>
           <skip>true</skip>
         </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <tasks>
+                <!-- assumes the default location for the source directory -->
+                <copy file="src/main/idl/omg/CosTransactions.idl.${otsVersion}"
+                   tofile="src/main/idl/omg/CosTransactions.idl"/>
+              </tasks>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
