@@ -256,6 +256,7 @@
                         <node.address>127.0.0.1</node.address>
                     </systemPropertyVariables>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                    <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
                   </configuration>
                 </execution>
               </executions>

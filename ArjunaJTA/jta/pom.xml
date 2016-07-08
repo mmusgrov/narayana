@@ -496,25 +496,34 @@
 
                       <!-- failures due to using forkMode once -->
                       <exclude>**/TransactionSynchronizationRegistryTest.java</exclude>
-                       <exclude>**/XATerminatorUnitTest.java</exclude>
-                       <exclude>**/LastResourceAllowedTestCase.java</exclude>
-                       <exclude>**/RecoveryXidsUnitTest.java</exclude>
-                       <exclude>**/SubordinateTestCase.java</exclude>
-                       <exclude>**/SubordinateTxUnitTest.java</exclude>
-                       <exclude>**/UserTransactionUnitTest.java</exclude>
-                       <exclude>**/JTATest.java</exclude>
-                       <exclude>**/JTATransactionCommitTest.java</exclude>
-                       <exclude>**/TransactionSynchronizationRegistryTest.java</exclude>
-                       <exclude>**/UserTxUnitTest.java</exclude>
-                       <exclude>**/TestCommitMarkableResource.java</exclude>
-                       <exclude>**/TestCommitMarkableResourceGCFromCrashAfterCommit.java</exclude>
-                       <exclude>**/TestCommitMarkableResourceMultiEnlist.java</exclude>
-                       <exclude>**/TestCommitMarkableResourceReturnUnknownOutcomeFrom1PCCommit.java</exclude>
-                       <exclude>**/SimpleNestedDisabledTest.java</exclude>
-                       <exclude>**/SimpleNestedTest.java</exclude>
-                       <exclude>**/SubordinateTestCase.java</exclude>
-                       <exclude>**/SimpleTest.java</exclude>
+                      <exclude>**/XATerminatorUnitTest.java</exclude>
+                      <exclude>**/LastResourceAllowedTestCase.java</exclude>
+                      <exclude>**/RecoveryXidsUnitTest.java</exclude>
+                      <exclude>**/SubordinateTestCase.java</exclude>
+                      <exclude>**/SubordinateTxUnitTest.java</exclude>
+                      <exclude>**/UserTransactionUnitTest.java</exclude>
+                      <exclude>**/JTATest.java</exclude>
+                      <exclude>**/JTATransactionCommitTest.java</exclude>
+                      <exclude>**/TransactionSynchronizationRegistryTest.java</exclude>
+                      <exclude>**/UserTxUnitTest.java</exclude>
+                      <exclude>**/TestCommitMarkableResource.java</exclude>
+                      <exclude>**/TestCommitMarkableResourceGCFromCrashAfterCommit.java</exclude>
+                      <exclude>**/TestCommitMarkableResourceMultiEnlist.java</exclude>
+                      <exclude>**/TestCommitMarkableResourceReturnUnknownOutcomeFrom1PCCommit.java</exclude>
+                      <exclude>**/SimpleNestedDisabledTest.java</exclude>
+                      <exclude>**/SimpleNestedTest.java</exclude>
+                      <exclude>**/SubordinateTestCase.java</exclude>
+                      <exclude>**/SimpleTest.java</exclude>
 
+                      <exclude>**/XARecoveryModuleUnitTest.java</exclude>
+                      <exclude>**/JNDIManagerUnitTest.java</exclude>
+                      <exclude>**/JNDIManagerUnitTest.java</exclude>
+                      <exclude>**/XAUtilsUnitTest.java</exclude>
+                      <exclude>**/TestCommitMarkableResourceFailAfterCommitTwoXAResources.java</exclude>
+                      <exclude>**/RecoveryManagerTest.java</exclude>
+                      <exclude>**/TestJDBCStoreOffline.java</exclude>
+                      <exclude>**/XARecoveryModuleUnitTest.java</exclude>
+                      <exclude>**/RollbackTest.java</exclude>
                     </excludes>
                   </configuration>
                 </execution>
