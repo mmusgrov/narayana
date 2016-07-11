@@ -796,7 +796,19 @@ XNARAYANA_TESTS=$NARAYANA_TESTS
 NARAYANA_TESTS=0
 
 [ $NARAYANA_BUILD = 1 ] && build_narayana "$@"
-[ $AS_BUILD = 1 ] && build_as "$@"
+if [ $AS_BUILD = 1 ];then
+  build_as "$@"
+else
+  echo "Step 1: JBOSS_HOME=$JBOSS_HOME"
+  if [ "x$JBOSS_HOME" == "x" ]; then echo 
+    echo "Step 2: JBOSS_HOME=$JBOSS_HOME"
+    if [ -d ${WORKSPACE}/jboss-as ]; then
+      WILDFLY_VERSION_FROM_JBOSS_AS=`awk "/wildfly-parent/ {getline;print;}" ${WORKSPACE}/jboss-as/pom.xml | cut -d \< -f 2|cut -d \> -f 2`
+      export JBOSS_HOME="${WORKSPACE}/jboss-as/build/target/wildfly-${WILDFLY_VERSION_FROM_JBOSS_AS}"
+      echo "Step 3: JBOSS_HOME=$JBOSS_HOME"
+    fi
+  fi
+fi
 if [ $XNARAYANA_TESTS = 1 ]; then
   NARAYANA_TESTS=1
   build_narayana "$@"
