@@ -462,6 +462,8 @@ function xts_tests {
   [ $? = 0 ] || fatal "XTS: SOME TESTS failed"
   [ -z ${BYTEMAN_DISABLED+x} ] && ran_crt=0
 
+echo "TODO: BYTEMAN_DISABLED=$BYTEMAN_DISABLED - disabling logs"
+ran_crt=0
   if [ $ran_crt = 1 ]; then
     if [[ $# == 0 || $# > 0 && "$1" != "-DskipTests" ]]; then
       (cd XTS/localjunit/crash-recovery-tests && java -cp target/classes/ com.arjuna.qa.simplifylogs.SimplifyLogs ./target/log/ ./target/log-simplified)
