@@ -481,7 +481,8 @@
                     <goal>test</goal>
                   </goals>
                   <configuration combine.self="override">
-                    <forkMode>once</forkMode>
+                    <forkMode>pertest</forkMode>
+                    <childDelegation>true</childDelegation>
                     <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
                     <!-- j9 TODO -->
                     <excludes>

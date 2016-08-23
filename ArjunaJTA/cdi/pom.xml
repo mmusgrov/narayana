@@ -249,7 +249,7 @@
                     <goal>test</goal>
                   </goals>
                   <configuration combine.self="override">
-                    <forkMode>always</forkMode>
+                    <forkMode>pertest</forkMode>
                     <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
                     <systemPropertyVariables combine.children="append">
                         <server.jvm.args>${server.jvm.args}</server.jvm.args>
