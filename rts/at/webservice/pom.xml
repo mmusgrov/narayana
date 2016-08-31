@@ -277,9 +277,9 @@
                     <skipTests>false</skipTests>
                     <forkMode>always</forkMode>
                     <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
-                    <!-- j9 TODO --> 
                     <excludes>
-                      <exclude>ClientIntegrationTest.java</exclude>
+                      <!-- j9 TODO ClassNotFoundException: org.jboss.logging.Logger -->
+                      <exclude>**/ClientIntegrationTest.java</exclude>
                     </excludes>
                   </configuration>
                 </execution>

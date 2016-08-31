@@ -211,17 +211,24 @@ function build_narayana {
   [ $CODE_COVERAGE = 1 ] && NARAYANA_ARGS="${NARAYANA_ARGS} -pl !code-coverage"
 
   XPROF="release,community"
-  if [ $JAVA_VERSION="9-ea" ]; then
+  if [ $JAVA_VERSION = "9-ea" ]; then
     ORBARG="-Djacorb-disabled -Didlj-disabled -Dopenjdk-disabled"
     #XPROF=",arq" # j9 TODO arquillian based tests fail unless the arq profile is active
-    XPROF=community,arq
+    XPROF=release,community,arq
   elif [ $IBM_ORB = 1 ]; then
     ORBARG="-Dibmorb-enabled -Djacorb-disabled -Didlj-disabled -Dopenjdk-disabled"
     ${JAVA_HOME}/bin/java -version 2>&1 | grep IBM
     [ $? = 0 ] || fatal "You must use the IBM jdk to build with ibmorb"
   fi
+
   ./build.sh -P${XPROF}${OBJECT_STORE_PROFILE} $ORBARG "$@" $NARAYANA_ARGS $IPV6_OPTS $CODE_COVERAGE_ARGS clean install
   [ $? = 0 ] || fatal "narayana build failed"
+
+  # jtax tests are skipped by default
+  if [ $JAVA_VERSION = "9-ea" -a $NARAYANA_TESTS = 1 ]; then
+      MAVEN_OPTS="-upgrademodulepath target/upgrademodulepath -addmods java.corba -XaddExports:java.corba/com.sun.corba.se.spi.orb=ALL-UNNAMED -XaddExports:java.corba/com.sun.corba.se.spi.ior=ALL-UNNAMED -XaddExports:java.corba/com.sun.corba.se.impl.ior=ALL-UNNAMED" ./build.sh -P${XPROF}${OBJECT_STORE_PROFILE} $ORBARG $NARAYANA_ARGS $IPV6_OPTS $CODE_COVERAGE_ARGS -f ArjunaJTS/jtax/pom.xml -DskipTests=false test
+    [ $? = 0 ] || fatal "narayana jtax build failed"
+  fi
 
   return 0
 }
@@ -272,7 +279,7 @@ function build_as {
   git pull --rebase --ff-only upstream master
   [ $? = 0 ] || fatal "git rebase failed"
 
-  if [ $JAVA_VERSION="9-ea" ]; then
+  if [ $JAVA_VERSION = "9-ea" ]; then
     # j9 TODO enforcer.BanTransitiveDependencies fails for narayana-jts-integration (skip-enforce)
     JAVA_OPTS="-Xms1303m -Xmx1303m $JAVA_OPTS" ./build.sh clean install -Dskip-enforce -DskipTests -Dts.smoke=false -Dlicense.skipDownloadLicenses=true $IPV6_OPTS -Drelease=true
   else
@@ -325,7 +332,7 @@ function rts_as_tests {
 function jta_as_tests {
   echo "#-1. JTA AS Integration Test"
   cp ArjunaJTA/jta/src/test/resources/standalone-cmr.xml ${JBOSS_HOME}/standalone/configuration/
-  if [ $JAVA_VERSION="9-ea" ]; then
+  if [ $JAVA_VERSION = "9-ea" ]; then
     MAVEN_OPTS="-Xms1303m -Xmx1303m" ./build.sh -f ./ArjunaJTA/jta/pom.xml -Parq $CODE_COVERAGE_ARGS "$@" test
   else
     MAVEN_OPTS="-XX:MaxPermSize=512m -Xms1303m -Xmx1303m" ./build.sh -f ./ArjunaJTA/jta/pom.xml -Parq $CODE_COVERAGE_ARGS "$@" test
@@ -386,7 +393,7 @@ function blacktie {
 
   if [[ $# == 0 || $# > 0 && "$1" != "-DskipTests" ]]; then
     # START JBOSS
-    if [ $JAVA_VERSION="9-ea" ]; then
+    if [ $JAVA_VERSION = "9-ea" ]; then
       JBOSS_HOME=`pwd`/blacktie/wildfly-${WILDFLY_MASTER_VERSION} JAVA_OPTS="-Xmx256m $JAVA_OPTS" blacktie/wildfly-${WILDFLY_MASTER_VERSION}/bin/standalone.sh -c standalone-blacktie.xml -Djboss.bind.address=$JBOSSAS_IP_ADDR -Djboss.bind.address.unsecure=$JBOSSAS_IP_ADDR -Djboss.bind.address.management=$JBOSSAS_IP_ADDR&
     else
       JBOSS_HOME=`pwd`/blacktie/wildfly-${WILDFLY_MASTER_VERSION} JAVA_OPTS="-Xmx256m -XX:MaxPermSize=256m $JAVA_OPTS" blacktie/wildfly-${WILDFLY_MASTER_VERSION}/bin/standalone.sh -c standalone-blacktie.xml -Djboss.bind.address=$JBOSSAS_IP_ADDR -Djboss.bind.address.unsecure=$JBOSSAS_IP_ADDR -Djboss.bind.address.management=$JBOSSAS_IP_ADDR&
@@ -610,6 +617,9 @@ function qa_tests_once {
     sed -e "s/COMMAND_LINE_13=-DCoordinatorEnvironmentBean.defaultTimeout=[0-9]*/COMMAND_LINE_13=-DCoordinatorEnvironmentBean.defaultTimeout=${txtimeout}/" TaskImpl.properties > "TaskImpl.properties.tmp" && mv "TaskImpl.properties.tmp" "TaskImpl.properties"
   fi
   # if IPV6_OPTS is not set get the jdbc drivers (we do not run the jdbc tests in IPv6 mode)
+  if [ $JAVA_VERSION = "9-ea" ]; then
+    orbtype="${orbtype}-j9"
+  fi
   [ -z "${IPV6_OPTS+x}" ] && ant -Dorbtype=$orbtype "$QA_BUILD_ARGS" get.drivers dist ||
     ant -Dorbtype=$orbtype "$QA_BUILD_ARGS" dist
 
@@ -684,7 +694,7 @@ function qa_tests {
     qa_tests_once "orb=ibmorb" "$@" # run qa against the Sun orb
     ok3=$?
   else
-    if [ $SUN_ORB = 1 ]; then
+    if [ $JAVA_VERSION = "9-ea" -o $SUN_ORB = 1 ]; then
       qa_tests_once "orb=idlj" "$@" # run qa against the Sun orb
       ok2=$?
     fi

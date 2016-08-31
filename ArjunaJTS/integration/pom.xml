@@ -210,7 +210,8 @@
                    <configuration combine.self="override">
                      <argLine>-Xmx256m -Djava.util.logging.config.file=logging.properties</argLine>
                      <useManifestOnlyJar>false</useManifestOnlyJar>
-                     <excludes> <!-- TODO j9 -->
+                     <!-- TODO j9 -->
+                     <excludes>
                        <exclude>**/SPIUnitTest.java</exclude>
                      </excludes>
                    </configuration>

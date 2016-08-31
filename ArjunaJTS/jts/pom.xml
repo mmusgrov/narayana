@@ -325,8 +325,6 @@
                   <goal>test</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <forkCount>1</forkCount>
-                  <reuseForks>true</reuseForks> <!-- j9 TODO setting this to false fails -->
                   <systemProperties combine.children="append" />
                   <argLine>-addmods java.corba -Xpatch:java.corba=${java.corba.patch.jar} -XaddExports:java.corba/org.omg.CORBA=ALL-UNNAMED -XaddExports:java.corba/org.omg.CosTransactions=ALL-UNNAMED</argLine>
                   <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
@@ -346,7 +344,7 @@
                     <exclude>**/jacorb/**</exclude>
                     <exclude>**/ibmorb/**</exclude>
 
-<!-- j9 TODO Test failures: the following fail on java 9 -->
+                    <!-- j9 TODO -->
                     <exclude>**/ServerControlWrapperUnitTest.java</exclude>
                     <exclude>**/JavaIdlRecoveryUnitTest.java</exclude>
                     <exclude>**/RecoveredServerTransactionUnitTest.java</exclude>
@@ -360,9 +358,10 @@
                     <exclude>**/ServerFactoryUnitTest.java</exclude>
                     <exclude>**/StrictInterpositionUnitTest.java</exclude>
                     <exclude>**/SynchTest.java</exclude>
-
-                    <exclude>**/TxUnitTest.java</exclude>
+                    <!-- j9 TODO org.omg.CORBA.BAD_INV_ORDER  -->
                     <exclude>**/AsyncTest.java</exclude>
+                    <exclude>**/TxUnitTest.java</exclude>
+                    <!-- end j9 TODO -->
                   </excludes>
                   <reportsDirectory>${project.build.directory}/surefire-reports-j9</reportsDirectory>
                   <classpathDependencyExcludes>

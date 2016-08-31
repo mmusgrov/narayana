@@ -29,6 +29,10 @@
     <idlj.boot.args>-Xbootclasspath/p:${openjdk-orb.jar}</idlj.boot.args>
     <java.corba.patch.name>idlj.java.corba.patch</java.corba.patch.name>
     <java.corba.patch.jar>${project.build.directory}/dependency/${java.corba.patch.name}-${project.version}.jar</java.corba.patch.jar>
+    <java.transaction.upgrade.name>narayana-jta-j9-module</java.transaction.upgrade.name>
+    <java.transaction.upgrade.jar>${project.build.directory}/dependency/${java.transaction.upgrade.name}-${project.version}.jar</java.transaction.upgrade.jar>
+    <MAVEN_OPTS>-upgrademodulepath ${project.build.directory}/upgrademodulepath -addmods java.corba -XaddExports:java.corba/com.sun.corba.se.spi.orb=ALL-UNNAMED -XaddExports:java.corba/com.sun.corba.se.spi.ior=ALL-UNNAMED -XaddExports:java.corba/com.sun.corba.se.impl.ior=ALL-UNNAMED</MAVEN_OPTS>
+    <skipTests>true</skipTests>
   </properties>
 
   <build>
@@ -90,7 +94,6 @@
       <artifactId>ironjacamar-spec-api</artifactId>
       <version>${version.org.jboss.ironjacamar}</version>
       <scope>provided</scope>
-      <!-- TODO AS7 -->
     </dependency>
     <dependency>
       <groupId>org.jboss.logging</groupId>
@@ -200,6 +203,13 @@
                       <version>${project.version}</version>
                       <type>${project.packaging}</type>
                     </artifactItem>
+                    <artifactItem>
+                      <groupId>org.jboss.narayana.jta</groupId>
+                      <artifactId>narayana-jta-j9-module</artifactId>
+                      <version>${project.version}</version>
+                      <type>jar</type>
+                      <outputDirectory>${project.build.directory}/upgrademodulepath</outputDirectory>
+                    </artifactItem>
                   </artifactItems>
                 </configuration>
               </execution>
@@ -260,7 +270,22 @@
                 </goals>
                 <configuration combine.self="override">
                   <systemProperties combine.children="append" />
-                  <argLine>-addmods java.corba -XaddExports:java.corba/org.omg.CORBA=ALL-UNNAMED</argLine>
+                  <skipTests>${skipTests}</skipTests>
+                  <forkMode>pertest</forkMode>
+<!--
+<forkCount>1</forkCount>
+<reuseForks>false</reuseForks>
+the default is
+  reuseForks = true
+  forkCount = 1
+-->
+                  <childDelegation>true</childDelegation>
+<!-- export private stuff from java.corba
+com.sun.corba.se.spi.orb
+com.sun.corba.se.spi.ior
+com.sun.corba.se.impl.ior
+-->
+                  <argLine>-upgrademodulepath ${project.build.directory}/upgrademodulepath -addmods java.corba -XaddExports:java.corba/com.sun.corba.se.spi.orb=ALL-UNNAMED -XaddExports:java.corba/com.sun.corba.se.spi.ior=ALL-UNNAMED -XaddExports:java.corba/com.sun.corba.se.impl.ior=ALL-UNNAMED</argLine>
 <!--
                   <argLine>-addmods java.corba -Xpatch:java.corba=${java.corba.patch.jar} -XaddExports:java.corba/org.omg.CORBA=ALL-UNNAMED -XaddExports:java.corba/org.omg.CORBA.ORBPackage=ALL-UNNAMED -XaddExports:java.corba/org.omg.PortableInterceptor=ALL-UNNAMED -XaddExports:java.corba/org.omg.PortableServer=ALL-UNNAMED -XaddExports:java.corba/org.omg.CORBA.portable=ALL-UNNAMED</argLine>
 -->
@@ -276,9 +301,6 @@
                     <exclude>**/JTSTestCase.java</exclude>
                     <exclude>**/LastOnePhaseResource.java</exclude>
                     <exclude>**/implicit/**</exclude>
-
-                    <!-- j9 TODO the tests are failig with NoClassDefFoundError: org/omg/CORBA/BAD_INV_ORDER -->
-                    <exclude>**/**</exclude>
                   </excludes>
                   <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
                   <classpathDependencyExcludes>
