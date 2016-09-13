@@ -256,4 +256,15 @@ public class XATerminator extends XATerminatorImple implements
 
 		return txn;
 	}
+
+	@Override
+	public Transaction getOrImportTransaction(Xid xid, int timeoutIfNew) throws XAException {
+		/*
+		 * Use the subordination manager to import the transaction. If the xid has not been seen
+		 * before then the importer will create one with the specified timeout.
+		 *
+		 * Note that the implementation of the importTransaction call is thread safe
+		 */
+		return SubordinationManager.getTransactionImporter().importTransaction(xid, timeoutIfNew);
+	}
 }

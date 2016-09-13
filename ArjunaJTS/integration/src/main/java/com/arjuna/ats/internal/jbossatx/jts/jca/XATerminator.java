@@ -248,7 +248,7 @@ public class XATerminator extends XATerminatorImple implements
 
 		if (txn == null) {
 			/*
-			 * If it wasn't created locally. Check to see if it has been imported from
+			 * If it wasn't created locally check to see if it has been imported from
 			 * another server. Note that:
 			 * - this call may reload the transaction from disk
 			 * - will throw exceptions if it has already been aborted
@@ -257,5 +257,16 @@ public class XATerminator extends XATerminatorImple implements
 		}
 
 		return txn;
+	}
+
+	@Override
+	public Transaction getOrImportTransaction(Xid xid, int timeoutIfNew) throws XAException {
+		/*
+		 * Use the subordination manager to import the transaction. If the xid has not been seen
+		 * before then the importer will create one with the specified timeout.
+		 *
+		 * Note that the implementation of the importTransaction call is thread safe
+		 */
+		return SubordinationManager.getTransactionImporter().importTransaction(xid, timeoutIfNew);
 	}
 }

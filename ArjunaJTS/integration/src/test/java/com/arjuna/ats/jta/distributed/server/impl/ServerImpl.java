@@ -242,7 +242,7 @@ public class ServerImpl implements LocalServer {
 
 		if (transaction == null) {
 			// there is no such imported transaction so create one and associate with the toResume Xid
-			transaction = SubordinationManager.getTransactionImporter().importTransaction(toResume, remainingTimeout);
+			transaction = extendedJBossXATerminator.getOrImportTransaction(toResume, remainingTimeout);
 			toReturn = ((TransactionImple) transaction).getTxId();
 		}
 
