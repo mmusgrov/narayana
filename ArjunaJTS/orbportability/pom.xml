@@ -193,13 +193,13 @@
                     <arg>-addmods</arg>
                     <arg>java.corba</arg>
                     <arg>-Xpatch:java.corba=${java.corba.patch.jar}</arg>
-                    <arg>-XaddExports:java.corba/com.sun.corba.se.impl.orbutil=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/com.sun.corba.se.impl.ior=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/com.sun.corba.se.impl.interceptors=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/com.sun.corba.se.spi.ior=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/com.sun.corba.se.spi.orb=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/org.omg.CORBA.portable=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/org.omg.CosTransactions=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/com.sun.corba.se.impl.orbutil=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/com.sun.corba.se.impl.ior=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/com.sun.corba.se.impl.interceptors=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/com.sun.corba.se.spi.ior=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/com.sun.corba.se.spi.orb=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/org.omg.CORBA.portable=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/org.omg.CosTransactions=ALL-UNNAMED</arg>
                   </compilerArgs>
                   <excludes>
                     <exclude>**/jacorb/**</exclude>
@@ -217,14 +217,14 @@
                     <arg>-addmods</arg>
                     <arg>java.corba</arg>
                     <arg>-Xpatch:java.corba=${java.corba.patch.jar}</arg>
-                    <arg>-XaddExports:java.corba/com.sun.corba.se.impl.orbutil=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/com.sun.corba.se.impl.ior=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/com.sun.corba.se.spi.ior=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/com.sun.corba.se.spi.orb=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/com.sun.corba.se.impl.interceptors=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/org.omg.CORBA.portable=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/com.sun.corba.se.impl.ior=ALL-UNNAMED</arg>
-                    <arg>-XaddExports:java.corba/org.omg.CosTransactions=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/com.sun.corba.se.impl.orbutil=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/com.sun.corba.se.impl.ior=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/com.sun.corba.se.spi.ior=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/com.sun.corba.se.spi.orb=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/com.sun.corba.se.impl.interceptors=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/org.omg.CORBA.portable=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/com.sun.corba.se.impl.ior=ALL-UNNAMED</arg>
+                    <arg>--add-exports java.corba/org.omg.CosTransactions=ALL-UNNAMED</arg>
                   </compilerArgs>
                   <testExcludes>
                     <exclude>**/PropertyInitTest.java</exclude>
