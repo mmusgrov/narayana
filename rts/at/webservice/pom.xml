@@ -286,7 +286,6 @@
                     <goal>test</goal>
                   </goals>
                   <configuration combine.self="override">
-                    <skipTests>false</skipTests>
                     <forkMode>always</forkMode>
                     <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
                     <excludes>

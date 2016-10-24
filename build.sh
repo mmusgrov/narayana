@@ -43,6 +43,10 @@ if [ -z "$MAVEN_OPTS" ]
 then
 	if [ $JAVA_VERSION="9-ea" ]; then
 		MAVEN_OPTS="$MAVEN_OPTS -Xmx512M"
+		MAVEN_OPTS="$MAVEN_OPTS --add-exports-private java.base/java.util=ALL-UNNAMED"
+		MAVEN_OPTS="$MAVEN_OPTS --add-exports-private java.base/java.lang.reflect=ALL-UNNAMED"
+		MAVEN_OPTS="$MAVEN_OPTS --add-exports-private java.base/java.text=ALL-UNNAMED"
+		MAVEN_OPTS="$MAVEN_OPTS --add-exports-private java.desktop/java.awt.font=ALL-UNNAMED"
 	else
 		MAVEN_OPTS="$MAVEN_OPTS -Xmx512M XX:MaxPermSize=256m"
 	fi
