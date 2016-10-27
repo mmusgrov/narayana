@@ -407,7 +407,12 @@
     <jvm.args.memory>-Xms64m -Xmx1024m</jvm.args.memory>
     <jvm.args.debug></jvm.args.debug>
     <jvm.args.other>-server</jvm.args.other>
-    
+    <jvm.args.jdk9>
+        --add-exports-private=java.base/java.lang=ALL-UNNAMED
+        --add-exports-private=java.base/java.security=ALL-UNNAMED
+        --add-exports-private=java.base/java.io=ALL-UNNAMED
+    </jvm.args.jdk9>
+
     <!-- External dependencies versions -->
     <version.org.codehaus.mojo.findbugs-maven-plugin>3.0.1</version.org.codehaus.mojo.findbugs-maven-plugin>
     <version.org.jboss.spec.javax.jms.jboss-jms-api_1.1_spec>1.0.1.Final</version.org.jboss.spec.javax.jms.jboss-jms-api_1.1_spec>
@@ -545,24 +550,12 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
-              <executions>
-                <execution>
-                  <id>default-test</id>
-                  <phase>test</phase>
-                  <goals>
-                    <goal>test</goal>
-                  </goals>
-                  <configuration combine.self="append">
-                    <forkMode>pertest</forkMode>
-                    <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
-                    <systemPropertyVariables combine.children="append">
-                      <server.jvm.args>${server.jvm.args}</server.jvm.args>
-                      <node.address>127.0.0.1</node.address>
-                    </systemPropertyVariables>
-                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
-                  </configuration>
-                </execution>
-              </executions>
+              <configuration combine.self="append">
+                  <forkMode>pertest</forkMode>
+                  <childDelegation>true</childDelegation>
+                  <reportsDirectory>${project.build.directory}/surefire-j9-reports</reportsDirectory>
+                  <redirectTestOutputToFile>true</redirectTestOutputToFile>
+              </configuration>
             </plugin>
           </plugins>
         </build>
