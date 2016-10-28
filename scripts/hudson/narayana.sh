@@ -853,9 +853,6 @@ kill_qa_suite_processes $MainClassPatterns
 export ANT_OPTS="$ANT_OPTS $IPV6_OPTS"
 
 # run the job
-# TODO
-XNARAYANA_TESTS=$NARAYANA_TESTS
-NARAYANA_TESTS=0
 
 [ $NARAYANA_BUILD = 1 ] && build_narayana "$@"
 if [ $AS_BUILD = 1 ];then
