@@ -411,6 +411,7 @@
         --add-exports-private=java.base/java.lang=ALL-UNNAMED
         --add-exports-private=java.base/java.security=ALL-UNNAMED
         --add-exports-private=java.base/java.io=ALL-UNNAMED
+        --add-exports-private=java.base/java.util=ALL-UNNAMED
     </jvm.args.jdk9>
 
     <!-- External dependencies versions -->

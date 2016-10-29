@@ -232,7 +232,6 @@ function build_narayana {
   [ $NARAYANA_TESTS = 1 ] && NARAYANA_ARGS= || NARAYANA_ARGS="-DskipTests"
   [ $CODE_COVERAGE = 1 ] && NARAYANA_ARGS="${NARAYANA_ARGS} -pl !code-coverage"
 
-  XPROF="release,community"
   if [ $JAVA_VERSION = "9-ea" ]; then
     ORBARG="-Djacorb-disabled -Didlj-disabled -Dopenjdk-disabled"
   elif [ $IBM_ORB = 1 ]; then
@@ -241,7 +240,7 @@ function build_narayana {
     [ $? = 0 ] || fatal "You must use the IBM jdk to build with ibmorb"
   fi
 
-  ./build.sh -P${XPROF}${OBJECT_STORE_PROFILE} $ORBARG "$@" $NARAYANA_ARGS $IPV6_OPTS $CODE_COVERAGE_ARGS clean install
+  ./build.sh -Prelease,community$OBJECT_STORE_PROFILE $ORBARG "$@" $NARAYANA_ARGS $IPV6_OPTS $CODE_COVERAGE_ARGS clean install
   [ $? = 0 ] || fatal "narayana build failed"
 
   return 0
@@ -869,10 +868,7 @@ else
   fi
   init_jboss_home
 fi
-if [ $XNARAYANA_TESTS = 1 ]; then
-  NARAYANA_TESTS=1
-  build_narayana "$@"
-fi
+
 [ $BLACKTIE = 1 ] && blacktie "$@"
 [ $OSGI_TESTS = 1 ] && osgi_tests "$@"
 [ $JTA_CDI_TESTS = 1 ] && jta_cdi_tests "$@"
