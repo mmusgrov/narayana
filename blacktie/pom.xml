@@ -176,7 +176,7 @@
             </dependency>
             <dependency>
                 <groupId>org.jboss.narayana.jts</groupId>
-                <artifactId>narayana-jts-jacorb</artifactId>
+                <artifactId>jtax</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
