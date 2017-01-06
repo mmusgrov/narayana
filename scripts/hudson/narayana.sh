@@ -297,7 +297,7 @@ function build_as {
   if [ $JAVA_VERSION = "9-ea" ]; then
     # build openjdk-orb with fixing the reflect issue
     git clone -b jdk-9 https://github.com/zhfeng/openjdk-orb.git
-    ./build.sh -f openjdk-orb/pom.xml clean install -DskipTests
+    MAVEN_OPTS="--add-modules java.corba --add-exports java.corba/com.sun.tools.corba.se.idl.toJavaPortable=ALL-UNNAMED" ./build.sh -f openjdk-orb/pom.xml clean install -DskipTests
     [ $? = 0 ] || fatal "openjdk-orb build failed"
 
     # replace the openjdk-orb with the 8.0.8.Beta1-SNAPSHOT
