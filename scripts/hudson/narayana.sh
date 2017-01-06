@@ -295,6 +295,14 @@ function build_as {
   [ $? = 0 ] || fatal "git rebase failed"
 
   if [ $JAVA_VERSION = "9-ea" ]; then
+    # build openjdk-orb with fixing the reflect issue
+    git clone -b jdk-9 https://github.com/zhfeng/openjdk-orb.git
+    ./build.sh -f openjdk-orb/pom.xml clean install -DskipTests
+    [ $? = 0 ] || fatal "openjdk-orb build failed"
+
+    # replace the openjdk-orb with the 8.0.8.Beta1-SNAPSHOT
+    sed -i s/8.0.6.Final/8.0.8.Beta1-SNAPSHOT/g pom.xml
+
     # j9 TODO enforcer.BanTransitiveDependencies fails for narayana-jts-integration (skip-enforce)
     JAVA_OPTS="-Xms1303m -Xmx1303m $JAVA_OPTS" ./build.sh clean install -Dskip-enforce -DskipTests -Dts.smoke=false -Dlicense.skipDownloadLicenses=true $IPV6_OPTS -Drelease=true
   else
