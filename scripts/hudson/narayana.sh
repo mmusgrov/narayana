@@ -553,7 +553,7 @@ EOF
 
 function set_qa_log_level {
 echo "creating file $WORKSPACE/qa/dist/narayana-full-${NARAYANA_CURRENT_VERSION}/etc/log4j.xml"
-cat << 'EOF' > $WORKSPACE/qa/dist/narayana-full-${NARAYANA_CURRENT_VERSION}/etc/log4j.xml
+cat << EOF > $WORKSPACE/qa/dist/narayana-full-${NARAYANA_CURRENT_VERSION}/etc/log4j.xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
 
@@ -561,7 +561,7 @@ cat << 'EOF' > $WORKSPACE/qa/dist/narayana-full-${NARAYANA_CURRENT_VERSION}/etc/
 
     <appender name="console" class="org.apache.log4j.ConsoleAppender">
         <param name="Target" value="System.err"/>
-        <param name="Threshold" value="WARN"/>
+        <param name="Threshold" value="$1"/>
 
         <layout class="org.apache.log4j.PatternLayout">
             <param name="ConversionPattern" value="%c\t[%t]\t%m%n"/>
@@ -571,7 +571,7 @@ cat << 'EOF' > $WORKSPACE/qa/dist/narayana-full-${NARAYANA_CURRENT_VERSION}/etc/
     <appender name="file" class="org.apache.log4j.FileAppender">
         <param name="File" value="logs/test.log"/>
         <param name="Append" value="false"/>
-        <param name="Threshold" value="WARN"/>
+        <param name="Threshold" value="$1"/>
 
         <layout class="org.apache.log4j.PatternLayout">
             <param name="ConversionPattern" value="%c\t[%t]\t%m%n"/>
@@ -579,7 +579,7 @@ cat << 'EOF' > $WORKSPACE/qa/dist/narayana-full-${NARAYANA_CURRENT_VERSION}/etc/
     </appender>
 
     <category name="com.arjuna">
-        <level value="WARN"/>
+        <level value="$1"/>
         <appender-ref ref="console"/>
         <appender-ref ref="file"/>
     </category>
