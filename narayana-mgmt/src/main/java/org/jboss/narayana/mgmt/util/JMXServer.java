@@ -48,10 +48,10 @@ public class JMXServer
 {
     protected final static Logger log = Logger.getLogger(JMXServer.class);
 
-	public static String JTS_INITIALISER_CNAME = "com.arjuna.ats.internal.jta.tools.osb.mbean.jts.ToolsInitialiser";
+	public static String JTS_INITIALISER_CNAME = "org.jboss.narayana.mgmt.internal.jts.ToolsInitialiser";
 	public static String AJT_RECORD_TYPE = "CosTransactions/XAResourceRecord";
-	public static String AJT_WRAPPER_TYPE = "com.arjuna.ats.internal.jta.tools.osb.mbean.jts.ArjunaTransactionImpleWrapper";
-	public static String AJT_XAREC_TYPE = "com.arjuna.ats.internal.jta.tools.osb.mbean.jts.XAResourceRecordBean";
+	public static String AJT_WRAPPER_TYPE = "corg.jboss.narayana.mgmt.internal.jts.ArjunaTransactionImpleWrapper";
+	public static String AJT_XAREC_TYPE = "org.jboss.narayana.mgmt.internal.jts.XAResourceRecordBean";
 
 	private static MBeanServer server;
 	private static JMXServer agent = new JMXServer();

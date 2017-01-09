@@ -44,6 +44,7 @@ public class NewTypeTest extends JTSOSBTestBase {
     public void testInstrumentNewType() throws MBeanException {
         OSBTypeHandler osbTypeHandler = new OSBTypeHandler(
                 true,
+                true,
                 "org.jboss.narayana.mgmt.internal.jts.ArjunaTransactionImpleWrapper",
                 "org.jboss.narayana.mgmt.internal.jts.JTSActionBean",
                 "StateManager/BasicAction/TwoPhaseCoordinator/ArjunaTransactionImple/ServerTransaction/JCA",

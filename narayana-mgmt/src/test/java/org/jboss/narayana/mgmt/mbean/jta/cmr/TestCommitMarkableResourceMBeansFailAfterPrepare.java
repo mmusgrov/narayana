@@ -17,15 +17,15 @@
  * (C) 2013
  * @author JBoss Inc.
  */
-package com.hp.mwtests.ts.jta.commitmarkable;
+package org.jboss.narayana.mgmt.mbean.jta.cmr;
 
 import com.arjuna.ats.arjuna.common.Uid;
-import com.arjuna.ats.arjuna.tools.osb.mbean.OSEntryBean;
-import com.arjuna.ats.arjuna.tools.osb.mbean.ObjStoreBrowser;
-import com.arjuna.ats.arjuna.tools.osb.mbean.UidWrapper;
 import org.h2.jdbcx.JdbcDataSource;
 import org.jboss.byteman.contrib.bmunit.BMScript;
 import org.jboss.byteman.contrib.bmunit.BMUnitRunner;
+import org.jboss.narayana.mgmt.internal.arjuna.OSEntryBean;
+import org.jboss.narayana.mgmt.internal.arjuna.ObjStoreBrowser;
+import org.jboss.narayana.mgmt.internal.arjuna.UidWrapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 

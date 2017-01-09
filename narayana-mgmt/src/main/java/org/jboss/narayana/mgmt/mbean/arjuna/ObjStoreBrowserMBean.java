@@ -1,10 +1,12 @@
 package org.jboss.narayana.mgmt.mbean.arjuna;
 
 import javax.management.MBeanException;
+import javax.management.MXBean;
 
 import org.jboss.narayana.mgmt.annotation.MXBeanDescription;
 import org.jboss.narayana.mgmt.annotation.MXBeanPropertyDescription;
 
+@MXBean
 @MXBeanDescription("Representation of the transaction logging mechanism")
 public interface ObjStoreBrowserMBean extends ObjStoreItemMBean {
 	@MXBeanPropertyDescription("See if any new transactions have been created or completed")

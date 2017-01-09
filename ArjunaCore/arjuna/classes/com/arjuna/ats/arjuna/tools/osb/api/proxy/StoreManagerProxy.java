@@ -21,14 +21,17 @@
 package com.arjuna.ats.arjuna.tools.osb.api.proxy;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.management.JMException;
 import javax.management.JMX;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
+import javax.management.MBeanServerFactory;
 import javax.management.NotificationListener;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
@@ -39,7 +42,6 @@ import javax.management.remote.JMXServiceURL;
 
 import com.arjuna.ats.arjuna.tools.osb.api.mbeans.ParticipantStoreBeanMBean;
 import com.arjuna.ats.arjuna.tools.osb.api.mbeans.RecoveryStoreBeanMBean;
-import com.arjuna.ats.arjuna.tools.osb.util.JMXServer;
 
 /**
  * Miscellaneous methods for obtaining remote proxies to the JBossTS Recovery and Participant stores
@@ -64,6 +66,28 @@ public class StoreManagerProxy {
     private NotificationListener recoveryListener = null;
     private NotificationListener participantListener = null;
 
+
+    private static MBeanServer server;
+
+    private static MBeanServer getServer()
+    {
+        // NB not multi thread safe
+        if (server == null)
+        {
+            List<MBeanServer> servers = MBeanServerFactory.findMBeanServer(null);
+
+            if (servers != null && servers.size() > 0)
+                server = servers.get(0);
+            else
+                server = ManagementFactory.getPlatformMBeanServer();
+
+            if (server == null)
+                server = MBeanServerFactory.createMBeanServer();
+        }
+
+        return server;
+    }
+
     /**
      * Construct a holder for Participant and Recovery Store proxies. There is one instance for each connection
      * to a JVM. In practice there will only ever be one instance.
@@ -75,7 +99,7 @@ public class StoreManagerProxy {
      */
     private StoreManagerProxy(String serviceUrl, NotificationListener listener) throws JMException, IOException {
         if ("default".equals(serviceUrl)) {
-            mbsc = JMXServer.getAgent().getServer();
+            mbsc = getServer();
         } else {
             // create an RMI connector
             JMXServiceURL url = new JMXServiceURL(serviceUrl);
@@ -127,7 +151,7 @@ public class StoreManagerProxy {
      */
     public static void startServerConnector(String serviceUrl) throws IOException {
         jmxCServer = JMXConnectorServerFactory.newJMXConnectorServer(
-                new JMXServiceURL(serviceUrl), null, JMXServer.getAgent().getServer());
+                new JMXServiceURL(serviceUrl), null, getServer());
 
         // accept JMX connections
         jmxCServer.start();
@@ -146,7 +170,7 @@ public class StoreManagerProxy {
      */
     public static boolean registerBean(ObjectName name, Object bean, boolean register) {
         try {
-            MBeanServer mbs = JMXServer.getAgent().getServer();
+            MBeanServer mbs = getServer();
             boolean isRegistered = mbs.isRegistered(name);
 
             System.out.println((register ? "" : "un") + "registering bean " + name);

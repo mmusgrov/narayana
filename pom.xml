@@ -485,6 +485,7 @@
     <module>STM</module>
     <module>txframework</module>
     <module>compensations</module>
+    <module>narayana-mgmt</module>
     <module>osgi</module>
     <module>narayana-full</module>
     <module>code-coverage</module>

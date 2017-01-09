@@ -28,6 +28,8 @@ import javax.management.MBeanException;
 
 import com.arjuna.ats.arjuna.common.Uid;
 import com.arjuna.ats.arjuna.logging.tsLogger;
+import org.jboss.narayana.mgmt.mbean.arjuna.OSEntryBeanMBean;
+import org.jboss.narayana.mgmt.util.JMXServer;
 
 /**
  * Base class MBean implementation wrapper for MBeans corresponding to a Uid
@@ -37,7 +39,18 @@ import com.arjuna.ats.arjuna.logging.tsLogger;
 public class UidWrapper {
 	private static final ThreadLocal<String> recordWrapperTypeName = new ThreadLocal<String>();
 
-	public static void setRecordWrapperTypeName(String name) {
+    public UidWrapper(ObjStoreBrowser browser, String type, Uid uid, boolean registerBean, OSBTypeHandler osbType) {
+        this(browser,
+                osbType == null ? OSEntryBean.class.getName() : osbType.getBeanClass(),
+                type,
+                osbType == null ? null : osbType.getRecordClass(),
+                uid,
+                registerBean);
+
+        this.osbType = null;//osbType;
+    }
+
+    public static void setRecordWrapperTypeName(String name) {
 		recordWrapperTypeName.set(name);
     }
 	public static String getRecordWrapperTypeName() {
@@ -52,9 +65,11 @@ public class UidWrapper {
 	private String ostype;
 	private Uid uid;
 	private long tstamp;
-	private OSEntryBean mbean;
+	private OSEntryBean mbeanImpl;
+    private OSEntryBeanMBean mbean;
 	boolean registered = false;
 	boolean allowRegistration;
+    private OSBTypeHandler osbType;
 
 	public UidWrapper(Uid uid) {
 		this(null, "", "", null, uid);
@@ -77,7 +92,7 @@ public class UidWrapper {
 	}
 
 	public OSEntryBean getMBean() {
-		return mbean;
+		return mbeanImpl;
 	}
 
     /**
@@ -106,16 +121,23 @@ public class UidWrapper {
 	}
 
 	void register() {
-		if (allowRegistration && mbean != null && !registered) {
-			mbean.register();
+		if (allowRegistration && mbeanImpl != null && !registered) {
+            if (mbean != null)
+                JMXServer.getAgent().registerMBean(getName(), mbean);
+            else
+                mbeanImpl.register();
+
 			registered = true;
 		}
 	}
 
 	public void unregister() {
-		if (registered && mbean != null) {
+		if (registered && mbeanImpl != null) {
 			try {
-				mbean.unregister();
+                if (mbean != null)
+                    JMXServer.getAgent().unregisterMBean(getName());
+                else
+				    mbeanImpl.unregister();
 			} catch (Exception e) {
 
 			}
@@ -170,7 +192,7 @@ public class UidWrapper {
 	}
 
 	public StringBuilder toString(String prefix, StringBuilder sb) {
-		return mbean == null ? sb : mbean.toString(prefix, sb);
+		return mbeanImpl == null ? sb : mbeanImpl.toString(prefix, sb);
 	}
 
 	public List<UidWrapper> probe(String type) {
@@ -186,19 +208,28 @@ public class UidWrapper {
 		try {
 			Class<OSEntryBean> cl = (Class<OSEntryBean>) Class.forName(beantype);
 			Constructor<OSEntryBean> constructor = cl.getConstructor(UidWrapper.class);
-			mbean = constructor.newInstance(this);
+			mbeanImpl = constructor.newInstance(this);
+
+            if (osbType != null && osbType.getNewBeanClass() != null) {
+                Class<OSEntryBean> ncl = (Class<OSEntryBean>) Class.forName(osbType.getNewBeanClass());
+
+                Constructor<OSEntryBean> nc2 = cl.getConstructor(mbeanImpl.getClass());
+
+                mbean = nc2.newInstance(mbeanImpl);
+            }
+
 		} catch (Throwable e) { // ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, InstantiationException
 			tsLogger.i18NLogger.info_osb_MBeanCtorFail(e);
-			mbean = new OSEntryBean(this);           
+			mbeanImpl = new OSEntryBean(this);
         }
 
-		mbean.activate();
+		mbeanImpl.activate();
 
-		return mbean;
+		return mbeanImpl;
 	}
 
 	public void createAndRegisterMBean() {
-		if (mbean == null)
+		if (mbeanImpl == null)
 		    createMBean();
 		register();
 	}

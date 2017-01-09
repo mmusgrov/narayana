@@ -34,6 +34,7 @@ import javax.management.MBeanException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean;
@@ -84,7 +85,7 @@ public class ExposeAllLogsTest {
         assertTrue(store.write_committed(u, FOO_TYPE, state));
 
         // check that the record is not exposed
-        probeObjectStore(false, false);
+        ObjStoreBrowser osb = probeObjectStore(false, false);
         // get uids via the object store API
         uids = getUids(store, new HashSet<Uid>(), FOO_TYPE);
         // and validate that there is a uid corresponding to u
@@ -97,12 +98,14 @@ public class ExposeAllLogsTest {
         assertFalse(uids2.containsKey(u));
 
         // now try the same but tell the browser to expose all log records
-        probeObjectStore(true, exposeAllLogsViaJMX);
+        osb.stop();
+
+        osb = probeObjectStore(true, exposeAllLogsViaJMX);
 
         // and get the uids for log record MBeans
         uids2.clear();
-        getUids(uids2, agent.queryNames(osMBeanName + ",*", null));
-
+        getUids(uids2, agent.queryNames(osMBeanName + ",*", null)); //agent.queryNames("jboss.jta:type=ObjectStore,itype=*", null)
+//        jboss.jta:type=ObjectStore,itype=StateManager/LockManager/foo,uid=0_ffffac1182c6_90eb_585d4cae_1
         // and validate that there is now an MBean corresponding to u
         assertTrue(uids2.containsKey(u));
 
@@ -117,9 +120,11 @@ public class ExposeAllLogsTest {
         uids2.clear();
         getUids(uids2, agent.queryNames(osMBeanName + ",*", null));
         assertFalse(uids2.containsKey(u));
+
+        osb.stop();
     }
 
-    private void probeObjectStore(boolean exposeAllLogs, boolean useJMX) throws MBeanException {
+    private ObjStoreBrowser probeObjectStore(boolean exposeAllLogs, boolean useJMX) throws MBeanException {
         ObjectStoreEnvironmentBean osEnvBean = BeanPopulator.getDefaultInstance(ObjectStoreEnvironmentBean.class);
 
         osEnvBean.setExposeAllLogRecordsAsMBeans(exposeAllLogs);
@@ -133,6 +138,8 @@ public class ExposeAllLogsTest {
             osb.setExposeAllRecordsAsMBeans(exposeAllLogs);
 
         osb.probe();
+
+        return osb;
     }
 
     // Given a set of MBean names find their corresponding Uids

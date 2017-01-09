@@ -52,6 +52,7 @@ public class HeuristicInformationTest extends JTSOSBTestBase {
     public ObjStoreBrowser getOSB() throws MBeanException {
         OSBTypeHandler osbTypeHandler = new OSBTypeHandler(
                 true,
+                true,
                 "com.hp.mwtests.ts.jta.jts.tools.UserExtendedCrashRecord",
                 "org.jboss.narayana.mgmt.mbean.LogRecordWrapper",
                 UserExtendedCrashRecord.record_type(),

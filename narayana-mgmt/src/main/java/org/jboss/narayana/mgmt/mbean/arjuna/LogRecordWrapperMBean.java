@@ -24,11 +24,14 @@ package org.jboss.narayana.mgmt.mbean.arjuna;
 import org.jboss.narayana.mgmt.annotation.MXBeanDescription;
 import org.jboss.narayana.mgmt.annotation.MXBeanPropertyDescription;
 
+import javax.management.MXBean;
+
 /**
  * JMX MBean interface for transaction participants.
  *
  * @author Mike Musgrove
  */
+@MXBean
 @MXBeanDescription("Representation of a transaction participant")
 public interface LogRecordWrapperMBean extends OSEntryBeanMBean {
 	@MXBeanPropertyDescription("Indication of the status of this transaction participant (prepared, heuristic, etc)")

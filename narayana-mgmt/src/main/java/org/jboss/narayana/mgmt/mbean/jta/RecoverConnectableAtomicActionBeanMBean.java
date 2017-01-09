@@ -22,6 +22,9 @@ package org.jboss.narayana.mgmt.mbean.jta;
 import org.jboss.narayana.mgmt.annotation.MXBeanPropertyDescription;
 import org.jboss.narayana.mgmt.mbean.arjuna.ActionBeanMBean;
 
+import javax.management.MXBean;
+
+@MXBean
 public interface RecoverConnectableAtomicActionBeanMBean extends ActionBeanMBean {
     @MXBeanPropertyDescription("A unique id for this transaction")
 	String toDo();

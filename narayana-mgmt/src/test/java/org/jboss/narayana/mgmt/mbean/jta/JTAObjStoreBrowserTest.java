@@ -1,38 +1,4 @@
-package org.jboss.narayana.mgmt.mbean.jts;
-
-import com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean;
-import com.arjuna.ats.arjuna.common.arjPropertyManager;
-import com.arjuna.ats.internal.arjuna.thread.ThreadActionData;
-
-import com.arjuna.ats.internal.jta.transaction.jts.TransactionImple;
-import com.arjuna.common.internal.util.propertyservice.BeanPopulator;
-import org.jboss.narayana.mgmt.mbean.jta.DummyXA;
-import org.jboss.narayana.mgmt.mbean.jta.FailureXAResource;
-import org.jboss.narayana.mgmt.internal.arjuna.LogRecordWrapper;
-import org.jboss.narayana.mgmt.internal.arjuna.OSEntryBean;
-import org.jboss.narayana.mgmt.internal.arjuna.ObjStoreBrowser;
-import org.jboss.narayana.mgmt.internal.arjuna.UidWrapper;
-import org.jboss.narayana.mgmt.internal.jta.JTAActionBean;
-import org.jboss.narayana.mgmt.mbean.arjuna.OSEntryBeanMBean;
-import org.jboss.narayana.mgmt.util.JMXServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import javax.management.InstanceNotFoundException;
-import javax.management.JMX;
-import javax.management.MBeanException;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectName;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
-import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+package org.jboss.narayana.mgmt.mbean.jta;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -40,10 +6,37 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.arjuna.ats.internal.jts.ORBManager;
-import com.arjuna.orbportability.OA;
-import com.arjuna.orbportability.ORB;
-import com.arjuna.orbportability.RootOA;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.management.MBeanException;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
+
+import com.arjuna.ats.arjuna.common.ObjectStoreEnvironmentBean;
+import com.arjuna.ats.arjuna.common.arjPropertyManager;
+import org.jboss.narayana.mgmt.util.JMXServer;
+import org.jboss.narayana.mgmt.mbean.jta.XAResourceRecordBeanMBean;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.arjuna.ats.arjuna.common.Uid;
+import org.jboss.narayana.mgmt.internal.arjuna.LogRecordWrapper;
+import org.jboss.narayana.mgmt.internal.arjuna.OSEntryBean;
+import org.jboss.narayana.mgmt.internal.arjuna.ObjStoreBrowser;
+import org.jboss.narayana.mgmt.internal.arjuna.UidWrapper;
+import com.arjuna.ats.internal.arjuna.thread.ThreadActionData;
+import org.jboss.narayana.mgmt.internal.jta.CommitMarkableResourceRecordBean;
+import org.jboss.narayana.mgmt.internal.jta.JTAActionBean;
+import org.jboss.narayana.mgmt.internal.jta.XAResourceRecordBean;
+import com.arjuna.ats.internal.jta.transaction.arjunacore.TransactionImple;
 
 class ExtendedFailureXAResource extends FailureXAResource {
 	private boolean forgotten;
@@ -61,10 +54,7 @@ class ExtendedFailureXAResource extends FailureXAResource {
 	}
 }
 
-public class ObjStoreBrowserTest {
-    private ORB myORB = null;
-    private RootOA myOA = null;
-
+public class JTAObjStoreBrowserTest {
     private ObjStoreBrowser osb;
 
 	private ObjStoreBrowser createObjStoreBrowser() {
@@ -75,10 +65,12 @@ public class ObjStoreBrowserTest {
 		return osb;
 	}
 
+	@BeforeClass
+	public static void setUp() {
+	}
+
 	@Before
-    public void beforeTest() throws Exception {
-        emptyObjectStore();
-        setUpJTS();
+    public void beforeTest() {
         FailureXAResource.resetForgetCounts();
         osb = createObjStoreBrowser();
 
@@ -86,32 +78,15 @@ public class ObjStoreBrowserTest {
     }
 
     @After
-    public void afterTest() throws Exception {
+    public void afterTest() {
         osb.stop();
-        tearDownJTS();
     }
-
-    private void setUpJTS () throws Exception {
-        myORB = ORB.getInstance("test");
-        myOA = OA.getRootOA(myORB);
-
-        myORB.initORB(new String[] {}, null);
-        myOA.initOA();
-
-        ORBManager.setORB(myORB);
-        ORBManager.setPOA(myOA);
-    }
-
-    private void tearDownJTS () throws Exception {
-        myOA.destroy();
-        myORB.shutdown();
-    }
-
-/*	@Test
+/* TODO
+	@Test
 	public void testXAResourceRecordBean() throws Exception {
 		com.arjuna.common.tests.simple.EnvironmentBeanTest.testBeanByReflection(new XAResourceRecordBean(new UidWrapper(Uid.nullUid())));
-	}*/
-/*TODO
+	}
+
 	@Test
 	public void testCommitMarkableResourceRecordBean() throws Exception {
 		com.arjuna.common.tests.simple.EnvironmentBeanTest.testBeanByReflection(new CommitMarkableResourceRecordBean(new UidWrapper(Uid.nullUid())));
@@ -126,7 +101,7 @@ public class ObjStoreBrowserTest {
     {
         FailureXAResource failureXAResource = new FailureXAResource(FailureXAResource.FailLocation.commit); // generates a heuristic on commit
 
-        getHeuristicMBean(osb, new TransactionImple(), failureXAResource);
+        getHeuristicMBean(osb, new TransactionImple(1000000000), failureXAResource);
     }
 
     /**
@@ -262,12 +237,6 @@ public class ObjStoreBrowserTest {
             return names != null ? names : new HashSet<>();
         }
 
-        OSEntryBeanMBean getParticipantMBean() throws InstanceNotFoundException {
-            MBeanServer server = JMXServer.getAgent().getServer();
-
-            return JMX.newMBeanProxy(server, participantBeanName, OSEntryBeanMBean.class);
-        }
-
         void setRefuseForget(boolean refuse) {
             failureXAResource.setRefuseForget(failureXAResource.getXid(), refuse);
         }
@@ -276,7 +245,7 @@ public class ObjStoreBrowserTest {
     private HeuristicTestData getHeuristic() throws Exception
     {
         FailureXAResource failureXAResource = new FailureXAResource(FailureXAResource.FailLocation.commit); // generates a heuristic on commit
-        TransactionImple tx = new TransactionImple();
+        TransactionImple tx = new TransactionImple(1000000000);
         XAResourceRecordBeanMBean resourceBean = getHeuristicMBean(osb, tx, failureXAResource);
         JTAActionBean txnMBean = getTransactionBean(osb, tx, true);
         Set<ObjectName> participants;
@@ -301,18 +270,16 @@ public class ObjStoreBrowserTest {
     }
 
     private HeuristicTestData tryRemove(boolean failForget, boolean ignoreMBeanHeuristics, HeuristicTestData hd)
-            throws MBeanException, MalformedObjectNameException, InstanceNotFoundException {
+            throws MBeanException, MalformedObjectNameException
+    {
         ObjectStoreEnvironmentBean osEnv = arjPropertyManager.getObjectStoreEnvironmentBean();
 
         osEnv.setIgnoreMBeanHeuristics(ignoreMBeanHeuristics);
 
         hd.failureXAResource.setRefuseForget(hd.failureXAResource.getXid(), failForget);
 
-        // remove the bean via a JMX proxy
-        hd.getParticipantMBean().remove();
-
-        // an equivalent alternative would have been to call remove directly on the bean
-        //hd.resourceBean.remove();
+        // remove the bean via JMX
+        hd.resourceBean.remove();
 
         // assert that forget was called on the resource
         assertEquals(1, hd.failureXAResource.getForgetCount(hd.failureXAResource.getXid()));
@@ -383,53 +350,5 @@ public class ObjStoreBrowserTest {
         assertTrue(participant instanceof XAResourceRecordBeanMBean);
 
         return (XAResourceRecordBeanMBean) participant;
-    }
-
-    public void emptyObjectStore()
-    {
-        String objectStoreDirName = BeanPopulator.getDefaultInstance(ObjectStoreEnvironmentBean.class).getObjectStoreDir();
-
-        System.out.println("Emptying " + objectStoreDirName);
-
-        File objectStoreDir = new File(objectStoreDirName);
-
-        removeContents(objectStoreDir);
-    }
-
-    public boolean removeContents(File directory)
-    {
-        boolean deleteParent = true;
-        if ((directory != null) &&
-                directory.isDirectory() &&
-                (!directory.getName().equals("")) &&
-                (!directory.getName().equals("/")) &&
-                (!directory.getName().equals("\\")) &&
-                (!directory.getName().equals(".")) &&
-                (!directory.getName().equals("target/generated-sources")))
-        {
-            File[] contents = directory.listFiles();
-
-            if (contents != null) {
-                boolean canDelete = true;
-                for (File content : contents) {
-                    if (content.isDirectory()) {
-                        if (!content.getName().equals("RecoveryCoordinator")) {
-                            canDelete = removeContents(content) && canDelete;
-
-                            if (!canDelete) {
-                                deleteParent = false;
-                            } else {
-                                content.delete();
-                            }
-                        } else {
-                            deleteParent = false;
-                        }
-                    } else {
-                        content.delete();
-                    }
-                }
-            }
-        }
-        return deleteParent;
     }
 }

@@ -36,18 +36,25 @@ public class OSBTypeHandler {
 
     private String recordClass; // defines which object store record types will be instrumented
     private String beanClass; // the JMX mbean representation of the record type
+    private String newBeanClass;
     private String typeName; // the type name {@link com.arjuna.ats.arjuna.coordinator.AbstractRecord#type()}
     HeaderStateReader headerStateReader;
 
     public OSBTypeHandler(boolean enabled, String recordClass, String beanClass, String typeName, String headerStateReaderClassName) {
-        this(enabled, true, recordClass, beanClass, typeName, headerStateReaderClassName);
+        this(enabled, true, recordClass, beanClass, null, typeName, headerStateReaderClassName);
     }
 
     public OSBTypeHandler(boolean enabled, boolean allowRegistration, String recordClass, String beanClass, String typeName, String headerStateReaderClassName) {
+        this(enabled, allowRegistration, recordClass, beanClass, null, typeName, headerStateReaderClassName);
+    }
+
+    public OSBTypeHandler(boolean enabled, boolean allowRegistration, String recordClass, String oldBeanClass, String beanClass, String typeName,
+                          String headerStateReaderClassName) {
         this.enabled = enabled;
         this.allowRegistration = allowRegistration;
         this.recordClass = recordClass;
-        this.beanClass = beanClass;
+        this.beanClass = oldBeanClass;
+        this.newBeanClass = beanClass;
         this.typeName = typeName;
         this.headerStateReader = headerStateReaderClassName == null ? new HeaderStateReader() : createHeader(headerStateReaderClassName);
     }
@@ -91,4 +98,7 @@ public class OSBTypeHandler {
         return headerStateReader;
     }
 
+    public String getNewBeanClass() {
+        return newBeanClass;
+    }
 }

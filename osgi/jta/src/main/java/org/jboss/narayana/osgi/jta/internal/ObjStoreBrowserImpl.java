@@ -27,9 +27,11 @@ import com.arjuna.ats.arjuna.objectstore.ObjectStoreIterator;
 import com.arjuna.ats.arjuna.objectstore.StoreManager;
 import com.arjuna.ats.arjuna.state.InputObjectState;
 import com.arjuna.ats.arjuna.tools.log.TransactionTypeManager;
-import com.arjuna.ats.arjuna.tools.osb.mbean.ObjStoreBrowser;
-import com.arjuna.ats.arjuna.tools.osb.util.JMXServer;
+
 import com.arjuna.ats.internal.arjuna.tools.log.EditableTransaction;
+import org.jboss.narayana.mgmt.internal.arjuna.ObjStoreBrowser;
+import org.jboss.narayana.mgmt.mbean.LogBrowser;
+import org.jboss.narayana.mgmt.util.JMXServer;
 import org.jboss.narayana.osgi.jta.ObjStoreBrowserService;
 
 import javax.management.AttributeList;
@@ -55,14 +57,14 @@ import java.util.Set;
  */
 
 public class ObjStoreBrowserImpl implements ObjStoreBrowserService{
-    private ObjStoreBrowser osb;
+    private LogBrowser osb;
     private PrintStream printStream;
     private List<String> recordTypes = new ArrayList<String>();
     private String currentType = null;
     private String currentLog = "";
     private boolean attached = false;
 
-    public ObjStoreBrowserImpl(ObjStoreBrowser osb) {
+    public ObjStoreBrowserImpl(LogBrowser osb) {
         try {
             printStream = new PrintStream(System.out, true, StandardCharsets.UTF_8.name());
         } catch (UnsupportedEncodingException e) {
@@ -279,11 +281,11 @@ public class ObjStoreBrowserImpl implements ObjStoreBrowserService{
 
     @Override
     public void start() {
-        osb.start();
+        // LogBrowser is started automatically
     }
 
     @Override
     public void stop() {
-        osb.stop();
+        osb.dispose();
     }
 }

@@ -21,6 +21,9 @@ package org.jboss.narayana.mgmt.mbean.jta;
 
 import org.jboss.narayana.mgmt.annotation.MXBeanDescription;
 
+import javax.management.MXBean;
+
+@MXBean
 @MXBeanDescription("Management view of an XAResource participating in a transaction")
 public interface XAResourceRecordBeanMBean extends XAResourceMBean {
 }

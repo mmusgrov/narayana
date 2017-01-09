@@ -18,7 +18,7 @@
  * (C) 2010,
  * @author JBoss, by Red Hat.
  */
-package org.jboss.narayana.mgmt.mbean.arjuna;
+package com.hp.mwtests.ts.arjuna.tools;
 
 import static org.junit.Assert.assertTrue;
 

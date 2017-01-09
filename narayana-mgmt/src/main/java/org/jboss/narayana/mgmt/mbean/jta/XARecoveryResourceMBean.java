@@ -24,11 +24,14 @@ package org.jboss.narayana.mgmt.mbean.jta;
 import org.jboss.narayana.mgmt.annotation.MXBeanDescription;
 import org.jboss.narayana.mgmt.mbean.arjuna.OSEntryBeanMBean;
 
+import javax.management.MXBean;
+
 /**
  * MBean for XAResourceRecords
  *
  * @author Mike Musgrove
  */
+@MXBean
 @MXBeanDescription("Management view of a JTS XARecoveryResource participating in a transaction")
 public interface XARecoveryResourceMBean extends OSEntryBeanMBean {
     byte[] getGlobalTransactionId();

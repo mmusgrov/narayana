@@ -8,6 +8,7 @@ import com.arjuna.ats.arjuna.objectstore.StoreManager;
 import com.arjuna.ats.arjuna.recovery.RecoveryManager;
 import com.arjuna.ats.arjuna.state.InputObjectState;
 import com.arjuna.common.internal.util.propertyservice.BeanPopulator;
+import org.jboss.narayana.mgmt.internal.arjuna.OSBTypeHandler;
 import org.jboss.narayana.mgmt.internal.arjuna.ObjStoreBrowser;
 import org.jboss.narayana.mgmt.util.JMXServer;
 import com.arjuna.ats.internal.arjuna.objectstore.hornetq.HornetqJournalEnvironmentBean;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public class LogBrowser {
     private static Map<StoreKey, LogBrowser> browsers = new HashMap<>();
@@ -64,6 +66,12 @@ public class LogBrowser {
     public static synchronized LogBrowser getBrowser(StoreKey storeKey) throws Exception {
         if (oa == null)
             initOrb();
+
+        if (storeKey == null) {
+            storeKey = new StoreKey(
+                    BeanPopulator.getDefaultInstance(ObjectStoreEnvironmentBean.class).getObjectStoreType(),
+                    BeanPopulator.getDefaultInstance(ObjectStoreEnvironmentBean.class).getObjectStoreDir());
+        }
 
         if (!browsers.containsKey(storeKey))
             browsers.put(storeKey, createBrowser(storeKey));
@@ -116,30 +124,20 @@ public class LogBrowser {
         // or just go directly via ObjStoreBrowser
     }
 
-    public void dispose() {
-        StoreManager.shutdown();
-
-        if (osb != null)
-            osb.stop();
-
-
-        if (orb != null) {
-            oa.destroy();
-            orb.shutdown();
-        }
-
-        try {
-            RecoveryManager.manager().terminate(false); // TODO does this cause a hang
-        } catch (Throwable ignore) {
-        }
-
-        browsers.remove(storeKey);
-    }
-
     private static LogBrowser createBrowser(StoreKey storeKey) throws Exception {
         setupStore(storeKey);
 
-        ObjStoreBrowser osb = new ObjStoreBrowser(storeKey.getLocation());
+        ObjStoreBrowser osb = new ObjStoreBrowser(storeKey.getLocation(), new ObjStoreTypeInfo() {
+
+            @Override
+            public OSBTypeHandler[] getHandlers() {
+                return Stream.of(
+                        org.jboss.narayana.mgmt.mbean.arjuna.OSBTypeHandlers.getHandlers(),
+                        org.jboss.narayana.mgmt.mbean.jta.OSBTypeHandlers.getHandlers(),
+                        org.jboss.narayana.mgmt.mbean.jts.OSBTypeHandlers.getHandlers()
+                ).flatMap(Stream::of).toArray(OSBTypeHandler[]::new);
+            }
+        });
         osb.setExposeAllRecordsAsMBeans(true);
         osb.start(); // only required if we want to use JMX
 
@@ -180,7 +178,7 @@ public class LogBrowser {
     }
 
     private static void initOrb() throws InvalidName {
-        final Properties initORBProperties = new Properties();
+/*        final Properties initORBProperties = new Properties();
         initORBProperties.setProperty("com.sun.CORBA.POA.ORBServerId", "1");
         initORBProperties.setProperty("com.sun.CORBA.POA.ORBPersistentServerPort", ""
                 + BeanPopulator.getDefaultInstance(JTSEnvironmentBean.class).getRecoveryManagerPort());
@@ -192,10 +190,41 @@ public class LogBrowser {
         oa.initOA();
 
         ORBManager.setORB(orb);
-        ORBManager.setPOA(oa);
+        ORBManager.setPOA(oa);*/
+
+        // trigger loading of startRecoveryActivators
+        RecoveryManager.manager();
+    }
+
+    public void dispose() {
+        StoreManager.shutdown();
+
+/*        if (osb != null)
+            osb.stop();
+
+
+        if (orb != null) {
+            oa.destroy();
+            orb.shutdown();
+        }*/
+
+        try {
+            RecoveryManager.manager().terminate(false); // TODO does this cause a hang
+        } catch (Throwable ignore) {
+        }
+
+        browsers.remove(storeKey);
     }
 
     public void probe() throws MBeanException {
         osb.probe();
+    }
+
+    public ObjStoreBrowser getImpl() {
+        return osb;
+    }
+
+    public void setExposeAllRecordsAsMBeans(boolean exposeAllRecordsAsMBeans) {
+        osb.setExposeAllRecordsAsMBeans(exposeAllRecordsAsMBeans);
     }
 }
