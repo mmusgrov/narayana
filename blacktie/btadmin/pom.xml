@@ -304,8 +304,45 @@
                     <scope>provided</scope>
                 </dependency>
             </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>2.10</version>
+                        <executions>
+                            <execution>
+                                <id>copy-dependencies</id>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>copy</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>org.jboss.narayana.jts</groupId>
+                                            <artifactId>${java.corba.patch.name}</artifactId>
+                                            <version>${project.version}</version>
+                                            <type>${project.packaging}</type>
+                                        </artifactItem>
+                                        <artifactItem>
+                                            <groupId>org.jboss.narayana.jta</groupId>
+                                            <artifactId>narayana-jta-j9-module</artifactId>
+                                            <version>${project.version}</version>
+                                            <type>jar</type>
+                                            <outputDirectory>${project.build.directory}/upgrademodulepath</outputDirectory>
+                                        </artifactItem>
+                                    </artifactItems>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
             <properties>
-                <jvm.args.jdk9>--add-modules java.corba</jvm.args.jdk9>
+                <java.corba.patch.name>idlj.java.corba.patch</java.corba.patch.name>
+                <java.corba.patch.jar>${project.build.directory}/dependency/${java.corba.patch}-${project.version}.jar</java.corba.patch.jar>
+                <jvm.args.jdk9>--add-modules java.corba --patch-module java.corba=${java.corba.patch.jar} --upgrade-module-path ${project.build.directory}/upgrademodulepath</jvm.args.jdk9>
             </properties>
         </profile>
   </profiles>
