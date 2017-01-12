@@ -83,7 +83,7 @@
 					<systemProperties>
 						<property>
 							<name>TEST_REPORTS_DIR</name>
-							<value>${project.build.directory}/surefire-reports</value>
+							<value>${test.reports.dir}</value>
 						</property>
 						<property>
 							<name>CLIENT_SERVER_EXE</name>
@@ -275,6 +275,7 @@
 	<properties>
 		<test.output.type>shared</test.output.type>
 		<test.excludes>**/cs.cxx</test.excludes>
+		<test.reports.dir>${project.build.directory}/surefire-reports</test.reports.dir>
 	</properties>
 
         <profiles>
@@ -347,6 +348,7 @@
                 <java.corba.patch.name>idlj.java.corba.patch</java.corba.patch.name>
                 <java.corba.patch.jar>${project.build.directory}/dependency/${java.corba.patch}-${project.version}.jar</java.corba.patch.jar>
                 <jvm.args.jdk9>--add-modules java.corba --patch-module java.corba=${java.corba.patch.jar} --upgrade-module-path ${project.build.directory}/upgrademodulepath</jvm.args.jdk9>
+                <test.reports.dir>${project.build.directory}/surefire-j9-reports</test.reports.dir>
             </properties>
           </profile>
         </profiles>
