@@ -76,42 +76,42 @@
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-            <configuration>
-              <excludes>
-                <exclude>**/*.*</exclude>
-              </excludes>
-            </configuration>
+        <configuration>
+          <excludes>
+            <exclude>**/*.*</exclude>
+          </excludes>
+        </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
-              <artifactSet>
-                <includes>
-                  <include>org.jboss.narayana:common</include>
-                  <include>org.jboss.narayana.arjunacore:arjuna</include>
-                  <include>org.jboss.narayana.arjunacore:txoj</include>
-                  <include>org.jboss.narayana.jta:jta</include>
-                  <include>org.jboss.narayana.jta:jdbc</include>
-                  <include>org.jboss.narayana.jta:jms</include>
-                  <include>org.jboss.narayana.jta:cdi</include>
-                  <include>org.jboss.narayana.jts:orbportability</include>
-                  <include>org.jboss.narayana.jts:jts</include>
-                  <include>org.jboss.narayana.jts:idlj-idl</include>
-                  <include>org.jboss.narayana.jts:jtax</include>
-                </includes>
-              </artifactSet>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
+        <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-shade-plugin</artifactId>
+            <executions>
+                <execution>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>shade</goal>
+                    </goals>
+                    <configuration>
+                        <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+                        <artifactSet>
+                            <includes>
+                                <include>org.jboss.narayana:common</include>
+                                <include>org.jboss.narayana.arjunacore:arjuna</include>
+                                <include>org.jboss.narayana.arjunacore:txoj</include>
+                                <include>org.jboss.narayana.jta:jta</include>
+                                <include>org.jboss.narayana.jta:jdbc</include>
+                                <include>org.jboss.narayana.jta:jms</include>
+                                <include>org.jboss.narayana.jta:cdi</include>
+                                <include>org.jboss.narayana.jts:orbportability</include>
+                                <include>org.jboss.narayana.jts:jts</include>
+                                <include>org.jboss.narayana.jts:idlj-idl</include>
+                                <include>org.jboss.narayana.jts:jtax</include>
+                            </includes>
+                        </artifactSet>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>buildnumber-maven-plugin</artifactId>

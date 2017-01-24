@@ -51,9 +51,6 @@
         <activation>
           <jdk>[1.9,)</jdk>
         </activation>
-        <modules>
-            <module>narayana-jts-idlj-j9</module>
-        </modules>
         <build>
           <plugins>
            <plugin>

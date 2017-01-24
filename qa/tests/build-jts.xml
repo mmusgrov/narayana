@@ -53,7 +53,7 @@
         <if>
 	         <equals arg1="${orbtype}" arg2="ibmorb" />
         <then>
-            <property name="jts.idl.tests.jar" value="${jts.build.dir}/idl/${orbtype}/target/idlj-idl-j9-${narayana.version}-tests.jar"/>
+            <property name="jts.idl.tests.jar" value="${jts.build.dir}/idl/${orbtype}/target/idlj-idl-${narayana.version}-tests.jar"/>
             <property name="org.jboss.jbossts.qa.orb.home" value="${env.JAVA_HOME}"/>
             <property name="org.jboss.jbossts.qa.orb.classpath" value="${org.jboss.jbossts.qa.orb.home}/lib/ibmorbtools.jar;${org.jboss.jbossts.qa.orb.home}/jre/lib/ibmorb.jar"/>
             <property name="idl.params1" value="include='${org.jboss.jbossts.qa.orb.home}/lib;${org.jboss.jbossts.qa.ts.home}/narayana-full-${narayana.version}/idl/;../../ArjunaJTS/idl/src/test/idl/TestModule.idl',classpath='${org.jboss.jbossts.qa.orb.classpath}'"/>
@@ -64,7 +64,7 @@
         <elseif>
 	         <equals arg1="${orbtype}" arg2="idlj" />
         <then>
-            <property name="jts.idl.tests.jar" value="${jts.build.dir}/idl/${orbtype}/target/idlj-idl-j9-${narayana.version}-tests.jar"/>
+            <property name="jts.idl.tests.jar" value="${jts.build.dir}/idl/${orbtype}/target/idlj-idl-${narayana.version}-tests.jar"/>
 		    <property name="org.jboss.jbossts.qa.orb.home" value="${env.JAVA_HOME}"/>
             <property name="org.jboss.jbossts.qa.orb.classpath" value="${org.jboss.jbossts.qa.orb.home}/lib/idl.jar;${org.jboss.jbossts.qa.orb.home}/lib/logkit-1.2.jar"/>
             <property name="idl.params1" value="include='${org.jboss.jbossts.qa.orb.home}/lib;${org.jboss.jbossts.qa.ts.home}/narayana-full-${narayana.version}/idl/;${jts.build.dir}/idl/src/test/idl/TestModule.idl',classpath='${org.jboss.jbossts.qa.orb.classpath}'"/>
@@ -74,9 +74,9 @@
         </then>
         </elseif>
         <elseif>
-	         <equals arg1="${orbtype}" arg2="idlj-j9" />
+	         <equals arg1="${orbtype}" arg2="idlj" />
         <then>
-            <property name="jts.idl.tests.jar" value="${jts.build.dir}/idl/idlj-j9/target/idlj-idl-j9-${narayana.version}-tests.jar"/>
+            <property name="jts.idl.tests.jar" value="${jts.build.dir}/idl/idlj/target/idlj-idl-${narayana.version}-tests.jar"/>
 		    <property name="org.jboss.jbossts.qa.orb.home" value="${env.JAVA_HOME}"/>
             <property name="org.jboss.jbossts.qa.orb.classpath" value="${org.jboss.jbossts.qa.orb.home}/lib/idl.jar;${org.jboss.jbossts.qa.orb.home}/lib/logkit-1.2.jar"/>
             <property name="idl.params1" value="include='${org.jboss.jbossts.qa.orb.home}/include;${org.jboss.jbossts.qa.ts.home}/narayana-full-${narayana.version}/idl/;${jts.build.dir}/idl/src/test/idl/TestModule.idl',classpath='${org.jboss.jbossts.qa.orb.classpath}'"/>
@@ -91,7 +91,7 @@
         <elseif>
 	        <equals arg1="${orbtype}" arg2="jacorb" />
         <then>
-            <property name="jts.idl.tests.jar" value="${jts.build.dir}/idl/${orbtype}/target/idlj-idl-j9-${narayana.version}-tests.jar"/>
+            <property name="jts.idl.tests.jar" value="${jts.build.dir}/idl/${orbtype}/target/idlj-idl-${narayana.version}-tests.jar"/>
 		    <property name="org.jboss.jbossts.qa.orb.home" value="${org.jboss.jbossts.qa.ts.home}/narayana-full-${narayana.version}/jacorb"/>
 		    <property name="org.jboss.jbossts.qa.orb.classpath" value="${org.jboss.jbossts.qa.orb.home}/lib/idl.jar;${org.jboss.jbossts.qa.orb.home}/lib/logkit-1.2.jar"/>
             <property name="idl.params1" value="include='${org.jboss.jbossts.qa.ts.home}/narayana-full-${narayana.version}/idl/;${org.jboss.jbossts.qa.ts.home}/narayana-full-${narayana.version}/jacorb/idl/omg;${jts.build.dir}/idl/src/test/idl/TestModule.idl',classpath='${org.jboss.jbossts.qa.orb.classpath}'"/>

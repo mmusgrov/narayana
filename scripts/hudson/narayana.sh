@@ -234,7 +234,8 @@ function build_narayana {
 
   if [ $JAVA_VERSION = "9-ea" ]; then
     ORBARG="-Djacorb-disabled -Didlj-disabled -Dopenjdk-disabled"
-    export MAVEN_OPTS="--add-modules java.corba $MAVEN_OPTS"
+    export MAVEN_OPTS="--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED --add-opens java.base/java.text=ALL-UNNAMED --add-opens java.desktop/java.awt.font=ALL-UNNAMED $MAVEN_OPTS"
+
   elif [ $IBM_ORB = 1 ]; then
     ORBARG="-Dibmorb-enabled -Djacorb-disabled -Didlj-disabled -Dopenjdk-disabled"
     ${JAVA_HOME}/bin/java -version 2>&1 | grep IBM
