@@ -33,6 +33,7 @@ package com.arjuna.ats.internal.jta.transaction.jts;
 
 import javax.transaction.xa.Xid;
 
+import com.arjuna.ats.jts.utils.Utility;
 import org.omg.CORBA.SystemException;
 import org.omg.CORBA.TRANSACTION_ROLLEDBACK;
 import org.omg.CORBA.WrongTransaction;
@@ -107,7 +108,7 @@ public class AtomicTransaction extends
 		}
 		catch (Unavailable e)
 		{
-			_theStatus = Status.StatusNoTransaction;
+			_theStatus = Utility.canonicalStatus(Status.StatusNoTransaction);
 
 			throw new NoTransaction();
 		}
@@ -166,7 +167,7 @@ public class AtomicTransaction extends
 		}
 		catch (Unavailable e)
 		{
-			_theStatus = Status.StatusNoTransaction;  // unknown?
+			_theStatus = Utility.canonicalStatus(Status.StatusNoTransaction);  // unknown?
 
 			throw new NoTransaction();
 		}

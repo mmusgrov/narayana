@@ -60,14 +60,14 @@ public class UtilityTest
     @Test
     public void testPrint ()
     {
-        Utility.printStatus(new PrintWriter(System.err), org.omg.CosTransactions.Status.StatusNoTransaction);
+        Utility.printStatus(new PrintWriter(System.err), Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction));
         
         String vote = Utility.stringVote(org.omg.CosTransactions.Vote.VoteCommit);
         
         assertTrue(vote != null);
         assertEquals(vote, "CosTransactions::VoteCommit");
         
-        String status = Utility.stringStatus(org.omg.CosTransactions.Status.StatusNoTransaction);
+        String status = Utility.stringStatus(Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction));
         
         assertTrue(status != null);
         assertEquals(status, "CosTransactions::StatusNoTransaction");

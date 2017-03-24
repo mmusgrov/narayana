@@ -95,7 +95,7 @@ public class AtomicTransaction
         }
 
 		_theAction = null;
-		_theStatus = Status.StatusNoTransaction;
+		_theStatus = Utility.canonicalStatus(Status.StatusNoTransaction);
 		_timeout = get_timeout();
 	}
 
@@ -279,7 +279,7 @@ public class AtomicTransaction
 		}
 		catch (NoTransaction e)
 		{
-			_theStatus = Status.StatusNoTransaction;
+			_theStatus = Utility.canonicalStatus(Status.StatusNoTransaction);
 
 			throw e;
 		}
@@ -368,7 +368,7 @@ public class AtomicTransaction
 		}
 		catch (NoTransaction e)
 		{
-			_theStatus = Status.StatusNoTransaction;
+			_theStatus = Utility.canonicalStatus(Status.StatusNoTransaction);
 
 			throw e;
 		}
@@ -668,7 +668,7 @@ public class AtomicTransaction
         		 */
         		
         		if (_theAction == null)
-        		    _theStatus = org.omg.CosTransactions.Status.StatusNoTransaction;
+        		    _theStatus = Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction);
 		}
 	}
 

@@ -23,6 +23,7 @@ package com.hp.mwtests.ts.jts.interposition;
 
 import java.io.File;
 
+import com.arjuna.ats.jts.utils.Utility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -68,7 +69,7 @@ public final class ServerFactoryUnitTest extends TestBase {
 
     @Test
     public void testGetOSStatusNoTransaction() throws NoTransaction, SystemException {
-        Assert.assertEquals(Status.StatusNoTransaction, ServerFactory.getOSStatus(new Uid()));
+        Assert.assertEquals(Utility.canonicalStatus(Status.StatusNoTransaction), ServerFactory.getOSStatus(new Uid()));
     }
 
     @Test

@@ -33,6 +33,7 @@ package com.arjuna.ats.internal.jts.recovery.transactions;
 
 import java.util.Hashtable;
 
+import com.arjuna.ats.jts.utils.Utility;
 import org.omg.CORBA.SystemException;
 import org.omg.CosTransactions.Resource;
 import org.omg.CosTransactions.Status;
@@ -99,7 +100,7 @@ public class TransactionCache
 	    return cacheItem.getStatus();
 	}
 
-	return Status.StatusNoTransaction;  // used to mean it isn't cached
+	return Utility.canonicalStatus(Status.StatusNoTransaction);  // used to mean it isn't cached
     }
 
     /**

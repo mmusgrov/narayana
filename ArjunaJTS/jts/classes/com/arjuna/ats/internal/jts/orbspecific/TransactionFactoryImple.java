@@ -480,7 +480,7 @@ public class TransactionFactoryImple extends
 					org.omg.CosTransactions.Status s = getOSStatus(u);
 
 					if ((s == org.omg.CosTransactions.Status.StatusUnknown)
-							|| (s == org.omg.CosTransactions.Status.StatusNoTransaction))
+							|| (s == Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction)))
 					{
 						return ServerFactory.getCurrentStatus(u); // check it's
 																  // not a
@@ -551,7 +551,7 @@ public class TransactionFactoryImple extends
 		 */
 
 		if ((s == org.omg.CosTransactions.Status.StatusUnknown)
-				|| (s == org.omg.CosTransactions.Status.StatusNoTransaction))
+				|| (s == Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction)))
 		{
 			return getOSStatus(u);
 		}
@@ -592,7 +592,7 @@ public class TransactionFactoryImple extends
 				case StateStatus.OS_UNKNOWN:
 				    final Status heuristicStatus = getHeuristicStatus(u, recoveryStore);
 				    
-				    if (org.omg.CosTransactions.Status.StatusNoTransaction.equals(heuristicStatus)
+				    if (Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction).equals(heuristicStatus)
 				            || org.omg.CosTransactions.Status.StatusUnknown.equals(heuristicStatus)) {
 				        
 				        // means no state present, so check if server transaction
@@ -879,7 +879,7 @@ public class TransactionFactoryImple extends
 	    
         switch (status) {
         case StateStatus.OS_UNKNOWN:
-            return org.omg.CosTransactions.Status.StatusNoTransaction;
+            return Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction);
         case StateStatus.OS_COMMITTED:
             return org.omg.CosTransactions.Status.StatusCommitted;
         case StateStatus.OS_UNCOMMITTED:

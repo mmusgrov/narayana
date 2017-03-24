@@ -35,6 +35,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.arjuna.ats.jts.utils.Utility;
 import org.junit.Test;
 import org.omg.CosTransactions.Status;
 
@@ -53,7 +54,7 @@ public class AssumedCompleteUnitTest extends TestBase
     {
         AssumedCompleteTransaction tx = new AssumedCompleteTransaction(new Uid());
         
-        assertEquals(tx.getOriginalStatus(), Status.StatusNoTransaction);
+        assertEquals(tx.getOriginalStatus(), Utility.canonicalStatus(Status.StatusNoTransaction));
         
         assertTrue(tx.type() != null);
         assertEquals(AssumedCompleteTransaction.typeName(), tx.type());
@@ -76,7 +77,7 @@ public class AssumedCompleteUnitTest extends TestBase
     {
         AssumedCompleteServerTransaction tx = new AssumedCompleteServerTransaction(new Uid());
         
-        assertEquals(tx.getOriginalStatus(), Status.StatusNoTransaction);
+        assertEquals(tx.getOriginalStatus(), Utility.canonicalStatus(Status.StatusNoTransaction));
         
         assertTrue(tx.type() != null);
         assertEquals(AssumedCompleteServerTransaction.typeName(), tx.type());

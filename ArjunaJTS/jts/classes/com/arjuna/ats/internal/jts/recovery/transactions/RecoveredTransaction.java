@@ -192,7 +192,7 @@ public class RecoveredTransaction extends ArjunaTransactionImple implements
         }
 
         if ((theStatus == Status.StatusPrepared)
-                || (theStatus == Status.StatusCommitting)
+                || (theStatus == Utility.canonicalStatus(Status.StatusCommitting))
                 || (theStatus == Status.StatusCommitted))
         {
             phase2Commit(_reportHeuristics);
@@ -202,7 +202,7 @@ public class RecoveredTransaction extends ArjunaTransactionImple implements
             _txStatus = Status.StatusCommitted;
         }
         else if ((theStatus == Status.StatusRolledBack)
-                || (theStatus == Status.StatusRollingBack)
+                || (theStatus == Utility.canonicalStatus(Status.StatusRollingBack))
                 || (theStatus == Status.StatusMarkedRollback))
         {
             phase2Abort(_reportHeuristics);

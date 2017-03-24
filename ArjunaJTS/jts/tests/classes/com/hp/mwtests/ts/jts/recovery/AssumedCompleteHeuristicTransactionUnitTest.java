@@ -24,6 +24,7 @@ package com.hp.mwtests.ts.jts.recovery;
 import java.io.IOException;
 import java.util.Date;
 
+import com.arjuna.ats.jts.utils.Utility;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,7 +53,7 @@ public final class AssumedCompleteHeuristicTransactionUnitTest {
     
     @Test
     public void testGetOriginalStatus() {
-        Assert.assertEquals(Status.StatusNoTransaction, transaction.getOriginalStatus());
+        Assert.assertEquals(Utility.canonicalStatus(Status.StatusNoTransaction), transaction.getOriginalStatus());
     }
     
     @Test

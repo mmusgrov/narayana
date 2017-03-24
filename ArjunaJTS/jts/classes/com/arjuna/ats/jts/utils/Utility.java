@@ -33,6 +33,8 @@ package com.arjuna.ats.jts.utils;
 
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+
+import com.arjuna.ats.jts.common.jtsPropertyManager;
 import com.arjuna.ats.jts.logging.jtsLogger;
 import org.omg.CORBA.BAD_PARAM;
 import org.omg.CosTransactions.PropagationContext;
@@ -46,6 +48,11 @@ import com.arjuna.ats.arjuna.coordinator.TxControl;
 import com.arjuna.ats.internal.jts.utils.Helper;
 import com.arjuna.ats.jts.exceptions.ExceptionCodes;
 
+import static org.omg.CosTransactions.Status.StatusCommitting;
+import static org.omg.CosTransactions.Status.StatusNoTransaction;
+import static org.omg.CosTransactions.Status.StatusPreparing;
+import static org.omg.CosTransactions.Status.StatusRollingBack;
+
 /**
  * Some useful utility functions for the OTS. Use with care!
  *
@@ -56,6 +63,8 @@ import com.arjuna.ats.jts.exceptions.ExceptionCodes;
 
 public class Utility
 {
+    private static boolean USE_OTS_21_SPEC = jtsPropertyManager.getJTSEnvironmentBean().isUseOTS12Spec();
+
     public static String getHierarchy (PropagationContext ctx)
     {
 	int depth = ((ctx.parents != null) ? ctx.parents.length : 0);
@@ -181,7 +190,7 @@ public class Utility
 
     public static String stringStatus (org.omg.CosTransactions.Status res)
     {
-	switch (res.value())
+	switch (canonicalStatus(res).value())
 	{
 	case Status._StatusActive:
 	    return "CosTransactions::StatusActive";
@@ -208,6 +217,23 @@ public class Utility
 	}
     }
 
+    public static Status canonicalStatus(Status status) {
+        if (USE_OTS_21_SPEC) {
+            // 1.2 int values StatusPreparing, StatusCommitting, StatusRollingBack, StatusNoTransaction
+            // 1.4 int values StatusNoTransaction, StatusPreparing, StatusCommitting, StatusRollingBack
+
+            if (status.equals(StatusNoTransaction))
+                return StatusPreparing;
+            else if (status.equals(StatusPreparing))
+                return StatusCommitting;
+            else if (status.equals(StatusCommitting))
+                return StatusRollingBack;
+            else if (status.equals(StatusRollingBack))
+                return StatusNoTransaction;
+        }
+
+        return status;
+    }
     /*
      * Any need for the inverse operation?
      * Could easily do it for JBoss transactions only.

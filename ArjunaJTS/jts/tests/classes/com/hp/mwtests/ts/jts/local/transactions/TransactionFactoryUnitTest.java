@@ -149,7 +149,7 @@ public class TransactionFactoryUnitTest extends TestBase
         
         assertEquals(theUid, tx.get_uid());
 
-        assertEquals(factory.getOSStatus(tx.get_uid()), org.omg.CosTransactions.Status.StatusNoTransaction); // no state in OS yet!
+        assertEquals(factory.getOSStatus(tx.get_uid()), Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction)); // no state in OS yet!
         
         PropagationContext ctx = tx.get_coordinator().get_txcontext();       
         Control cont = factory.recreate(ctx);       

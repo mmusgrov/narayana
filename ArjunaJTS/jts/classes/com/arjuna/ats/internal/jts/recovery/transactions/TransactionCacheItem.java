@@ -32,6 +32,7 @@
 
 package com.arjuna.ats.internal.jts.recovery.transactions;
 
+import com.arjuna.ats.jts.utils.Utility;
 import org.omg.CosTransactions.Status;
 
 import com.arjuna.ats.arjuna.common.Uid;
@@ -60,7 +61,7 @@ class TransactionCacheItem
 	_attempts=0;
 	// NoTransaction is used to mean that the status is not
 	// actually known
-	_knownStatus = Status.StatusNoTransaction;
+	_knownStatus = Utility.canonicalStatus(Status.StatusNoTransaction);
 	loadTransaction(true);
     }
     

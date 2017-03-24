@@ -65,5 +65,4 @@ public class StatusConverter
 			return javax.transaction.Status.STATUS_UNKNOWN;
 		}
 	}
-
 }

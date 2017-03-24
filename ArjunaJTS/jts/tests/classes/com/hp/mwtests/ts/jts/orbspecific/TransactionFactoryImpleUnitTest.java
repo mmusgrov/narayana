@@ -26,6 +26,7 @@ import java.io.File;
 import com.arjuna.ats.internal.jts.recovery.transactions.AssumedCompleteHeuristicServerTransaction;
 import com.arjuna.ats.internal.jts.recovery.transactions.AssumedCompleteServerTransaction;
 import com.arjuna.ats.internal.jts.recovery.transactions.AssumedCompleteTransaction;
+import com.arjuna.ats.jts.utils.Utility;
 import junit.framework.Assert;
 
 import org.junit.After;
@@ -82,7 +83,7 @@ public final class TransactionFactoryImpleUnitTest extends TestBase {
 
     @Test
     public void testGetOSStatusNoTransaction() throws NoTransaction, SystemException {
-        Assert.assertEquals(Status.StatusNoTransaction, transactionFactory.getOSStatus(new Uid()));
+        Assert.assertEquals(Utility.canonicalStatus(Status.StatusNoTransaction), transactionFactory.getOSStatus(new Uid()));
     }
 
     @Test
@@ -114,7 +115,7 @@ public final class TransactionFactoryImpleUnitTest extends TestBase {
     @Test
     public void testGetOSStatusWithAssumedCompleteServerTransaction() throws Exception {
         checkStatus(new AssumedCompleteServerTransaction(new Uid()), AssumedCompleteServerTransaction.typeName(),
-                Status.StatusNoTransaction);
+                Utility.canonicalStatus(Status.StatusNoTransaction));
     }
 
     private void clearObjectStore() {

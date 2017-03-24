@@ -34,6 +34,7 @@ package com.arjuna.ats.internal.jts.orbspecific.recovery.recoverycoordinators;
 import com.arjuna.ats.arjuna.exceptions.ObjectStoreException;
 import com.arjuna.ats.arjuna.objectstore.StateStatus;
 import com.arjuna.ats.arjuna.objectstore.StoreManager;
+import com.arjuna.ats.jts.utils.Utility;
 import org.omg.CORBA.SystemException;
 import org.omg.CosTransactions.Inactive;
 import org.omg.CosTransactions.NotPrepared;
@@ -153,7 +154,7 @@ public class GenericRecoveryCoordinator extends org.omg.CosTransactions.Recovery
 	    transactionActive = false;
 	}
 
-	if (currentStatus == Status.StatusNoTransaction)
+	if (currentStatus == Utility.canonicalStatus(Status.StatusNoTransaction))
 	{
 	    /*
 	     * There is no intentions list, so the transaction either

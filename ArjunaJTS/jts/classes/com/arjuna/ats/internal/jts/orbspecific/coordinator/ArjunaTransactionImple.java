@@ -1208,7 +1208,7 @@ public class ArjunaTransactionImple extends
 
 			// https://jira.jboss.org/jira/browse/JBTM-608
 
-			if ((currentStatus == Status.StatusActive) || (currentStatus == Status.StatusPreparing))// is transaction still
+			if ((currentStatus == Status.StatusActive) || (currentStatus == Utility.canonicalStatus(Status.StatusPreparing)))// is transaction still
 			    // running?
 			{
 			    synchronized (this)
@@ -1802,20 +1802,20 @@ public class ArjunaTransactionImple extends
 				theStatus = Status.StatusMarkedRollback;
 				break;
 			case ActionStatus.PREPARING:
-				theStatus = Status.StatusPreparing;
+				theStatus = Utility.canonicalStatus(Status.StatusPreparing);
 				break;
 			case ActionStatus.COMMITTING:
-				theStatus = Status.StatusCommitting;
+				theStatus = Utility.canonicalStatus(Status.StatusCommitting);
 				break;
 			case ActionStatus.ABORTING:
-				theStatus = Status.StatusRollingBack;
+				theStatus = Utility.canonicalStatus(Status.StatusRollingBack);
 				break;
 			default:
 				theStatus = Status.StatusUnknown;
 			}
 		}
 		else
-			theStatus = Status.StatusNoTransaction;
+			theStatus = Utility.canonicalStatus(Status.StatusNoTransaction);
 
 		return theStatus;
 	}

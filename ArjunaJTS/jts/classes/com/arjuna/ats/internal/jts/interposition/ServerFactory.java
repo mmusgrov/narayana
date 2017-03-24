@@ -33,6 +33,7 @@ package com.arjuna.ats.internal.jts.interposition;
 
 import java.util.Enumeration;
 
+import com.arjuna.ats.jts.utils.Utility;
 import org.omg.CORBA.BAD_PARAM;
 import org.omg.CORBA.SystemException;
 import org.omg.CosTransactions.Control;
@@ -122,7 +123,7 @@ public class ServerFactory
 			}
 			catch (NoTransaction ex)
 			{
-				return org.omg.CosTransactions.Status.StatusNoTransaction;
+				return Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction);
 			}
 			catch (Exception e) {
                 jtsLogger.i18NLogger.warn_interposition_sfcaught("ServerFactory.getCurrentStatus", uid, e);
@@ -158,7 +159,7 @@ public class ServerFactory
         }
 
 		if ((s == org.omg.CosTransactions.Status.StatusUnknown)
-				|| (s == org.omg.CosTransactions.Status.StatusNoTransaction))
+				|| (s == Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction)))
 		{
 			return getOSStatus(u);
 		}
@@ -286,7 +287,7 @@ public class ServerFactory
 
         switch (status) {
         case StateStatus.OS_UNKNOWN:
-            return org.omg.CosTransactions.Status.StatusNoTransaction;
+            return Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction);
         case StateStatus.OS_COMMITTED:
             return org.omg.CosTransactions.Status.StatusCommitted;
         case StateStatus.OS_UNCOMMITTED:

@@ -54,6 +54,8 @@ public class JTSEnvironmentBean implements JTSEnvironmentBeanMBean
 
     @FullPropertyName(name = "com.arjuna.ats.jts.recovery.commitTransactionRetryLimit")
     private volatile int commitedTransactionRetryLimit = 3;
+    private volatile int transactionServiceId = 0xDEADBEEF;
+    private boolean useOTS12Spec = false;
 
 
     /**
@@ -414,5 +416,21 @@ public class JTSEnvironmentBean implements JTSEnvironmentBeanMBean
     public void setCommitedTransactionRetryLimit(int commitedTransactionRetryLimit)
     {
         this.commitedTransactionRetryLimit = commitedTransactionRetryLimit;
+    }
+
+    public int getTransactionServiceId() {
+        return transactionServiceId;
+    }
+
+    public void setTransactionServiceId(int transactionServiceId) {
+        this.transactionServiceId = transactionServiceId;
+    }
+
+    public boolean isUseOTS12Spec() {
+        return useOTS12Spec;
+    }
+
+    public void setUseOTS12Spec(boolean useOTS12Spec) {
+        this.useOTS12Spec = useOTS12Spec;
     }
 }

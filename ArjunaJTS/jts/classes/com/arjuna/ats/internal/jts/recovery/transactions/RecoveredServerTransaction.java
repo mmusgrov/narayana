@@ -200,7 +200,7 @@ public class RecoveredServerTransaction extends ServerTransaction implements
             }
         }
 
-        if ((theStatus == Status.StatusCommitting)
+        if ((theStatus == Utility.canonicalStatus(Status.StatusCommitting))
                 || (theStatus == Status.StatusCommitted))
         {
             phase2Commit(_reportHeuristics);
@@ -210,9 +210,9 @@ public class RecoveredServerTransaction extends ServerTransaction implements
             _txStatus = Status.StatusCommitted;
         }
         else if ((theStatus == Status.StatusRolledBack)
-                || (theStatus == Status.StatusRollingBack)
+                || (theStatus == Utility.canonicalStatus(Status.StatusRollingBack))
                 || (theStatus == Status.StatusMarkedRollback)
-                || (theStatus == Status.StatusNoTransaction))
+                || (theStatus == Utility.canonicalStatus(Status.StatusNoTransaction)))
         {
             phase2Abort(_reportHeuristics);
 
@@ -320,7 +320,7 @@ public class RecoveredServerTransaction extends ServerTransaction implements
                     theStatus = org.omg.CosTransactions.Status.StatusRolledBack;
 
                     // theStatus =
-                    // org.omg.CosTransactions.Status.StatusNoTransaction;
+                    // Utility.canonicalStatus(Status.StatusNoTransaction);
 
                     if (jtsLogger.logger.isDebugEnabled()) {
                         jtsLogger.logger.debug("RecoveredServerTransaction.getStatusFromParent -" +

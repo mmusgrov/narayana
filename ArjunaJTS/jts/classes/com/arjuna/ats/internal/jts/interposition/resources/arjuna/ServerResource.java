@@ -40,6 +40,7 @@ import com.arjuna.ats.internal.jts.ORBManager;
 import com.arjuna.ats.internal.jts.orbspecific.interposition.ServerControl;
 import com.arjuna.ats.internal.jts.orbspecific.interposition.resources.arjuna.ServerNestedAction;
 import com.arjuna.ats.jts.logging.jtsLogger;
+import com.arjuna.ats.jts.utils.Utility;
 
 /**
  * The base class from which interposed resources derive.
@@ -156,7 +157,7 @@ public class ServerResource
 
                 if ((nestedStatus != org.omg.CosTransactions.Status.StatusRolledBack)
                         && (nestedStatus != org.omg.CosTransactions.Status.StatusCommitted)
-                        && (nestedStatus != org.omg.CosTransactions.Status.StatusNoTransaction))
+                        && (nestedStatus != Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction)))
                 {
                     child.rollback_subtransaction();
                 }
@@ -208,7 +209,7 @@ public class ServerResource
             if (_theControl != null)
                 return _theControl.getImplHandle().get_status();
             else
-                return org.omg.CosTransactions.Status.StatusNoTransaction;
+                return Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction);
         }
         catch (Exception e)
         {

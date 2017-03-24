@@ -187,7 +187,7 @@ private Status getStatus (Uid transactionUid, FactoryContactItem item, boolean c
 	     * factory should still have a reference to the transaction!
 	     */
 
-	    if (otsStatus == Status.StatusNoTransaction)
+	    if (otsStatus == Utility.canonicalStatus(Status.StatusNoTransaction))
 	    {
 		otsStatus = factory.getStatus(otid);
 
@@ -340,11 +340,11 @@ private Status getStatus (Uid transactionUid, FactoryContactItem item, boolean c
 		 * (local) process then we can direct recovery now.
 		 */
 
-		if (s == Status.StatusCommitting)
+		if (s == Utility.canonicalStatus(Status.StatusCommitting))
 		    return Status.StatusCommitted;
 		else
 		{
-		    if (s == Status.StatusRollingBack)
+		    if (s == Utility.canonicalStatus(Status.StatusRollingBack))
 			return Status.StatusRolledBack;
 		}
 
@@ -352,7 +352,7 @@ private Status getStatus (Uid transactionUid, FactoryContactItem item, boolean c
             }
             catch (NoTransaction e1)
             {
-                return Status.StatusNoTransaction;
+                return Utility.canonicalStatus(Status.StatusNoTransaction);
             }
             catch (SystemException e2)
             {

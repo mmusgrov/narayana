@@ -396,7 +396,7 @@ public class CurrentImple extends LocalObject implements
 	public org.omg.CosTransactions.Status get_status () throws SystemException
 	{
 		ControlWrapper currentAction = _theManager.current();
-		org.omg.CosTransactions.Status stat = ((currentAction == null) ? org.omg.CosTransactions.Status.StatusNoTransaction
+		org.omg.CosTransactions.Status stat = ((currentAction == null) ? Utility.canonicalStatus(org.omg.CosTransactions.Status.StatusNoTransaction)
 				: currentAction.get_status());
 
 		if (jtsLogger.logger.isTraceEnabled()) {

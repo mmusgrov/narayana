@@ -24,6 +24,7 @@ package com.arjuna.ats.internal.jts.recovery.transactions;
 import java.io.IOException;
 import java.util.Date;
 
+import com.arjuna.ats.jts.utils.Utility;
 import org.omg.CosTransactions.Status;
 
 import com.arjuna.ats.arjuna.common.Uid;
@@ -53,7 +54,7 @@ public final class AssumedCompleteHeuristicServerTransaction extends RecoveredSe
     }
     
     public Status getOriginalStatus() {
-        return Status.StatusNoTransaction;
+        return Utility.canonicalStatus(Status.StatusNoTransaction);
     }
     
     public String type() {
