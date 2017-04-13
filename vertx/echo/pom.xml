@@ -9,6 +9,8 @@
   <artifactId>echo-test</artifactId>
   <version>5.6.0.Final-SNAPSHOT</version>
 
+  <name>Narayana - vertx STM echo demo</name>
+
   <properties>
     <narayana.version>${project.version}</narayana.version>
     <vertx.version>3.3.3</vertx.version>

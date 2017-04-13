@@ -21,6 +21,7 @@
 
 package org.jboss.stm.internal.reflect;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -400,8 +401,12 @@ public class InvocationHandler<T> implements java.lang.reflect.InvocationHandler
                             }
                         }
                     }
-    
-                    return method.invoke(_theObject, args);
+
+                    try {
+                        return method.invoke(_theObject, args);
+                    } catch (InvocationTargetException e) {
+                        throw e.getCause() != null ? e.getCause() : e;
+                    }
                 }
                 finally
                 {
