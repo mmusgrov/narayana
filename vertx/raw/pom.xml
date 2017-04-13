@@ -28,6 +28,7 @@
   <artifactId>stm-error-demo</artifactId>
   <version>5.6.0.Final-SNAPSHOT</version>
 
+  <name>Narayana - vertx STM raw</name>
   <properties>
     <!-- the main class -->
     <exec.mainClass>SharedHammer</exec.mainClass>

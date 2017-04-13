@@ -32,7 +32,7 @@ public class ClientVerticle extends AbstractVerticle {
 
   public void start() {
 
-    LocalMap<String, String> map = vertx.sharedData().getLocalMap("demo.mymap");
+    LocalMap<String, String> map = vertx.sharedData().getLocalMap("olddemo.mymap");
 
     Container<Sample> theContainer = new Container<Sample>("Demo", Container.TYPE.PERSISTENT, Container.MODEL.SHARED);
     Sample obj1 = theContainer.create(new SampleLockable(10));

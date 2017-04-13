@@ -24,7 +24,7 @@ public class SampleVerticle2 extends AbstractVerticle {
 
   public void start()
   {
-      LocalMap<String, String> map = vertx.sharedData().getLocalMap("demo.mymap");
+      LocalMap<String, String> map = vertx.sharedData().getLocalMap("olddemo.mymap");
       Container<Sample> theContainer = new Container<>("Demo", Container.TYPE.PERSISTENT, Container.MODEL.SHARED);
       String uidName = map.get(ClientVerticle.LEADER);
       Sample obj1 = theContainer.clone(new SampleLockable(10), new Uid(uidName));

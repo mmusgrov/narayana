@@ -109,9 +109,9 @@ public class NestedUnitTest extends TestCase
     public void testTopLevel () throws Exception
     {
         Counter dt2 = new RecoverableContainer<Counter>().enlist(new CounterImple());
-        
+
         assertTrue(dt2.increment(true));
-        
+
         assertTrue(dt2.count() == 1);
     }
 }

@@ -21,23 +21,26 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
     <parent>
       <groupId>org.jboss.narayana.vertx</groupId>
-      <artifactId>narayana-vertx</artifactId>
+      <artifactId>narayna-vertex-stm-actor-parent</artifactId>
       <version>5.6.0.Final-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <modelVersion>4.0.0</modelVersion>
+    <artifactId>stm-actor-demo</artifactId>
 
-    <artifactId>stm-vertex-shared</artifactId>
-    <name>Narayana - vertx STM shared</name>
+    <name>Narayana - vertx STM actor olddemo</name>
 
     <properties>
+        <trip.verticle>olddemo.Server</trip.verticle>
+        <test.verticle>reproducer.TripVerticle</test.verticle>
+        <demo2.verticle>olddemo.ServerVerticle</demo2.verticle>
+        <demo.verticle>olddemo.verticle.NonVolatileActivityVerticle</demo.verticle>
         <!-- the main verticle class name -->
-        <!--main.verticle>io.vertx.example.HelloWorldVerticle</main.verticle>-->
-        <main.verticle>ClientVerticle</main.verticle>
+        <main.verticle>${demo.verticle}</main.verticle>
         <vertx.version>3.3.3</vertx.version>
         <narayana.version>${project.version}</narayana.version>
         <jboss-logging.version>3.1.4.GA</jboss-logging.version>
@@ -49,6 +52,18 @@
             <artifactId>vertx-core</artifactId>
             <version>${vertx.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-unit</artifactId>
+            <version>3.3.3</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web</artifactId>
+            <version>3.3.3</version>
+        </dependency>
+
 
         <!-- Add hazelcast deps if you want it clusterable -->
         <dependency>
@@ -68,7 +83,11 @@
             <version>${jboss-logging.version}</version>
             <scope>compile</scope>
         </dependency>
-
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.7</version>
+        </dependency>
     </dependencies>
 
     <build>

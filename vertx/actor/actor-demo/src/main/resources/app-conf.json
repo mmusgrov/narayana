@@ -1,0 +1,22 @@
+{
+  "trip.name": "TheatreTrip",
+  "theatre.name": "Theatre",
+  "favorite.taxi.name": "Favorite",
+  "alt.taxi.name": "Alternate",
+
+  "trip.container.shared": false,
+  "trip.container.persistent" : false,
+  "theatre.container.shared": true,
+  "theatre.container.persistent" : true,
+  "taxi.container.shared": true,
+  "taxi.container.persistent" : true,
+
+  "trip.http.port": 8081,
+  "theatre.http.port": 8082,
+  "favorite.taxi.http.port": 8083,
+  "alt.taxi.http.port": 8084,
+
+  "theatre.capacity": 60,
+  "favorite.taxi.capacity": 30,
+  "alt.taxi.capacity": 20
+}
