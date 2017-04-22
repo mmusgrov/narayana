@@ -13,7 +13,7 @@ import java.util.List;
 public interface TaxiFirm {
     void initialize();
     String getName();
-    BookingId bookTaxi(int numberOfSeats) throws BookingException;
+    BookingId bookTaxi(String reference, int numberOfSeats) throws BookingException;
     void changeBooking(BookingId id, int numberOfSeats) throws BookingException;
     int getBookingCount();
     int getCapacity();

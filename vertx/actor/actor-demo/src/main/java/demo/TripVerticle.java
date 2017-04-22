@@ -1,93 +1,62 @@
-/*
- * JBoss, Home of Professional Open Source
- * Copyright 2006, JBoss Inc., and individual contributors as indicated
- * by the @authors tag. See the copyright.txt in the distribution for a
- * full listing of individual contributors.
- *
- * This is free software; you can redistribute it and/or modify it
- * under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This software is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this software; if not, write to the Free
- * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
- * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
- */
-
 package demo;
 
 import demo.actor.Booking;
+import demo.actor.BookingException;
+import demo.actor.BookingId;
 import demo.actor.TaxiFirm;
 import demo.actor.Theatre;
-import demo.internal.TaxiFirmImpl;
-import demo.internal.TheatreImpl;
-import io.vertx.core.AbstractVerticle;
+import demo.actor.Trip;
+import demo.internal.TripImpl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.shareddata.LocalMap;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.BodyHandler;
 import org.jboss.stm.Container;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class TripVerticle extends AbstractVerticle {
-    static String THEATRE_SLOT = "THEATRE_SLOT";
-    static String TAXI_SLOT = "TAXI_SLOT";
+import static demo.ServerVerticle.CONTAINER_MODEL;
+import static demo.ServerVerticle.CONTAINER_TYPE;
+import static demo.ServerVerticle.RETRY_COUNT;
+import static demo.TaxiFirmVerticle.ALT_TAXI_SLOT;
+import static demo.TaxiFirmVerticle.TAXI_SLOT;
+import static demo.TheatreVerticle.THEATRE_SLOT;
 
-    static int RETRY_COUNT = Integer.getInteger("trip.retry.count", 1);
-    static boolean HACK = true; // without this hack the theatre and taxi vericles never get the write locks
+public class TripVerticle extends BaseVerticle {
+    static int DEFAULT_PORT = 8080;
 
-    static Container.TYPE CONTAINER_TYPE = Container.TYPE.PERSISTENT;
-    static Container.MODEL CONTAINER_MODEL = Container.MODEL.SHARED;
+    private Trip service;
+
+    private Theatre theatre;
+    private TaxiFirm taxi;
+    private TaxiFirm altTaxi;
 
     public static void main(String[] args) {
         Vertx vertx = Vertx.vertx();
 
-        vertx.deployVerticle(new TripVerticle());
-    }
-
-    public void start() {
-        LocalMap<String, String> map = vertx.sharedData().getLocalMap("demo1.mymap");
-
-        Container<Theatre> theatreContainer = new Container<>(CONTAINER_TYPE, CONTAINER_MODEL);
-        Container<TaxiFirm> taxiContainer = new Container<>(CONTAINER_TYPE, CONTAINER_MODEL);
-
-        Theatre theatre = theatreContainer.create(new TheatreImpl("Theatre", 50));
-        TaxiFirm taxi = taxiContainer.create(new TaxiFirmImpl("Favorite", 40));
-
-        assert(theatre != null);
-        assert(taxi != null);
-
-        /*
-         * without the following hack the theatre and taxi vericles never get the write locks
-         * because the object store hierarchy never gets created and attempts to get the lock fail if the
-         * lock hierarchy does not exist
-         */
-        TheatreVerticle.hack(theatre);
-        TaxiVerticle.hack(taxi);
-
-        map.put(THEATRE_SLOT, theatreContainer.getIdentifier(theatre).toString());
-        map.put(TAXI_SLOT, taxiContainer.getIdentifier(taxi).toString());
-
         Future<Void> theatreReady = Future.future();
         Future<Void> taxiReady = Future.future();
+        Future<Void> altTaxiReady = Future.future();
 
-        vertx.deployVerticle(new TheatreVerticle(), getCompletionHandler(theatreReady));
-        vertx.deployVerticle(new TaxiVerticle(), getCompletionHandler(taxiReady));
+        TheatreVerticle theatreVerticle = new TheatreVerticle("Theatre", TheatreVerticle.DEFAULT_PORT);
+        TaxiFirmVerticle taxiFirmVerticle =  new TaxiFirmVerticle("Favorite", TaxiFirmVerticle.DEFAULT_PORT);
+        TaxiFirmVerticle altTaxiFirmVerticle = new TaxiFirmVerticle("Alt", TaxiFirmVerticle.DEFAULT_ALT_PORT);
 
-        CompositeFuture.join(theatreReady, taxiReady).setHandler(ar -> {
+        vertx.deployVerticle(theatreVerticle, getCompletionHandler(theatreReady));
+        vertx.deployVerticle(taxiFirmVerticle, getCompletionHandler(taxiReady));
+        vertx.deployVerticle(altTaxiFirmVerticle, getCompletionHandler(altTaxiReady));
+
+        CompositeFuture.join(theatreReady, taxiReady, altTaxiReady).setHandler(ar -> {
                     if (ar.succeeded()) {
-                        bookTrip(theatre, taxi);
-                        listBookings(theatre, taxi, "=== TRIP");
+                        vertx.deployVerticle(new TripVerticle("Trip", DEFAULT_PORT));
                     } else {
                         System.out.printf("=== TRIP: Could not start all services: %s%n", ar.cause().getMessage());
                     }
@@ -95,28 +64,95 @@ public class TripVerticle extends AbstractVerticle {
         );
     }
 
-    private void bookTrip(Theatre theatre, TaxiFirm taxi) {
-        TheatreVerticle.bookShow(RETRY_COUNT, theatre, "Evita", 4, "TripVerticle");
-        TaxiVerticle.bookTaxi(RETRY_COUNT, taxi, 2, "TripVerticle");
-    }
-
-    private void listBookings(Theatre theatre, TaxiFirm taxi, String debugMsg) {
-        System.out.printf("%s: Bookings:%n", debugMsg);
-
-        List<Booking> bookings = TheatreVerticle.getBookings(RETRY_COUNT, theatre, new ArrayList<>(), "TripVerticle");
-        TaxiVerticle.getBookings(RETRY_COUNT, taxi, bookings, "TripVerticle");
-
-        bookings.forEach(booking ->
-                System.out.printf("\t%s booking for %s for %d%n",
-                    booking.getName(), booking.getDescription(), booking.getSize()));
-    }
-
-    private Handler<AsyncResult<String>> getCompletionHandler(Future<Void> future) {
+    private static Handler<AsyncResult<String>> getCompletionHandler(Future<Void> future) {
         return (AsyncResult<String> res) -> {
             if (res.succeeded())
                 future.complete();
             else
                 future.fail(res.cause());
         };
+    }
+
+    TripVerticle(String name, int port) {
+        super(name, port);
+    }
+
+    protected void initServices() {
+        this.theatre = TheatreVerticle.getOrCloneTheatre(getServiceUid(THEATRE_SLOT));
+        this.taxi = TaxiFirmVerticle.getOrCloneTaxiFirm(getServiceUid(TAXI_SLOT));
+        this.altTaxi = TaxiFirmVerticle.getOrCloneTaxiFirm(getServiceUid(ALT_TAXI_SLOT));
+
+        if (isExclusive()) {
+            Container<Trip> theContainer = new Container<>(Container.TYPE.PERSISTENT, Container.MODEL.EXCLUSIVE);
+            service = theContainer.create(new TripImpl(theatre, taxi, altTaxi));
+        } else {
+            Container<Trip> theContainer = new Container<>(CONTAINER_TYPE, CONTAINER_MODEL);
+//            service = theContainer.clone(new TripImpl(theatre, taxi, altTaxi), new Uid(uidName));
+            service = theContainer.create(new TripImpl(theatre, taxi, altTaxi));
+        }
+    }
+
+    protected void initRoutes(Router router) {
+        router.route("/api/trip*").handler(BodyHandler.create());
+
+        router.get("/api/trip").handler(this::getAll);
+        router.post("/api/trip/:show/:seats/:taxi").handler(this::addWithTaxi);
+        router.post("/api/trip/:show/:seats").handler(this::addWithoutTaxi);
+    }
+
+    private void addWithoutTaxi(RoutingContext routingContext) {
+        String showName =  routingContext.request().getParam("show");
+        String seats =  routingContext.request().getParam("seats");
+        int noOfSeeats = seats == null ? 1 : Integer.valueOf(seats);
+
+        add(routingContext, showName, noOfSeeats, null);
+    }
+
+    private void addWithTaxi(RoutingContext routingContext) {
+        String showName =  routingContext.request().getParam("show");
+        String seats =  routingContext.request().getParam("seats");
+        String taxiName =  routingContext.request().getParam("taxi");
+        int noOfSeeats = seats == null ? 1 : Integer.valueOf(seats);
+
+        add(routingContext, showName, noOfSeeats, taxiName);
+    }
+
+    private void add(RoutingContext routingContext, String showName, int noOfSeeats, String taxiName) {
+        try {
+            BookingId theatreBookingId = TheatreVerticle.bookShow(RETRY_COUNT, theatre, showName, noOfSeeats, "TripVerticle");
+            List<Booking> bookings = new ArrayList<>();
+
+            bookings.add(theatre.getBooking(theatreBookingId));
+
+            if (taxiName != null) {
+                BookingId taxiBookingId;
+
+                try {
+                    taxiBookingId = TaxiFirmVerticle.bookTaxi(RETRY_COUNT, taxi, taxiName, noOfSeeats, "TripVerticle");
+                    bookings.add(taxi.getBooking(taxiBookingId));
+                } catch (BookingException e) {
+                    taxiBookingId = TaxiFirmVerticle.bookTaxi(RETRY_COUNT, altTaxi, taxiName, noOfSeeats, "TripVerticle");
+                    bookings.add(altTaxi.getBooking(taxiBookingId));
+                }
+            }
+
+            JsonArray ja = new JsonArray(bookings);
+
+            routingContext.response()
+                    .setStatusCode(201)
+                    .putHeader("content-type", "application/json; charset=utf-8")
+                    .end(Json.encodePrettily(ja.encode()));
+        } catch (BookingException e) {
+            routingContext.response()
+                    .setStatusCode(406)
+                    .putHeader("content-type", "application/json; charset=utf-8")
+                    .end(new JsonObject().put("Status", e.getMessage()).encode());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void getBookings(List bookings) {
+        service.getBookings(bookings);
     }
 }

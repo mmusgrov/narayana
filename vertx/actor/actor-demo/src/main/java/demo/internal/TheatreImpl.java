@@ -13,11 +13,7 @@ import java.util.List;
 public class TheatreImpl extends ServiceImpl implements Theatre {
 
     public TheatreImpl(String name, int capacity) {
-        this(null, name, capacity);
-    }
-
-    public TheatreImpl(String uid, String name, int capacity) {
-        super(uid, name, capacity);
+        super(name, capacity);
     }
 
     @Override

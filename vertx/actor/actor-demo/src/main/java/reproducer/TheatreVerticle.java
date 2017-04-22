@@ -24,7 +24,7 @@ public class TheatreVerticle extends AbstractVerticle {
 
     public void start()
     {
-        LocalMap<String, String> map = vertx.sharedData().getLocalMap("demo1.mymap");
+        LocalMap<String, String> map = vertx.sharedData().getLocalMap("olddemo.mymap");
         String uidName = map.get(TripVerticle.THEATRE_SLOT);
         Container<Theatre> theContainer;
         Theatre theatre;

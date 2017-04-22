@@ -32,12 +32,12 @@
 
     <artifactId>stm-actor-demo</artifactId>
 
-    <name>Narayana - vertx STM actor demo1</name>
+    <name>Narayana - vertx STM actor olddemo</name>
 
     <properties>
-        <trip.verticle>demo1.Server</trip.verticle>
+        <trip.verticle>olddemo.Server</trip.verticle>
         <test.verticle>reproducer.TripVerticle</test.verticle>
-        <demo.verticle>demo.TripVerticle</demo.verticle>
+        <demo.verticle>demo.ServerVerticle</demo.verticle>
         <!-- the main verticle class name -->
         <main.verticle>${demo.verticle}</main.verticle>
         <vertx.version>3.3.3</vertx.version>

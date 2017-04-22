@@ -1,28 +1,25 @@
 package demo;
 
-import com.arjuna.ats.arjuna.ObjectModel;
 import com.arjuna.ats.arjuna.common.Uid;
-import demo1.common.actor.Booking;
+import olddemo.common.actor.Booking;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.shareddata.LocalMap;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import org.jboss.stm.Container;
-import org.jboss.stm.internal.PersistentContainer;
-import org.jboss.stm.internal.RecoverableContainer;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class BaseVerticle<T> extends AbstractVerticle {
-    private Uid uid;
     private String name;
+    private int listenerPort = 8080;
     private LocalMap<String, String> map;
 
-    public BaseVerticle(String name) {
+    public BaseVerticle(String name, int listenerPort) {
         this.name = name;
+        this.listenerPort = listenerPort;
     }
 
     public String getName() {
@@ -31,9 +28,9 @@ public class BaseVerticle<T> extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> future) {
-        map = vertx.sharedData().getLocalMap("demo1.actor.map");
+        map = vertx.sharedData().getLocalMap("olddemo.actor.map");
 
-        startServer(future, config().getInteger("http.port", 8080));
+        startServer(future, listenerPort);
     }
 
     private void startServer(Future<Void> future, int listenerPort) {
@@ -51,6 +48,7 @@ public class BaseVerticle<T> extends AbstractVerticle {
                             if (result.succeeded()) {
                                 future.complete(); // tell the caller the server is ready
                             } else {
+                                result.cause().printStackTrace(System.out);
                                 future.fail(result.cause()); // tell the caller that server failed to start
                             }
                         }
@@ -78,28 +76,16 @@ public class BaseVerticle<T> extends AbstractVerticle {
     void getBookings(List<Booking> bookings) {
     }
 
-    RecoverableContainer<T> getRecoverableContainer(String name) {
-        boolean isPersistent = config().getBoolean("container.persistent", false);
-        boolean isShared = config().getBoolean("container.shared", false);
-
-        if (isPersistent)
-            return new PersistentContainer<>(name, isShared ? ObjectModel.SINGLE : ObjectModel.MULTIPLE);
-
-        return new RecoverableContainer<>(name);
+    // persistent and shared: valid combination
+    // persistent and exclusive: valid combination
+    // recoverable and exclusive: valid combination
+    // recoverable and shared: invalid combination
+    static boolean isExclusive(String name) {
+        return Boolean.getBoolean(name.toLowerCase() + ".exclusive");
     }
 
-    Container<T> getContainer(String name) {
-        boolean isPersistent = config().getBoolean("container.persistent", false);
-        boolean isShared = config().getBoolean("container.shared", false);
-        Container.MODEL model = isShared ? Container.MODEL.SHARED : Container.MODEL.EXCLUSIVE;
-        Container.TYPE type = isPersistent ? Container.TYPE.PERSISTENT : Container.TYPE.RECOVERABLE;
-
-        return new Container<>(name, type, model);
-    }
-
-
-    public Uid getUid() {
-        return uid;
+    boolean isExclusive() {
+        return isExclusive(name);
     }
 
     String getServiceUid(String name) {

@@ -17,7 +17,7 @@ public interface Theatre {
     BookingId bookShow(String showName, int numberOfTickets) throws BookingException;
     void changeBooking(BookingId id, int numberOfTickets) throws BookingException;
 
-    Booking getBooking(BookingId bookingId) throws Exception;
+    Booking getBooking(BookingId bookingId) throws BookingException;
 
     int getBookingCount();
     int getCapacity();

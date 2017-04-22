@@ -403,6 +403,7 @@ public class InvocationHandler<T> implements java.lang.reflect.InvocationHandler
                     }
 
                     try {
+
                         return method.invoke(_theObject, args);
                     } catch (InvocationTargetException e) {
                         throw e.getCause() != null ? e.getCause() : e;

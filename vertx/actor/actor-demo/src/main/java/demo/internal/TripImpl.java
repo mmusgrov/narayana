@@ -23,7 +23,7 @@ public class TripImpl implements Trip {
     }
 
     public Collection<BookingId> bookTrip(String showName, int numberOfSeats, int numberOfTaxiSpaces) throws BookingException {
-        return bookTrip(theatre, numberOfSeats, preferredTaxi, altTaxi, numberOfTaxiSpaces);
+        return bookTrip(theatre, numberOfSeats, preferredTaxi, altTaxi, "taxiReference", numberOfTaxiSpaces);
     }
 
     public Booking getBooking(BookingId id) throws BookingException {
@@ -42,15 +42,17 @@ public class TripImpl implements Trip {
         }
     }
 
-    protected Collection<BookingId> bookTrip(Theatre theatre, int numberOfSeats, TaxiFirm preferredTaxi, TaxiFirm altTaxi, int numberOfTaxiSpaces) throws BookingException {
+    protected Collection<BookingId> bookTrip(Theatre theatre, int numberOfSeats,
+                                             TaxiFirm preferredTaxi, TaxiFirm altTaxi,
+                                             String taxiReference, int numberOfTaxiSpaces) throws BookingException {
         Collection<BookingId> bookingIds = new ArrayList<>(2);
 
         bookingIds.add(theatre.bookShow("Cats", numberOfSeats));
 
         try {
-            bookingIds.add(preferredTaxi.bookTaxi(numberOfTaxiSpaces));
+            bookingIds.add(preferredTaxi.bookTaxi(taxiReference, numberOfTaxiSpaces));
         } catch (BookingException e) {
-            bookingIds.add(altTaxi.bookTaxi(numberOfTaxiSpaces));
+            bookingIds.add(altTaxi.bookTaxi(taxiReference, numberOfTaxiSpaces));
         }
 
         return bookingIds;

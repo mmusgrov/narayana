@@ -56,7 +56,7 @@ public class TripVerticle extends AbstractVerticle {
     }
 
     public void start() {
-        LocalMap<String, String> map = vertx.sharedData().getLocalMap("demo1.mymap");
+        LocalMap<String, String> map = vertx.sharedData().getLocalMap("olddemo.mymap");
 
         Container<Theatre> theatreContainer = new Container<>(CONTAINER_TYPE, CONTAINER_MODEL);
         Container<TaxiFirm> taxiContainer = new Container<>(CONTAINER_TYPE, CONTAINER_MODEL);
@@ -96,15 +96,15 @@ public class TripVerticle extends AbstractVerticle {
     }
 
     private void bookTrip(Theatre theatre, TaxiFirm taxi) {
-        TheatreVerticle.bookShow(RETRY_COUNT, theatre, "Evita", 4, "TripVerticle");
-        TaxiVerticle.bookTaxi(RETRY_COUNT, taxi, 2, "TripVerticle");
+        TheatreVerticle.bookShow(RETRY_COUNT, theatre, "Evita", 4, "TripVerticleOK");
+        TaxiVerticle.bookTaxi(RETRY_COUNT, taxi, 2, "TripVerticleOK");
     }
 
     private void listBookings(Theatre theatre, TaxiFirm taxi, String debugMsg) {
         System.out.printf("%s: Bookings:%n", debugMsg);
 
-        List<Booking> bookings = TheatreVerticle.getBookings(RETRY_COUNT, theatre, new ArrayList<>(), "TripVerticle");
-        TaxiVerticle.getBookings(RETRY_COUNT, taxi, bookings, "TripVerticle");
+        List<Booking> bookings = TheatreVerticle.getBookings(RETRY_COUNT, theatre, new ArrayList<>(), "TripVerticleOK");
+        TaxiVerticle.getBookings(RETRY_COUNT, taxi, bookings, "TripVerticleOK");
 
         bookings.forEach(booking ->
                 System.out.printf("\t%s booking for %s for %d%n",

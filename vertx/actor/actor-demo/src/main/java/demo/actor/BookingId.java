@@ -6,7 +6,11 @@ public class BookingId {
     private Uid id;
 
     public BookingId() {
-        id = new Uid();
+        this(new Uid());
+    }
+
+    BookingId(Uid uid) {
+        id = uid;
     }
 
     public String getId() { return id.stringForm(); }

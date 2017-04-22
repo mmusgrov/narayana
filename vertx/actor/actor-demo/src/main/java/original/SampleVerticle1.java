@@ -12,7 +12,7 @@ public class SampleVerticle1 extends AbstractVerticle {
 
     public void start()
     {
-        LocalMap<String, String> map = vertx.sharedData().getLocalMap("demo1.mymap");
+        LocalMap<String, String> map = vertx.sharedData().getLocalMap("olddemo.mymap");
         Container<Sample> theContainer = new Container<>(CONTAINER_TYPE, CONTAINER_MODEL);
 
         String uidName = map.get(ServerVerticle.LEADER);

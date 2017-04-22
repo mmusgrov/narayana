@@ -13,11 +13,7 @@ import java.util.List;
 
 public class TaxiFirmImpl extends ServiceImpl implements TaxiFirm {
     public TaxiFirmImpl(String name, int capacity) {
-        this(null, name, capacity);
-    }
-
-    public TaxiFirmImpl(String uid, String name, int capacity) {
-        super(uid, name, capacity);
+        super(name, capacity);
     }
 
     @Override
@@ -27,8 +23,8 @@ public class TaxiFirmImpl extends ServiceImpl implements TaxiFirm {
 
     @Override
     @WriteLock
-    public BookingId bookTaxi(int numberOfSeats) throws BookingException {
-        return super.book(numberOfSeats);
+    public BookingId bookTaxi(String reference, int numberOfSeats) throws BookingException {
+        return super.book(reference, numberOfSeats);
     }
 
     @Override

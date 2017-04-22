@@ -41,7 +41,7 @@ public class ServerVerticle extends AbstractVerticle {
     }
 
     public void start() {
-        LocalMap<String, String> map = vertx.sharedData().getLocalMap("demo1.mymap");
+        LocalMap<String, String> map = vertx.sharedData().getLocalMap("olddemo.mymap");
 
         Container<Sample> theContainer = new Container<>(CONTAINER_TYPE, CONTAINER_MODEL);
 
@@ -89,7 +89,7 @@ public class ServerVerticle extends AbstractVerticle {
         A.begin();
         
 //        assert(obj1.value() == obj2.value()); the second verticle may have updated the value
-        System.out.printf("CCCCCCCCCCCCC: TripVerticle: VALUES: obj1=%d obj2=%d%n", obj1.value(), obj2.value());
+        System.out.printf("CCCCCCCCCCCCC: TripVerticleOK: VALUES: obj1=%d obj2=%d%n", obj1.value(), obj2.value());
 
         A.commit();
     }

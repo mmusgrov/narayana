@@ -20,7 +20,7 @@ public class TaxiVerticle extends AbstractVerticle {
 
     public void start()
     {
-        LocalMap<String, String> map = vertx.sharedData().getLocalMap("demo1.mymap");
+        LocalMap<String, String> map = vertx.sharedData().getLocalMap("olddemo.mymap");
         Container<TaxiFirm> theContainer = new Container<>(CONTAINER_TYPE, CONTAINER_MODEL);
 
         String uidName = map.get(TripVerticle.TAXI_SLOT);

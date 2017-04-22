@@ -5,7 +5,6 @@ import com.arjuna.ats.arjuna.state.OutputObjectState;
 import demo.actor.Booking;
 import demo.actor.BookingException;
 import demo.actor.BookingId;
-import org.jboss.stm.annotations.NotState;
 import org.jboss.stm.annotations.RestoreState;
 import org.jboss.stm.annotations.SaveState;
 import org.jboss.stm.annotations.State;
@@ -14,6 +13,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class ServiceImpl {
     @State
@@ -21,17 +21,14 @@ public class ServiceImpl {
     @State
     private int capacity;
     @State
-    private int size;
+    private int count; // the number of items booked
     @State
-    private Map<BookingId, Booking> bookings;
+    private Map<BookingId, Booking> bookings; // individual bookings
 
-    @NotState
-    private String uid; // TODO for debug purposes
-
-    ServiceImpl(String uid, String name, int capacity) {
-        this.uid = uid;
+    ServiceImpl(String name, int capacity) {
         this.name = name;
         this.capacity = capacity;
+        count = 0;
         this.bookings = new HashMap<>(capacity);
     }
 
@@ -39,16 +36,12 @@ public class ServiceImpl {
         return bookings;
     }
 
-    public void setUid(String uid) {
-        this.uid = uid;
-    }
-
     String getName() {
         return name;
     }
 
     int getBookingCount() {
-        return size;
+        return count;
     }
 
     int getCapacity() {
@@ -59,20 +52,16 @@ public class ServiceImpl {
         if (numberRequired <= 0)
             throw new BookingException("booking sizes should be greater than zero");
 
-        if (size + numberRequired > capacity)
-            throw new BookingException("Sorry only " + (capacity - size) + " bookings available");
+        if (count + numberRequired > capacity)
+            throw new BookingException("Sorry only " + (capacity - count) + " bookings available");
 
-        size += numberRequired;
+        count += numberRequired;
 
         Booking id = new Booking(name, description, this.getClass().getTypeName(), numberRequired);
 
         getBookings().put(id, id);
 
         return id;
-    }
-
-    public BookingId book(int numberOfTickets) throws BookingException {
-        return book("--", numberOfTickets);
     }
 
     void changeBooking(BookingId id, int numberOfSeats) throws BookingException {
@@ -82,10 +71,10 @@ public class ServiceImpl {
         Booking booking = getBookings().get(id);
         int newNumber = numberOfSeats - booking.getSize();
 
-        if (newNumber > 0 && size + newNumber > capacity)
-            throw new BookingException("Sorry only " + (capacity - size - booking.getSize()) + " bookings available");
+        if (newNumber > 0 && count + newNumber > capacity)
+            throw new BookingException("Sorry only " + (capacity - count - booking.getSize()) + " bookings available");
 
-        size += newNumber;
+        count += newNumber;
 
         if (numberOfSeats == 0)
             getBookings().remove(id);
@@ -100,8 +89,8 @@ public class ServiceImpl {
         throw new BookingException("No such reservation");
     }
 
-    public void getBookings(List<Booking> bookings) {
-        bookings.addAll(getBookings().values());
+    public void getBookings(List<Booking> bookingList) {
+        bookingList.addAll(getBookings().values());
     }
 
 
@@ -110,12 +99,13 @@ public class ServiceImpl {
     {
         os.packString(name);
         os.packInt(capacity);
-        os.packInt(size);
+        os.packInt(count);
 
         os.packInt(bookings.size());
 
-        bookings.values().forEach(booking -> {
+        getBookings().values().forEach(booking -> {
             try {
+                os.packString(booking.getId());
                 os.packString(booking.getName());
                 os.packString(booking.getDescription());
                 os.packString(booking.getType());
@@ -132,24 +122,24 @@ public class ServiceImpl {
     {
         name = os.unpackString();
         capacity = os.unpackInt();
-        size = os.unpackInt();
+        count = os.unpackInt();
 
-        int size = os.unpackInt();
+        int noOfBookings = os.unpackInt();
 
-        bookings.clear();
+        getBookings().clear();
 
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < noOfBookings; i++) {
             Booking booking;
 
             booking = new Booking(
                     os.unpackString(),
                     os.unpackString(),
                     os.unpackString(),
+                    os.unpackString(),
                     os.unpackInt()
             );
 
-            bookings.put(booking, booking);
+            getBookings().put(booking, booking);
         }
-
     }
 }
