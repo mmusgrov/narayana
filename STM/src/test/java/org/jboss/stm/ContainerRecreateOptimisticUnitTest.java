@@ -23,6 +23,10 @@
 package org.jboss.stm;
 
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.jboss.stm.annotations.Optimistic;
 import org.jboss.stm.annotations.Transactional;
@@ -181,7 +185,7 @@ public class ContainerRecreateOptimisticUnitTest extends TestCase
     
     public void testOptimisticRecreate ()
     {
-        Container<Sample1> theContainer = new Container<Sample1>(Container.TYPE.RECOVERABLE, Container.MODEL.EXCLUSIVE);
+        Container<Sample1> theContainer = new Container<Sample1>(Container.TYPE.RECOVERABLE, Container.MODEL.SHARED);
         Sample1 obj1 = theContainer.create(new Sample1Imple(10));
         
         assertTrue(obj1 != null);
@@ -225,4 +229,68 @@ public class ContainerRecreateOptimisticUnitTest extends TestCase
         
         A.commit();
     }
+
+    public void testOptimisticRecreateThreaded ()
+    {
+        Container<Sample1> theContainer2 = new Container<Sample1>(Container.TYPE.PERSISTENT, Container.MODEL.SHARED);
+        Container<Sample1> theContainer = new Container<Sample1>(Container.TYPE.RECOVERABLE, Container.MODEL.EXCLUSIVE);
+        Sample1 obj1 = theContainer.create(new Sample1Imple(10));
+
+        assertTrue(obj1 != null);
+
+        /*
+         * Do some basic checks and ensure state is in store prior to sharing.
+         */
+
+        AtomicAction A = new AtomicAction();
+
+        A.begin();
+
+        obj1.increment();
+        obj1.decrement();
+
+        A.commit();
+
+        assertEquals(obj1.value(), 10);
+
+        assertTrue(theContainer.getIdentifier(obj1).notEquals(Uid.nullUid()));
+
+        Callable<Sample1> task = () -> {
+
+            Sample1 obj2 = theContainer.clone(new Sample1Imple(), theContainer.getIdentifier(obj1));
+
+            assertTrue(obj2 != null);
+
+            AtomicAction B = new AtomicAction();
+
+            B.begin();
+
+            obj2.increment();
+
+            B.commit();
+
+            return obj2;
+//            assertEquals(obj2.value(), 11);
+        };
+
+        Future<Sample1> future = Executors.newCachedThreadPool().submit(task);
+        Sample1 obj2 = null;
+
+        try {
+            obj2 = future.get();
+            assertEquals(obj2.value(), 11);
+        } catch (Exception e) {
+            fail();
+        }
+        ;
+
+        A = new AtomicAction();
+
+        A.begin();
+
+        assertEquals(obj1.value(), obj2.value());
+
+        A.commit();
+    }
+
 }

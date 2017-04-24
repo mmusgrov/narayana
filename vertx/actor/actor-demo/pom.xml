@@ -82,7 +82,11 @@
             <version>${jboss-logging.version}</version>
             <scope>compile</scope>
         </dependency>
-
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.7</version>
+        </dependency>
     </dependencies>
 
     <build>
