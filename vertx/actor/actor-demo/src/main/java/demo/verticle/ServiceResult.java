@@ -1,18 +1,18 @@
 package demo.verticle;
 
 public class ServiceResult {
-    private String verticleName;
+    private String serviceName;
     private String threadId;
     private int activityCount;
 
-    public ServiceResult(String verticleName, String threadId, int activityCount) {
-        this.verticleName = verticleName;
+    public ServiceResult(String serviceName, String threadId, int activityCount) {
+        this.serviceName = serviceName;
         this.threadId = threadId;
         this.activityCount = activityCount;
     }
 
-    public String getVerticleName() {
-        return verticleName;
+    public String getServiceName() {
+        return serviceName;
     }
 
     public String getThreadId() {

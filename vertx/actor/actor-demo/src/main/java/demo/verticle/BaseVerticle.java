@@ -3,8 +3,6 @@ package demo.verticle;
 import com.arjuna.ats.arjuna.AtomicAction;
 import com.arjuna.ats.arjuna.common.Uid;
 import demo.stm.Activity;
-import demo.stm.Theatre;
-import demo.stm.TheatreImpl;
 import demo.stm.TaxiService;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.DeploymentOptions;
@@ -15,55 +13,74 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
-import org.jboss.stm.Container;
 
-public abstract class BaseVerticle<T> extends AbstractVerticle {
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+public abstract class BaseVerticle<T extends Activity> extends AbstractVerticle {
     private static int numberOfServiceInstances = 1;
     private static int httpPort = 8080;
-    private static Uid uid = null;
 
-    private static Theatre initialSTMObject;
-    private static Container<Theatre> theContainer;
+    static Uid uid = null;
 
-    private Theatre mandatory;
+    static String xarg = null;
+    static Map<String, String> options;
+
+    private Activity mandatory;
     private TaxiService optional;
+    private String serviceName;
 
-    String getName() {
-        return getClass().getName();
+    String getServiceName() {
+        return serviceName;
     }
 
-    private static void parseArgs(String[] args) {
-        httpPort = args.length == 0 ? 8080 : Integer.parseInt(args[0]);
-        numberOfServiceInstances = args.length == 1 ? 1 : Integer.parseInt(args[1]);
-        uid = args.length == 2 ? null : new Uid(args[2]);
+    static void addOption(String opt) {
+        if (opt != null && opt.contains("=")) {
+            String [] pair = opt.split("=");
+
+            options.put(pair[0], pair[1]);
+        }
+    }
+
+    static int getIntOption(String optionName, int defaultValue) {
+        return options.containsKey(optionName) ?
+            Integer.parseInt(options.get(optionName)) :
+                defaultValue;
+    }
+
+    static String getStringOption(String optionName, String defaultValue) {
+        return options.containsKey(optionName) ?
+                options.get(optionName) :
+                defaultValue;
+    }
+
+    static void parseArgs(String[] args) {
+        options = new HashMap<>();
+
+        Arrays.stream(args).forEach(BaseVerticle::addOption);
+
+        httpPort = getIntOption("port", 8080);
+        numberOfServiceInstances = getIntOption("count", 1);
+        String uidStr = getStringOption("uid", null);
+
+        if (uidStr != null)
+            uid = new Uid(uidStr);
 
         if (httpPort <= 0 || numberOfServiceInstances <= 0)
             throw new IllegalArgumentException("syntax: instance count and http port must be greater than zero%n");
 
+
         System.out.printf("Running %d vertx event listeners on http port %d%n", numberOfServiceInstances, httpPort);
     }
 
-    static void deployVerticle(String verticleClassName, Container container, String[] args) {
-        parseArgs(args);
+    static void deployVerticle(String verticleClassName, String verticleName) {
 
         Vertx vertx = Vertx.vertx();
 
-        theContainer = container;
-
-        initialSTMObject = uid == null ?
-                theContainer.create(new TheatreImpl()) :
-                theContainer.clone(new TheatreImpl(), uid);
-
-        uid = container.getIdentifier(initialSTMObject);
-
-        System.out.printf("Created an STM ojbect with id: %s%n", uid.toString());
-
-        // workaround for JBTM-1732
-        initializeSTMObject(initialSTMObject);
-
         DeploymentOptions opts = new DeploymentOptions().
                 setInstances(numberOfServiceInstances).
-                setConfig(new JsonObject().put("name", "Volatile Verticle").put("port", httpPort));
+                setConfig(new JsonObject().put("name", verticleName).put("port", httpPort));
 
         vertx.deployVerticle(verticleClassName, opts);
     }
@@ -72,13 +89,15 @@ public abstract class BaseVerticle<T> extends AbstractVerticle {
     public void start(Future<Void> future) {
         int listenerPort = config().getInteger("port", 8080);
 
+        serviceName = config().getString("name", "activity");
+        mandatory = initService();
+
         startServer(future, listenerPort);
     }
 
     private void startServer(Future<Void> future, int listenerPort) {
         Router router = Router.router(vertx);
 
-        initServices();
         initRoutes(router);
 
         // Create the HTTP server and pass the "accept" method to the request handler.
@@ -95,31 +114,25 @@ public abstract class BaseVerticle<T> extends AbstractVerticle {
                             }
                         }
                 );
+
+        assert router.getRoutes().size() > 0;
+
+        String route1 = router.getRoutes().get(0).getPath();
+
+        System.out.printf("%s service listening on http://localhost:%d%s%n" , getServiceName(), listenerPort, route1);
     }
 
-    private void initRoutes(Router router) {
-        router.route("/api/activity*").handler(BodyHandler.create());
+    void initRoutes(Router router) {
+        router.route("/api/" + getServiceName() + "*").handler(BodyHandler.create());
 
-        router.get("/api/activity/uid").handler(this::getUid);
-        router.get("/api/activity").handler(this::getActivity);
+        router.get("/api/" + getServiceName() + "/uid").handler(this::getUid);
+        router.get("/api/" + getServiceName()).handler(this::getActivity);
 
-        router.post("/api/activity/:name").handler(this::performActivity);
+        router.post("/api/" + getServiceName() + "/:name").handler(this::performActivity);
     }
 
-    private void initServices() {
-        // get a handle to an STM object for performing optional actions
-//        optional = new Container<TaxiService>().create(new TaxiServiceImpl()); // TaxiService is NestedTopLevel
 
-        // get a handle to an STM object for performing mandatory actions
-        if (uid == null) {
-            mandatory = theContainer.create(new TheatreImpl()); // Theatre is Nested
-            uid = theContainer.getIdentifier(mandatory);
-            System.out.printf("CREATED uid=%s%n", uid == null ? "null" : uid.toString());
-        } else {
-            mandatory = theContainer.clone(new TheatreImpl(), initialSTMObject); // Theatre is Nested
-            System.out.printf("CLONED using uid %s%n", uid.toString());
-        }
-    }
+    abstract Activity initService();
 
     private void getUid(RoutingContext routingContext) {
         routingContext.response()
@@ -136,10 +149,11 @@ public abstract class BaseVerticle<T> extends AbstractVerticle {
             int activityCount = mandatory.getValue(); // done as a sub transaction of A since mandatory is annotated wiht @Nested
             A.commit();
 
+            System.out.printf("%s: cnt: %d%n", getServiceName(), mandatory.getValue());
             routingContext.response()
                     .setStatusCode(201)
                     .putHeader("content-type", "application/json; charset=utf-8")
-                    .end(Json.encodePrettily(new ServiceResult(getName(), Thread.currentThread().getName(), activityCount)));
+                    .end(Json.encodePrettily(new ServiceResult(getServiceName(), Thread.currentThread().getName(), activityCount)));
         } catch (Exception e) {
             routingContext.response()
                     .setStatusCode(406)
@@ -148,7 +162,7 @@ public abstract class BaseVerticle<T> extends AbstractVerticle {
         }
     }
 
-    private void performActivity(RoutingContext routingContext) {
+    void performActivity(RoutingContext routingContext) {
         try {
             AtomicAction A = new AtomicAction();
 
@@ -160,7 +174,7 @@ public abstract class BaseVerticle<T> extends AbstractVerticle {
             routingContext.response()
                     .setStatusCode(201)
                     .putHeader("content-type", "application/json; charset=utf-8")
-                    .end(Json.encodePrettily(new ServiceResult(getName(), Thread.currentThread().getName(), activityCount)));
+                    .end(Json.encodePrettily(new ServiceResult(getServiceName(), Thread.currentThread().getName(), activityCount)));
         } catch (Exception e) {
             routingContext.response()
                     .setStatusCode(406)
@@ -170,7 +184,7 @@ public abstract class BaseVerticle<T> extends AbstractVerticle {
     }
 
     // workaround for JBTM-1732
-    private static void initializeSTMObject(Theatre activity) {
+    static void initializeSTMObject(Activity activity) {
         AtomicAction A = new AtomicAction();
 
         A.begin();
