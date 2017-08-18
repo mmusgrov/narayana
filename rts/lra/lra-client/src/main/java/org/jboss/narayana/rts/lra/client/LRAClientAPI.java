@@ -30,7 +30,7 @@ public interface LRAClientAPI {
     /**
      * Start a new LRA
      *
-     * The LRA model uses a presumed nothing protocol: the coordinator must communicate with Compensators
+     * The LRA lra.demo.model uses a presumed nothing protocol: the coordinator must communicate with Compensators
      * in order to inform them of the LRA activity. Every time a Compensator is enrolled with a LRA, the
      * coordinator must make information about it durable so that the Compensator can be contacted when
      * the LRA terminates, even in the event of subsequent failures. Compensators, clients and coordinators

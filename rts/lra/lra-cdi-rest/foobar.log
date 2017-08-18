@@ -1,0 +1,255 @@
+22:08:15,047 WARN  [org.jboss.as.txn] (ServerService Thread Pool -- 15) WFLYTX0013: Node identifier property is set to the default value. Please make sure it is unique.
+22:08:15,059 INFO  [org.jboss.as.security] (ServerService Thread Pool -- 18) WFLYSEC0002: Activating Security Subsystem
+22:08:15,063 INFO  [org.jboss.as.naming] (ServerService Thread Pool -- 21) WFLYNAM0001: Activating Naming Subsystem
+22:08:15,083 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-1) WFLYUT0003: Undertow 1.4.11.Final starting
+22:08:15,085 INFO  [org.wildfly.extension.io] (ServerService Thread Pool -- 13) WFLYIO001: Worker 'default' has auto-configured to 8 core threads with 64 task threads based on your 4 available processors
+22:08:15,085 INFO  [org.jboss.as.security] (MSC service thread 1-3) WFLYSEC0001: Current PicketBox version=4.9.6.Final
+22:08:15,158 INFO  [org.jboss.as.naming] (MSC service thread 1-6) WFLYNAM0003: Starting Naming Service
+22:08:15,214 INFO  [org.xnio] (MSC service thread 1-4) XNIO version 3.4.3.Final
+22:08:15,256 INFO  [org.xnio.nio] (MSC service thread 1-4) XNIO NIO Implementation Version 3.4.3.Final
+22:08:15,368 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-4) WFLYUT0012: Started server default-server.
+22:08:15,450 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-4) WFLYUT0006: Undertow HTTP listener default listening on [0:0:0:0:0:0:0:0]:8080
+22:08:15,541 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: WildFly Swarm 2017.8.1 (WildFly Core 2.2.1.Final) started in 1645ms - Started 88 of 97 services (18 services are lazy, passive or on-demand)
+22:08:16,608 INFO  [org.wildfly.swarm.runtime.deployer] (main) deploying lra-cdi-check.war
+22:08:16,648 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-2) WFLYSRV0027: Starting deployment of "lra-cdi-check.war" (runtime-name: "lra-cdi-check.war")
+22:08:16,854 WARN  [org.jboss.as.dependency.private] (MSC service thread 1-4) WFLYSRV0018: Deployment "deployment.lra-cdi-check.war" is using a private module ("org.jboss.jts:main") which may be changed or removed in future versions without notice.
+22:08:16,922 INFO  [org.jboss.weld.deployer] (MSC service thread 1-3) WFLYWELD0003: Processing weld deployment lra-cdi-check.war
+22:08:17,141 INFO  [org.hibernate.validator.internal.util.Version] (MSC service thread 1-3) HV000001: Hibernate Validator 5.2.4.Final
+22:08:17,287 INFO  [org.jboss.weld.Version] (MSC service thread 1-3) WELD-000900: 2.3.5 (Final)
+22:08:17,315 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-8) WFLYUT0018: Host default-host starting
+22:08:17,551 ERROR [org.jboss.msc.service.fail] (MSC service thread 1-1) MSC000001: Failed to start service jboss.deployment.unit."lra-cdi-check.war".WeldStartService: org.jboss.msc.service.StartException in service jboss.deployment.unit."lra-cdi-check.war".WeldStartService: Failed to start service
+	at org.jboss.msc.service.ServiceControllerImpl$StartTask.run(ServiceControllerImpl.java:1904)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+Caused by: org.jboss.weld.exceptions.DefinitionException: Exception List with 1 exceptions:
+Exception 0 :
+java.lang.IndexOutOfBoundsException: Index: 0, Size: 0
+	at java.util.ArrayList.rangeCheck(ArrayList.java:653)
+	at java.util.ArrayList.get(ArrayList.java:429)
+	at org.jboss.narayana.rts.lra.cdi.LraAnnotationProcessingExtension.processLraAnnotatedType(LraAnnotationProcessingExtension.java:162)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jboss.weld.injection.StaticMethodInjectionPoint.invoke(StaticMethodInjectionPoint.java:88)
+	at org.jboss.weld.injection.StaticMethodInjectionPoint.invoke(StaticMethodInjectionPoint.java:78)
+	at org.jboss.weld.injection.MethodInvocationStrategy$SimpleMethodInvocationStrategy.invoke(MethodInvocationStrategy.java:129)
+	at org.jboss.weld.event.ObserverMethodImpl.sendEvent(ObserverMethodImpl.java:313)
+	at org.jboss.weld.event.ExtensionObserverMethodImpl.sendEvent(ExtensionObserverMethodImpl.java:125)
+	at org.jboss.weld.event.ObserverMethodImpl.sendEvent(ObserverMethodImpl.java:291)
+	at org.jboss.weld.event.ObserverMethodImpl.notify(ObserverMethodImpl.java:269)
+	at org.jboss.weld.bootstrap.events.ContainerLifecycleEvents.fireProcessAnnotatedType(ContainerLifecycleEvents.java:197)
+	at org.jboss.weld.bootstrap.events.ContainerLifecycleEvents.fireProcessAnnotatedType(ContainerLifecycleEvents.java:169)
+	at org.jboss.weld.bootstrap.BeanDeployer.processAnnotatedTypes(BeanDeployer.java:159)
+	at org.jboss.weld.bootstrap.BeanDeployment.createTypes(BeanDeployment.java:224)
+	at org.jboss.weld.bootstrap.WeldStartup.startInitialization(WeldStartup.java:383)
+	at org.jboss.weld.bootstrap.WeldBootstrap.startInitialization(WeldBootstrap.java:76)
+	at org.jboss.as.weld.WeldStartService.start(WeldStartService.java:94)
+	at org.jboss.msc.service.ServiceControllerImpl$StartTask.startService(ServiceControllerImpl.java:1948)
+	at org.jboss.msc.service.ServiceControllerImpl$StartTask.run(ServiceControllerImpl.java:1881)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+
+	at org.jboss.weld.bootstrap.events.ContainerLifecycleEvents.fireProcessAnnotatedType(ContainerLifecycleEvents.java:204)
+	at org.jboss.weld.bootstrap.events.ContainerLifecycleEvents.fireProcessAnnotatedType(ContainerLifecycleEvents.java:169)
+	at org.jboss.weld.bootstrap.BeanDeployer.processAnnotatedTypes(BeanDeployer.java:159)
+	at org.jboss.weld.bootstrap.BeanDeployment.createTypes(BeanDeployment.java:224)
+	at org.jboss.weld.bootstrap.WeldStartup.startInitialization(WeldStartup.java:383)
+	at org.jboss.weld.bootstrap.WeldBootstrap.startInitialization(WeldBootstrap.java:76)
+	at org.jboss.as.weld.WeldStartService.start(WeldStartService.java:94)
+	at org.jboss.msc.service.ServiceControllerImpl$StartTask.startService(ServiceControllerImpl.java:1948)
+	at org.jboss.msc.service.ServiceControllerImpl$StartTask.run(ServiceControllerImpl.java:1881)
+	... 3 more
+
+22:08:17,555 ERROR [org.jboss.as.controller.management-operation] (main) WFLYCTL0013: Operation ("add") failed - address: (("deployment" => "lra-cdi-check.war")) - failure description: {
+    "WFLYCTL0080: Failed services" => {"jboss.deployment.unit.\"lra-cdi-check.war\".WeldStartService" => "org.jboss.msc.service.StartException in service jboss.deployment.unit.\"lra-cdi-check.war\".WeldStartService: Failed to start service
+    Caused by: org.jboss.weld.exceptions.DefinitionException: Exception List with 1 exceptions:
+Exception 0 :
+java.lang.IndexOutOfBoundsException: Index: 0, Size: 0
+	at java.util.ArrayList.rangeCheck(ArrayList.java:653)
+	at java.util.ArrayList.get(ArrayList.java:429)
+	at org.jboss.narayana.rts.lra.cdi.LraAnnotationProcessingExtension.processLraAnnotatedType(LraAnnotationProcessingExtension.java:162)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jboss.weld.injection.StaticMethodInjectionPoint.invoke(StaticMethodInjectionPoint.java:88)
+	at org.jboss.weld.injection.StaticMethodInjectionPoint.invoke(StaticMethodInjectionPoint.java:78)
+	at org.jboss.weld.injection.MethodInvocationStrategy$SimpleMethodInvocationStrategy.invoke(MethodInvocationStrategy.java:129)
+	at org.jboss.weld.event.ObserverMethodImpl.sendEvent(ObserverMethodImpl.java:313)
+	at org.jboss.weld.event.ExtensionObserverMethodImpl.sendEvent(ExtensionObserverMethodImpl.java:125)
+	at org.jboss.weld.event.ObserverMethodImpl.sendEvent(ObserverMethodImpl.java:291)
+	at org.jboss.weld.event.ObserverMethodImpl.notify(ObserverMethodImpl.java:269)
+	at org.jboss.weld.bootstrap.events.ContainerLifecycleEvents.fireProcessAnnotatedType(ContainerLifecycleEvents.java:197)
+	at org.jboss.weld.bootstrap.events.ContainerLifecycleEvents.fireProcessAnnotatedType(ContainerLifecycleEvents.java:169)
+	at org.jboss.weld.bootstrap.BeanDeployer.processAnnotatedTypes(BeanDeployer.java:159)
+	at org.jboss.weld.bootstrap.BeanDeployment.createTypes(BeanDeployment.java:224)
+	at org.jboss.weld.bootstrap.WeldStartup.startInitialization(WeldStartup.java:383)
+	at org.jboss.weld.bootstrap.WeldBootstrap.startInitialization(WeldBootstrap.java:76)
+	at org.jboss.as.weld.WeldStartService.start(WeldStartService.java:94)
+	at org.jboss.msc.service.ServiceControllerImpl$StartTask.startService(ServiceControllerImpl.java:1948)
+	at org.jboss.msc.service.ServiceControllerImpl$StartTask.run(ServiceControllerImpl.java:1881)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+"},
+    "WFLYCTL0412: Required services that are not installed:" => ["jboss.deployment.unit.\"lra-cdi-check.war\".WeldStartService"],
+    "WFLYCTL0180: Services with missing/unavailable dependencies" => undefined
+}
+22:08:17,563 ERROR [org.jboss.as.server] (main) WFLYSRV0021: Deploy of deployment "lra-cdi-check.war" was rolled back with the following failure message: 
+{
+    "WFLYCTL0080: Failed services" => {"jboss.deployment.unit.\"lra-cdi-check.war\".WeldStartService" => "org.jboss.msc.service.StartException in service jboss.deployment.unit.\"lra-cdi-check.war\".WeldStartService: Failed to start service
+    Caused by: org.jboss.weld.exceptions.DefinitionException: Exception List with 1 exceptions:
+Exception 0 :
+java.lang.IndexOutOfBoundsException: Index: 0, Size: 0
+	at java.util.ArrayList.rangeCheck(ArrayList.java:653)
+	at java.util.ArrayList.get(ArrayList.java:429)
+	at org.jboss.narayana.rts.lra.cdi.LraAnnotationProcessingExtension.processLraAnnotatedType(LraAnnotationProcessingExtension.java:162)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jboss.weld.injection.StaticMethodInjectionPoint.invoke(StaticMethodInjectionPoint.java:88)
+	at org.jboss.weld.injection.StaticMethodInjectionPoint.invoke(StaticMethodInjectionPoint.java:78)
+	at org.jboss.weld.injection.MethodInvocationStrategy$SimpleMethodInvocationStrategy.invoke(MethodInvocationStrategy.java:129)
+	at org.jboss.weld.event.ObserverMethodImpl.sendEvent(ObserverMethodImpl.java:313)
+	at org.jboss.weld.event.ExtensionObserverMethodImpl.sendEvent(ExtensionObserverMethodImpl.java:125)
+	at org.jboss.weld.event.ObserverMethodImpl.sendEvent(ObserverMethodImpl.java:291)
+	at org.jboss.weld.event.ObserverMethodImpl.notify(ObserverMethodImpl.java:269)
+	at org.jboss.weld.bootstrap.events.ContainerLifecycleEvents.fireProcessAnnotatedType(ContainerLifecycleEvents.java:197)
+	at org.jboss.weld.bootstrap.events.ContainerLifecycleEvents.fireProcessAnnotatedType(ContainerLifecycleEvents.java:169)
+	at org.jboss.weld.bootstrap.BeanDeployer.processAnnotatedTypes(BeanDeployer.java:159)
+	at org.jboss.weld.bootstrap.BeanDeployment.createTypes(BeanDeployment.java:224)
+	at org.jboss.weld.bootstrap.WeldStartup.startInitialization(WeldStartup.java:383)
+	at org.jboss.weld.bootstrap.WeldBootstrap.startInitialization(WeldBootstrap.java:76)
+	at org.jboss.as.weld.WeldStartService.start(WeldStartService.java:94)
+	at org.jboss.msc.service.ServiceControllerImpl$StartTask.startService(ServiceControllerImpl.java:1948)
+	at org.jboss.msc.service.ServiceControllerImpl$StartTask.run(ServiceControllerImpl.java:1881)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)
+"},
+    "WFLYCTL0412: Required services that are not installed:" => ["jboss.deployment.unit.\"lra-cdi-check.war\".WeldStartService"],
+    "WFLYCTL0180: Services with missing/unavailable dependencies" => undefined
+}
+22:08:17,594 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-7) WFLYUT0019: Host default-host stopping
+22:08:17,599 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-1) WFLYSRV0028: Stopped deployment lra-cdi-check.war (runtime-name: lra-cdi-check.war) in 41ms
+22:08:17,602 INFO  [org.jboss.as.controller] (main) WFLYCTL0183: Service status report
+WFLYCTL0184:    New missing/unsatisfied dependencies:
+      service jboss.deployment.unit."lra-cdi-check.war".WeldBootstrapService (missing) dependents: [service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldTerminalListener".WeldInstantiator, service jboss.deployment.unit."lra-cdi-check.war".CdiValidatorFactoryService, service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldInitialListener".WeldInstantiator, service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.ScriptFreeTLV".WeldInstantiator, WFLYCTL0208: ... and 2 more ] 
+      service jboss.deployment.unit."lra-cdi-check.war".WeldStartService (missing) dependents: [service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldTerminalListener".WeldInstantiator, service jboss.undertow.deployment.default-server.default-host./, service jboss.deployment.unit."lra-cdi-check.war".CdiValidatorFactoryService, service jboss.undertow.deployment.default-server.default-host./.UndertowDeploymentInfoService, WFLYCTL0208: ... and 4 more ] 
+      service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.PermittedTaglibsTLV".CREATE (missing) dependents: [service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.PermittedTaglibsTLV".START] 
+      service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.PermittedTaglibsTLV".START (missing) dependents: [service jboss.undertow.deployment.default-server.default-host./, service jboss.undertow.deployment.default-server.default-host./.UndertowDeploymentInfoService, service jboss.deployment.unit."lra-cdi-check.war".deploymentCompleteService] 
+      service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.PermittedTaglibsTLV".WeldInstantiator (missing) dependents: [service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.PermittedTaglibsTLV".START] 
+      service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.ScriptFreeTLV".CREATE (missing) dependents: [service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.ScriptFreeTLV".START] 
+      service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.ScriptFreeTLV".START (missing) dependents: [service jboss.undertow.deployment.default-server.default-host./, service jboss.undertow.deployment.default-server.default-host./.UndertowDeploymentInfoService, service jboss.deployment.unit."lra-cdi-check.war".deploymentCompleteService] 
+      service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.ScriptFreeTLV".WeldInstantiator (missing) dependents: [service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.ScriptFreeTLV".START] 
+      service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldInitialListener".CREATE (missing) dependents: [service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldInitialListener".START] 
+      service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldInitialListener".START (missing) dependents: [service jboss.undertow.deployment.default-server.default-host./, service jboss.undertow.deployment.default-server.default-host./.UndertowDeploymentInfoService, service jboss.deployment.unit."lra-cdi-check.war".deploymentCompleteService] 
+      service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldInitialListener".WeldInstantiator (missing) dependents: [service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldInitialListener".START] 
+      service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldTerminalListener".CREATE (missing) dependents: [service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldTerminalListener".START] 
+      service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldTerminalListener".START (missing) dependents: [service jboss.undertow.deployment.default-server.default-host./, service jboss.undertow.deployment.default-server.default-host./.UndertowDeploymentInfoService, service jboss.deployment.unit."lra-cdi-check.war".deploymentCompleteService] 
+      service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldTerminalListener".WeldInstantiator (missing) dependents: [service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldTerminalListener".START] 
+      service jboss.deployment.unit."lra-cdi-check.war".ee.ComponentRegistry (missing) dependents: [service jboss.undertow.deployment.default-server.default-host./.UndertowDeploymentInfoService] 
+      service jboss.deployment.unit."lra-cdi-check.war".jndiDependencyService (missing) dependents: [service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldInitialListener".START, service jboss.deployment.unit."lra-cdi-check.war".component."org.jboss.weld.servlet.WeldTerminalListener".START, service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.PermittedTaglibsTLV".START, service jboss.deployment.unit."lra-cdi-check.war".component."javax.servlet.jsp.jstl.tlv.ScriptFreeTLV".START] 
+      service jboss.undertow.deployment.default-server.default-host./ (missing) dependents: [service jboss.deployment.unit."lra-cdi-check.war".deploymentCompleteService] 
+      service jboss.undertow.deployment.default-server.default-host./.UndertowDeploymentInfoService (missing) dependents: [service jboss.undertow.deployment.default-server.default-host./] 
+      service jboss.undertow.deployment.default-server.default-host./.codec (missing) dependents: [service jboss.undertow.deployment.default-server.default-host./.UndertowDeploymentInfoService] 
+      service jboss.undertow.deployment.default-server.default-host./.session (missing) dependents: [service jboss.undertow.deployment.default-server.default-host./.UndertowDeploymentInfoService] 
+      service org.wildfly.request-controller.control-point."lra-cdi-check.war".undertow (missing) dependents: [service jboss.undertow.deployment.default-server.default-host./.UndertowDeploymentInfoService] 
+WFLYCTL0186:   Services which failed to start:      service jboss.deployment.unit."lra-cdi-check.war".WeldStartService
+
+22:08:17,614 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-6) WFLYUT0008: Undertow HTTP listener default suspending
+22:08:17,634 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-6) WFLYUT0007: Undertow HTTP listener default stopped, was bound to [0:0:0:0:0:0:0:0]:8080
+22:08:17,637 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-8) WFLYUT0004: Undertow 1.4.11.Final stopping
+22:08:17,655 INFO  [org.jboss.as] (MSC service thread 1-7) WFLYSRV0050: WildFly Swarm 2017.8.1 (WildFly Core 2.2.1.Final) stopped in 20ms
+22:08:17,679 INFO  [org.jboss.weld.Bootstrap] (main) WELD-ENV-002001: Weld SE container internal shut down
+22:08:17,729 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:                  Logging - STABLE          org.wildfly.swarm:logging:2017.8.1
+22:08:17,730 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:          Bean Validation - STABLE          org.wildfly.swarm:bean-validation:2017.8.1
+22:08:17,730 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:        CDI Configuration - STABLE          org.wildfly.swarm:cdi-config:2017.8.1
+22:08:17,730 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:             Transactions - STABLE          org.wildfly.swarm:transactions:2017.8.1
+22:08:17,730 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:                      CDI - STABLE          org.wildfly.swarm:cdi:2017.8.1
+22:08:17,730 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:                 Undertow - STABLE          org.wildfly.swarm:undertow:2017.8.1
+22:08:17,730 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:                   JAX-RS - STABLE          org.wildfly.swarm:jaxrs:2017.8.1
+22:08:18,092 INFO  [org.jboss.as] (MSC service thread 2-8) WFLYSRV0049: WildFly Swarm 2017.8.1 (WildFly Core 2.2.1.Final) starting
+22:08:18,099 INFO  [org.wildfly.swarm] (MSC service thread 2-8) WFSWARM0019: Install MSC service for command line args: [-Dswarm.logging.periodic-rotating-file-handlers=FILE, -Dswarm.logging.periodic-rotating-file-handlers.FILE.file.path=/tmp/junit5288995100925921595/junit8326929208500928655.tmp, -Dswarm.logging.root-logger.handlers=[CONSOLE,FILE]]
+22:09:51,432 WARN  [org.jboss.as.txn] (ServerService Thread Pool -- 16) WFLYTX0013: Node identifier property is set to the default value. Please make sure it is unique.
+22:09:51,464 INFO  [org.jboss.as.security] (ServerService Thread Pool -- 19) WFLYSEC0002: Activating Security Subsystem
+22:09:51,477 INFO  [org.jboss.as.naming] (ServerService Thread Pool -- 21) WFLYNAM0001: Activating Naming Subsystem
+22:09:51,496 INFO  [org.wildfly.extension.io] (ServerService Thread Pool -- 15) WFLYIO001: Worker 'default' has auto-configured to 8 core threads with 64 task threads based on your 4 available processors
+22:09:51,502 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-7) WFLYUT0003: Undertow 1.4.11.Final starting
+22:09:51,530 INFO  [org.jboss.as.security] (MSC service thread 1-8) WFLYSEC0001: Current PicketBox version=4.9.6.Final
+22:09:51,580 INFO  [org.jboss.as.naming] (MSC service thread 1-2) WFLYNAM0003: Starting Naming Service
+22:09:51,644 INFO  [org.xnio] (MSC service thread 1-7) XNIO version 3.4.3.Final
+22:09:51,686 INFO  [org.xnio.nio] (MSC service thread 1-7) XNIO NIO Implementation Version 3.4.3.Final
+22:09:51,908 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-4) WFLYUT0012: Started server default-server.
+22:09:52,021 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-4) WFLYUT0006: Undertow HTTP listener default listening on [0:0:0:0:0:0:0:0]:8080
+22:09:52,255 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: WildFly Swarm 2017.8.1 (WildFly Core 2.2.1.Final) started in 2142ms - Started 88 of 97 services (18 services are lazy, passive or on-demand)
+22:09:53,633 INFO  [org.wildfly.swarm.runtime.deployer] (main) deploying lra-cdi-check.war
+22:09:53,657 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-3) WFLYSRV0027: Starting deployment of "lra-cdi-check.war" (runtime-name: "lra-cdi-check.war")
+22:09:53,852 WARN  [org.jboss.as.dependency.private] (MSC service thread 1-7) WFLYSRV0018: Deployment "deployment.lra-cdi-check.war" is using a private module ("org.jboss.jts:main") which may be changed or removed in future versions without notice.
+22:09:53,895 INFO  [org.jboss.weld.deployer] (MSC service thread 1-5) WFLYWELD0003: Processing weld deployment lra-cdi-check.war
+22:09:54,110 INFO  [org.hibernate.validator.internal.util.Version] (MSC service thread 1-5) HV000001: Hibernate Validator 5.2.4.Final
+22:09:54,275 INFO  [org.jboss.weld.Version] (MSC service thread 1-5) WELD-000900: 2.3.5 (Final)
+22:09:54,312 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-1) WFLYUT0018: Host default-host starting
+22:09:55,147 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 23) RESTEASY002225: Deploying javax.ws.rs.core.Application: class org.wildfly.swarm.generated.WildFlySwarmDefaultJAXRSApplication$Proxy$_$$_WeldClientProxy
+22:09:55,156 INFO  [org.wildfly.extension.undertow] (ServerService Thread Pool -- 23) WFLYUT0021: Registered web context: /
+22:09:55,207 INFO  [org.jboss.as.server] (main) WFLYSRV0010: Deployed "lra-cdi-check.war" (runtime-name : "lra-cdi-check.war")
+22:09:55,225 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-3) WFLYUT0008: Undertow HTTP listener default suspending
+22:09:55,232 INFO  [org.wildfly.extension.undertow] (ServerService Thread Pool -- 23) WFLYUT0022: Unregistered web context: /
+22:09:55,232 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-3) WFLYUT0007: Undertow HTTP listener default stopped, was bound to [0:0:0:0:0:0:0:0]:8080
+22:09:55,240 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-8) WFLYUT0019: Host default-host stopping
+22:09:55,241 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-1) WFLYUT0004: Undertow 1.4.11.Final stopping
+22:09:55,267 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-1) WFLYSRV0028: Stopped deployment lra-cdi-check.war (runtime-name: lra-cdi-check.war) in 51ms
+22:09:55,276 INFO  [org.jboss.as] (MSC service thread 1-3) WFLYSRV0050: WildFly Swarm 2017.8.1 (WildFly Core 2.2.1.Final) stopped in 54ms
+22:09:55,287 INFO  [org.jboss.weld.Bootstrap] (main) WELD-ENV-002001: Weld SE container internal shut down
+22:09:55,314 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:                  Logging - STABLE          org.wildfly.swarm:logging:2017.8.1
+22:09:55,315 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:          Bean Validation - STABLE          org.wildfly.swarm:bean-validation:2017.8.1
+22:09:55,315 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:        CDI Configuration - STABLE          org.wildfly.swarm:cdi-config:2017.8.1
+22:09:55,316 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:             Transactions - STABLE          org.wildfly.swarm:transactions:2017.8.1
+22:09:55,318 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:                      CDI - STABLE          org.wildfly.swarm:cdi:2017.8.1
+22:09:55,319 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:                 Undertow - STABLE          org.wildfly.swarm:undertow:2017.8.1
+22:09:55,319 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:                   JAX-RS - STABLE          org.wildfly.swarm:jaxrs:2017.8.1
+22:09:55,695 INFO  [org.jboss.as] (MSC service thread 2-6) WFLYSRV0049: WildFly Swarm 2017.8.1 (WildFly Core 2.2.1.Final) starting
+22:09:55,700 INFO  [org.wildfly.swarm] (MSC service thread 2-6) WFSWARM0019: Install MSC service for command line args: [-Dswarm.logging.periodic-rotating-file-handlers=FILE, -Dswarm.logging.periodic-rotating-file-handlers.FILE.file.path=/tmp/junit2226099510795899201/junit8263699203951387312.tmp, -Dswarm.logging.root-logger.handlers=[CONSOLE,FILE]]
+22:18:05,870 WARN  [org.jboss.as.txn] (ServerService Thread Pool -- 13) WFLYTX0013: Node identifier property is set to the default value. Please make sure it is unique.
+22:18:05,891 INFO  [org.jboss.as.naming] (ServerService Thread Pool -- 21) WFLYNAM0001: Activating Naming Subsystem
+22:18:05,912 INFO  [org.jboss.as.security] (ServerService Thread Pool -- 19) WFLYSEC0002: Activating Security Subsystem
+22:18:05,935 INFO  [org.jboss.as.security] (MSC service thread 1-4) WFLYSEC0001: Current PicketBox version=4.9.6.Final
+22:18:05,975 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-5) WFLYUT0003: Undertow 1.4.11.Final starting
+22:18:05,989 INFO  [org.wildfly.extension.io] (ServerService Thread Pool -- 16) WFLYIO001: Worker 'default' has auto-configured to 8 core threads with 64 task threads based on your 4 available processors
+22:18:06,036 INFO  [org.jboss.as.naming] (MSC service thread 1-6) WFLYNAM0003: Starting Naming Service
+22:18:06,137 INFO  [org.xnio] (MSC service thread 1-6) XNIO version 3.4.3.Final
+22:18:06,163 INFO  [org.xnio.nio] (MSC service thread 1-6) XNIO NIO Implementation Version 3.4.3.Final
+22:18:06,239 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-4) WFLYUT0012: Started server default-server.
+22:18:06,406 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-4) WFLYUT0006: Undertow HTTP listener default listening on [0:0:0:0:0:0:0:0]:8080
+22:18:06,602 INFO  [org.jboss.as] (Controller Boot Thread) WFLYSRV0025: WildFly Swarm 2017.8.1 (WildFly Core 2.2.1.Final) started in 1752ms - Started 88 of 97 services (18 services are lazy, passive or on-demand)
+22:18:08,151 INFO  [org.wildfly.swarm.runtime.deployer] (main) deploying lra-cdi-check.war
+22:18:08,186 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-8) WFLYSRV0027: Starting deployment of "lra-cdi-check.war" (runtime-name: "lra-cdi-check.war")
+22:18:08,420 WARN  [org.jboss.as.dependency.private] (MSC service thread 1-2) WFLYSRV0018: Deployment "deployment.lra-cdi-check.war" is using a private module ("org.jboss.jts:main") which may be changed or removed in future versions without notice.
+22:18:08,482 INFO  [org.jboss.weld.deployer] (MSC service thread 1-4) WFLYWELD0003: Processing weld deployment lra-cdi-check.war
+22:18:08,758 INFO  [org.hibernate.validator.internal.util.Version] (MSC service thread 1-4) HV000001: Hibernate Validator 5.2.4.Final
+22:18:09,144 INFO  [org.jboss.weld.Version] (MSC service thread 1-1) WELD-000900: 2.3.5 (Final)
+22:18:09,187 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-3) WFLYUT0018: Host default-host starting
+22:18:10,009 INFO  [org.jboss.resteasy.resteasy_jaxrs.i18n] (ServerService Thread Pool -- 8) RESTEASY002225: Deploying javax.ws.rs.core.Application: class org.wildfly.swarm.generated.WildFlySwarmDefaultJAXRSApplication$Proxy$_$$_WeldClientProxy
+22:18:10,017 INFO  [org.wildfly.extension.undertow] (ServerService Thread Pool -- 8) WFLYUT0021: Registered web context: /
+22:18:10,057 INFO  [org.jboss.as.server] (main) WFLYSRV0010: Deployed "lra-cdi-check.war" (runtime-name : "lra-cdi-check.war")
+22:18:10,069 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-3) WFLYUT0008: Undertow HTTP listener default suspending
+22:18:10,077 INFO  [org.wildfly.extension.undertow] (ServerService Thread Pool -- 8) WFLYUT0022: Unregistered web context: /
+22:18:10,086 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-3) WFLYUT0007: Undertow HTTP listener default stopped, was bound to [0:0:0:0:0:0:0:0]:8080
+22:18:10,095 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-2) WFLYUT0019: Host default-host stopping
+22:18:10,096 INFO  [org.wildfly.extension.undertow] (MSC service thread 1-2) WFLYUT0004: Undertow 1.4.11.Final stopping
+22:18:10,141 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-7) WFLYSRV0028: Stopped deployment lra-cdi-check.war (runtime-name: lra-cdi-check.war) in 77ms
+22:18:10,147 INFO  [org.jboss.as] (MSC service thread 1-3) WFLYSRV0050: WildFly Swarm 2017.8.1 (WildFly Core 2.2.1.Final) stopped in 69ms
+22:18:10,162 INFO  [org.jboss.weld.Bootstrap] (main) WELD-ENV-002001: Weld SE container internal shut down
+22:18:10,200 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:                  Logging - STABLE          org.wildfly.swarm:logging:2017.8.1
+22:18:10,200 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:          Bean Validation - STABLE          org.wildfly.swarm:bean-validation:2017.8.1
+22:18:10,200 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:        CDI Configuration - STABLE          org.wildfly.swarm:cdi-config:2017.8.1
+22:18:10,201 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:             Transactions - STABLE          org.wildfly.swarm:transactions:2017.8.1
+22:18:10,201 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:                      CDI - STABLE          org.wildfly.swarm:cdi:2017.8.1
+22:18:10,201 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:                 Undertow - STABLE          org.wildfly.swarm:undertow:2017.8.1
+22:18:10,201 INFO  [org.wildfly.swarm] (main) WFSWARM0013: Installed fraction:                   JAX-RS - STABLE          org.wildfly.swarm:jaxrs:2017.8.1
+22:18:10,618 INFO  [org.jboss.as] (MSC service thread 2-8) WFLYSRV0049: WildFly Swarm 2017.8.1 (WildFly Core 2.2.1.Final) starting
+22:18:10,621 INFO  [org.wildfly.swarm] (MSC service thread 2-8) WFSWARM0019: Install MSC service for command line args: [-Dswarm.logging.periodic-rotating-file-handlers=FILE, -Dswarm.logging.periodic-rotating-file-handlers.FILE.file.path=/tmp/junit3394201886381207733/junit206429401546504389.tmp, -Dswarm.logging.root-logger.handlers=[CONSOLE,FILE]]

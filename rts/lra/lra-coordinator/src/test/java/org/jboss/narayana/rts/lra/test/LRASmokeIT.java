@@ -1,3 +1,5 @@
+package org.jboss.narayana.rts.lra.test;
+import java.io.File;
 /*
  * JBoss, Home of Professional Open Source.
  * Copyright 2013, Red Hat, Inc., and individual contributors
@@ -19,58 +21,65 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.test.api.ArquillianResource;
-
-import org.jboss.narayana.rts.lra.coordinator.api.Coordinator;
-import org.jboss.narayana.rts.lra.client.LRAClient;
-import org.jboss.shrinkwrap.api.Filters;
-import org.jboss.shrinkwrap.api.GenericArchive;
-import org.jboss.shrinkwrap.api.ShrinkWrap;
-import org.jboss.shrinkwrap.api.importer.ExplodedImporter;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
-
-import org.junit.Before;
-import org.junit.FixMethodOrder;
-import org.junit.runner.RunWith;
-import org.junit.runners.MethodSorters;
-
-import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.narayana.rts.lra.client.LRAClient;
+import org.jboss.shrinkwrap.api.Archive;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.wildfly.swarm.jaxrs.JAXRSArchive;
 
 @RunWith(Arquillian.class)
-@FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class LRAIT {
-
-    @Deployment(testable = false)
-    public static WebArchive createDeploymentFromFiles() {
-        return ShrinkWrap.create(WebArchive.class).merge(
-                ShrinkWrap.create(GenericArchive.class)
-                        .as(ExplodedImporter.class)
-                        .importDirectory("target/lra-coordinator")
-                        .as(GenericArchive.class), "/", Filters.includeAll());
-    }
-
-//    @Deployment(testable = false)
-    // this one does not register Coordinator.class as a JAXRS resource
-    public static WebArchive createDeploymentFromUberJar() {
-        return ShrinkWrap.createFromZipFile(WebArchive.class, new File("target/lra-coordinator-swarm.jar")).addClass(Coordinator.class);
-    }
+@RunAsClient
+public class LRASmokeIT {
 
     @ArquillianResource
     private URL base;
 
     private LRAClient lraClient;
 
+    @Deployment(testable = false)
+    public static Archive<?> createDeployment() throws Exception {
+        JAXRSArchive deployment = ShrinkWrap.create(JAXRSArchive.class, "lra-smoke-it.war");
+        deployment.addPackages(true, "org.jboss.narayana.rts.lra.coordinator");
+
+        File[] libs = Maven.resolver()
+            .loadPomFromFile("pom.xml")
+            .resolve("org.jboss.narayana.rts:lra-filters")
+            .withTransitivity().as(File.class); 
+
+        deployment.addAsLibraries(libs);
+        return deployment;
+    }
+
     @Before
     public void setupClass() throws MalformedURLException, URISyntaxException {
+        System.out.println(String.format("LRA client is connecting to %s://%s:%s",
+            base.getProtocol(), base.getHost(), base.getPort()));
         lraClient = new LRAClient(base.getProtocol(), base.getHost(), base.getPort());
+    }
+
+    @After
+    public void tearDown() {
+        if(lraClient != null) {
+            lraClient.close();
+        }
+        lraClient = null;
+    }
+
+    @Test
+    public void testStartLRA() {
+        URL lraId = lraClient.startLRA("testStartLRA");
+        lraClient.closeLRA(lraId);
     }
 }

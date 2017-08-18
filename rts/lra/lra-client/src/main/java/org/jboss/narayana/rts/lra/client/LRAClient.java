@@ -299,7 +299,7 @@ public class LRAClient implements LRAClientAPI, Closeable {
     public void renewTimeLimit(URL lraId, long limit, TimeUnit unit) {
         Response response = null;
 
-        lraTrace("leaving LRA", lraId);
+        lraTrace(String.format("renew time limit to %s s of LRA", unit.toSeconds(limit)), lraId);
 
         try {
             aquireConnection();

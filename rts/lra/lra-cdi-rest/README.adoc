@@ -1,0 +1,20 @@
+## What is the purpose of the module
+
+This module serves as a simple checker of prerequisites that usage of `@LRA` mandates.
+As example we can say that class annotated with `@LRA` is expected to contains annotations
+`@Status`, `@Compensate` and `@Complete`. All of this method needs to define `@Path` annotation etc.
+
+### Usage
+
+Only add the dependency to this project to your project. Then during the container startup
+(the term container here invoves e.g. instance of WildFly Swarm too) there is loaded
+a CDI extension which throws `DeploymentException` with description of the issue.
+
+The coordinates of this artifact are
+
+```
+<dependency>
+  <groupId>org.jboss.narayana.rts</groupId>
+  <artifactId>lra-cdi-rest</artifactId>
+</dependency>
+```

@@ -28,6 +28,7 @@ import org.jboss.narayana.rts.lra.annotation.Leave;
 import org.jboss.narayana.rts.lra.annotation.NestedLRA;
 import org.jboss.narayana.rts.lra.annotation.Status;
 import org.jboss.narayana.rts.lra.annotation.TimeLimit;
+import org.jboss.narayana.rts.lra.client.Current;
 import org.jboss.narayana.rts.lra.client.IllegalLRAStateException;
 import org.jboss.narayana.rts.lra.client.LRAClient;
 import org.jboss.narayana.rts.lra.client.LRAClientAPI;
@@ -198,7 +199,7 @@ public class ActivityController {
         if (lraId != null)
             throw new WebApplicationException(Response.Status.NOT_ACCEPTABLE);
 
-        // manually start an LRA via the injection LRAClient api
+        // manually start an LRA via the injection LRAClient lra.demo.api
         URL lra = lraClient.startLRA("subActivity", 0L);
 
         lraId = lra.toString();
@@ -233,8 +234,13 @@ public class ActivityController {
 
     private String restPutInvocation(String path, String bodyText) {
         String id = null;
-        Response response = ClientBuilder.newClient().target(context.getBaseUri())
-                .path("activities").path(path).request().put(Entity.text(bodyText));
+        Response response = ClientBuilder.newClient()
+            .target(context.getBaseUri())
+            .path("activities")
+            .path(path)
+            .request()
+            .header(LRAClient.LRA_HTTP_HEADER, Current.peek())
+            .put(Entity.text(bodyText));
 
         if (response.hasEntity())
             id = response.readEntity(String.class);
@@ -356,7 +362,7 @@ public class ActivityController {
         activityService.add(new Activity(LRAClient.getLRAId(lraId)));
 
         try {
-            Thread.sleep(200); // sleep for 200000 micro seconds (should be longer than specified in the @TimeLimit annotation)
+            Thread.sleep(200); // sleep for 200 miliseconds (should be longer than specified in the @TimeLimit annotation)
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

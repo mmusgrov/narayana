@@ -1,8 +1,16 @@
-## Build everything (skips tests)
+## Build everything and run integration tests
 
 ```bash
 mvn clean install
 ```
+
+## Test the LRA coodinator using Arquillian:
+
+```bash
+mvn -f lra-coordinator/pom.xml -DskipTests=false verify
+```
+
+(if you need to debug the integration test then use -Dmaven.failsafe.debug).
 
 ## View the swagger documentation for the LRA coordinator
 
@@ -77,7 +85,7 @@ Jackson for parsing Json the client (TripClient) only uses Java SE APIs.
 ```bash
 mvn package -f lra-test/pom.xml
 
-java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -cp lra-test/target/classes:lra-test/target/lra-test/WEB-INF/lib/jackson-jaxrs-json-provider-2.7.4.jar:lra-test/target/lra-test/WEB-INF/lib/javax.json-1.0.3.jar:lra-test/target/lra-test/WEB-INF/lib/jackson-databind-2.7.4.jar:lra-test/target/lra-test/WEB-INF/lib/jackson-core-2.7.4.jar:lra-test/target/lra-test/WEB-INF/lib/jackson-annotations-2.7.4.jar -Dservice.http.port=8081 TripClient
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -cp lra-test/target/classes:lra-test/target/lra-test/WEB-INF/lib/jackson-jaxrs-json-provider-2.7.4.jar:lra-test/target/lra-test/WEB-INF/lib/javax.json-1.0.3.jar:lra-coordinator/target/lra-coordinator/WEB-INF/lib/jackson-databind-2.7.4.jar:lra-coordinator/target/lra-coordinator/WEB-INF/lib/jackson-core-2.7.4.jar:lra-test/target/lra-test/WEB-INF/lib/jackson-annotations-2.8.0.jar -Dservice.http.port=8081 TripClient
 ```
 
 where the *service.http.port* system property specifies the port the example service is running on.
@@ -88,5 +96,4 @@ where the *service.http.port* system property specifies the port the example ser
 curl -X POST  "http://localhost:8081/trip/book?hotelName=Rex"
 curl -X POST  "http://localhost:8081/trip/book?flightNumber=BA123"
 ```
-
 

@@ -1,0 +1,28 @@
+# Short Running Actions (SRAs)
+
+[The rationale and specification for Short Running Actions](https://github.com/jbosstm/microprofile-sandbox/blob/0009-LRA/proposals/0009-LRA/0009-LRA.md#short-running-actions)
+
+## Build everything:
+
+```bash
+mvn clean package
+```
+
+## Making transactional service calls:
+
+Start a SRA coordinator:
+
+```bash
+mvn wildfly-swarm:run -DskipTests -Dswarm.http.port=8080 # -Dswarm.debug.port=5006
+```
+
+Make a service call:
+
+```bash
+curl -X POST  "http://localhost:8080/trip/book?hotelName=Rex"
+```
+
+this invocation should cause the service to start and end a SRA (via CDI annotations on the JAX-RS
+service methods).
+
+TODO create a test suite
