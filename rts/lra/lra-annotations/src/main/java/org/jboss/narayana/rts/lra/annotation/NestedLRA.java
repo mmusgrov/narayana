@@ -29,38 +29,36 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * <p>
  * Used on the interface or class. Defines that the container will create
  * a new LRA for each method invocation, regardless of whether or not there is
  * already an LRA associated with the caller. These LRAs will then
  * either be top-level LRAs or nested automatically depending upon the
  * context within which they are created.
- *
+ * <p>
  * When a nested LRA is closed its' compensators are completed but retained. At any time prior to the enclosing LRA
  * being closed or cancelled the nested LRA can be told to compensate (even though it may have already been told
  * to complete).
- *
- * Compatability with the @LRA annotation: if @LRA is not present @Nested is ignored, otherwise the behaviour depends
- * upon the value of the Type attribute:
- *
- * REQUIRED
- *  if there is an LRA present a new LRA is nested under it
- *
- * REQUIRES_NEW,
- *  the @Nested annotation is ignored
- *
- * MANDATORY,
- *  a new LRA is nested under the incoming LRA
- *
- * SUPPORTS,
- *  if there is an LRA present a new LRA is nested under otherwise a new top level LRA is begun
- *
- * NOT_SUPPORTED,
- *  nested does not make sense and operations on this resource that contain a LRA context will immediately return
- *  with a 412 Precondition Failed HTTP status code
- *
- * NEVER
- *  nested does not make sense and requests that carry a LRA context will immediately return
- *  with a 412 Precondition Failed HTTP status code
+ * <p>
+ * Compatability with the @LRA annotation: if {@link LRA} is not present @NestedLRA is ignored, otherwise the behaviour depends
+ * upon the value of the @LRA type attribute:
+ * <p>
+ * <ul>
+ *   <li>REQUIRED
+ *     if there is an LRA present a new LRA is nested under it
+ *   <li>REQUIRES_NEW,
+ *     the @NestedLRA annotation is ignored
+ *  <li>MANDATORY,
+ *     a new LRA is nested under the incoming LRA
+ *  <li>SUPPORTS,
+ *    if there is an LRA present a new LRA is nested under otherwise a new top level LRA is begun
+ *  <li>NOT_SUPPORTED,
+ *    nested does not make sense and operations on this resource that contain a LRA context will immediately return
+ *    with a <code>412 Precondition Failed</code> HTTP status code
+ *  <li>NEVER,
+ *    nested does not make sense and requests that carry a LRA context will immediately return
+ *    with a <code>412 Precondition Failed</code> HTTP status code
+ * </ul>
  */
 @Inherited
 @InterceptorBinding

@@ -77,8 +77,7 @@ public @interface LRA {
         REQUIRES_NEW,
 
         /**
-         *  <p>If called outside a transaction context, the method call will return with a 412 Precondition Failed
-         *  HTTP status code</p>
+         *  <p>If called outside a transaction context, the method call will return with a git</p>
          *  <p>If called inside a transaction context the bean method execution will then continue under that context.</p>
          */
         MANDATORY,
@@ -100,7 +99,7 @@ public @interface LRA {
         /**
          *  <p>If called outside a LRA context, managed bean method execution
          *  must then continue outside a LRA context.</p>
-         *  <p>If called inside a LRA context the method is not executed and a 412 Precondition Failed HTTP status code
+         *  <p>If called inside a LRA context the method is not executed and a <code>412 Precondition Failed</code> HTTP status code
          *  is returned to the caller.</p>
          */
         NEVER
