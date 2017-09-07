@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2013, Red Hat, Inc., and individual contributors
+ * Copyright 2017, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -148,7 +148,7 @@ public class Coordinator {
     @Path("start")
     @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @ApiOperation(value = "Start a new LRA",
-            notes = "The LRA lra.demo.model uses a presumed nothing protocol: the coordinator must communicate\n"
+            notes = "The LRA model uses a presumed nothing protocol: the coordinator must communicate\n"
                     + "with Compensators in order to inform them of the LRA activity. Every time a\n"
                     + "Compensator is enrolled with a LRA, the coordinator must make information about\n"
                     + "it durable so that the Compensator can be contacted when the LRA terminates,\n"

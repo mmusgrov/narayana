@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2013, Red Hat, Inc., and individual contributors
+ * Copyright 2017, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -148,10 +148,10 @@ public class Transaction extends AtomicAction { //org.jboss.jbossts.star.resourc
         if ((res != ActionStatus.RUNNING) && (res != ActionStatus.ABORT_ONLY)) {
             if (nested && compensate) {
                 /*
-                 * TODO this is wrong - we should be hooking into ActionType.NESTED ... but
-                 * Unfortunatly that means that after a nested txn is committed its participants are merged
+                 * Note that we do not hook into ActionType.NESTED because that would mean that after a
+                 * nested txn is committed its participants are merged
                  * with the parent and they can then only be aborted if the parent aborts whereas in
-                 * the LRA lra.demo.model nested LRAs can be compensated whilst the enclosing LRA is completed
+                 * the LRA model nested LRAs can be compensated whilst the enclosing LRA is completed
                  */
 
                 // repopulate the pending list TODO it won't neccessarily be present during recovery

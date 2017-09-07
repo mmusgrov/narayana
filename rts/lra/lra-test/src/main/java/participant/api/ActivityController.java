@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2013, Red Hat, Inc., and individual contributors
+ * Copyright 2017, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -199,7 +199,7 @@ public class ActivityController {
         if (lraId != null)
             throw new WebApplicationException(Response.Status.NOT_ACCEPTABLE);
 
-        // manually start an LRA via the injection LRAClient lra.demo.api
+        // manually start an LRA via the injection LRAClient api
         URL lra = lraClient.startLRA("subActivity", 0L);
 
         lraId = lra.toString();

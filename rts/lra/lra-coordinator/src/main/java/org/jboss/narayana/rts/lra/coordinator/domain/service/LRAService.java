@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2013, Red Hat, Inc., and individual contributors
+ * Copyright 2017, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -81,6 +81,8 @@ public class LRAService {
     }
 
     public void finished(Transaction transaction, boolean fromHierarchy, boolean needsRecovery) {
+        // if the LRA is top level or it's a nested LRA that was
+        // closed by a parent LRA (ie when fromHierarchy is true) then forget about the LRA
         if (fromHierarchy || transaction.isTopLevel()) {
             remove(ActionStatus.stringForm(transaction.status()), transaction.getId());
         }
@@ -93,14 +95,10 @@ public class LRAService {
         lraTrace(lraId, "remove LRA");
 
         if (transactions.containsKey(lraId)) {
-            Transaction lra = transactions.get(lraId);
+            transactions.get(lraId); // validate that the LRA exists
 
-//            if (lra.isTopLevel()) {
-                transactions.remove(lraId);
-                recoveringTransactions.remove(lraId);
-//            }
-
-            // TODO make sure we clean up nested LRAs when the top level LRA closes
+            transactions.remove(lraId);
+            recoveringTransactions.remove(lraId);
         }
     }
 
@@ -114,7 +112,6 @@ public class LRAService {
 
     public synchronized URL startLRA(String baseUri, URL parentLRA, String clientId, Long timelimit) {
         Transaction lra;
-//        long timeout;
 
         try {
             lra = new Transaction(baseUri, parentLRA, clientId);
@@ -124,24 +121,6 @@ public class LRAService {
 
         if (lra.currentLRA() != null)
             System.out.printf("WARNING LRA %s is already associated");
-
-        // AtomicAction uses seconds for timeouts
-/*        if (timelimit <= 0)
-            timeout = 0; // no timeout
-        } else if (timelimit < 1000) {
-            timeout = 1; // 1 second
-        } else {
-            long ltl = timelimit / 1000; // round down millis to the nearest second
-
-
-            if (ltl > Integer.MAX_VALUE) {
-                System.out.printf("WARNING LRA %s requested timeout is bigger than Integer.MAX_VALUE seconds, rounding down");
-                ltl = Integer.MAX_VALUE;
-            }
-
-            timeout = (int) ltl;
-        }*/
-
 
         int status = lra.begin(timelimit);
 
@@ -206,7 +185,6 @@ public class LRAService {
         }
     }
 
-    // TODO return a jax-rs Response
     public synchronized int joinLRA(StringBuilder recoveryUrl, URL lra, long timeLimit, String compensatorUrl, String linkHeader, String recoveryUrlBase) {
         if (lra ==  null)
             lraTrace(null, "Error missing LRA header in join request");
@@ -216,12 +194,8 @@ public class LRAService {
         Transaction transaction = getTransaction(lra);
 
         if (timeLimit < 0)
-            timeLimit = 0; // TODO use it
+            timeLimit = 0;
 
-        /*
-         * TODO update the spec with:
-         *   If the transaction is not TransactionActive then the implementation MUST return a 412 status code
-         */
         if (!transaction.isActive())
             return Response.Status.PRECONDITION_FAILED.getStatusCode();
 
