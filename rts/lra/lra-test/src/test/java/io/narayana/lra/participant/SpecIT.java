@@ -70,7 +70,7 @@ public class SpecIT {
     private static final Long LRA_TIMEOUT_MILLIS = 50000L;
     private static URL MICRSERVICE_BASE_URL;
 
-    private static final int COORDINATOR_SWARM_PORT = 8080;
+    private static final int COORDINATOR_SWARM_PORT = 8082;
     private static final int TEST_SWARM_PORT = 8081;
 
     private static LRAClient lraClient;
@@ -103,6 +103,8 @@ public class SpecIT {
 
     @BeforeClass
     public static void setupClass() throws Exception {
+        System.out.println("Getting ready to connect - waiting for coordinator to startup...");
+        Thread.currentThread().sleep(20000);
         int servicePort = Integer.getInteger("service.http.port", TEST_SWARM_PORT);
         MICRSERVICE_BASE_URL = new URL("http://localhost:" + servicePort);
 

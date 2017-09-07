@@ -8,7 +8,7 @@
     <configuration>
       <property name="host">localhost</property>
       <property name="port">${swarm.arquillian.daemon.port:12345}</property>
-      <property name="javaVmArguments">-Dswarm.http.port=8081 ${swarm.debug.params} ${swarm.logging.params}</property>
+      <property name="javaVmArguments">-Dswarm.http.port=8081 -Dlra.http.port=8082 ${swarm.debug.params} ${swarm.logging.params}</property>
     </configuration>
   </container>
 
