@@ -25,6 +25,11 @@
     <build>
         <finalName>lra-coordinator</finalName>
         <plugins>
+          <plugin>
+            <inherited>false</inherited>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+          </plugin>
             <plugin>
                 <groupId>org.wildfly.swarm</groupId>
                 <artifactId>wildfly-swarm-plugin</artifactId>
@@ -43,6 +48,13 @@
                     <properties>
                         <lra.http.port>${swarm.http.port}</lra.http.port>
                     </properties>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <configuration>
+                    <skipITs>true</skipITs>
                 </configuration>
             </plugin>
         </plugins>
@@ -93,4 +105,25 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+      <profile>
+          <id>release</id>
+          <build>
+              <plugins>
+                <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-install-plugin</artifactId>
+                  <executions>
+                    <execution>
+                      <id>default-install</id>
+                      <phase>install</phase>
+                    </execution>
+                  </executions>
+                  <inherited>false</inherited>
+                </plugin>
+              </plugins>
+          </build>
+      </profile>
+    </profiles>
 </project>

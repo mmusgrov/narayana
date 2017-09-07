@@ -20,7 +20,14 @@
     <packaging>jar</packaging>
 
     <build>
-        <finalName>lra-client</finalName>
+      <finalName>lra-client</finalName>
+      <plugins>
+        <plugin>
+          <inherited>false</inherited>
+          <groupId>org.sonatype.plugins</groupId>
+          <artifactId>nexus-staging-maven-plugin</artifactId>
+        </plugin>
+      </plugins>
     </build>
 
     <dependencies>
@@ -60,4 +67,25 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <profiles>
+      <profile>
+          <id>release</id>
+          <build>
+              <plugins>
+                <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-install-plugin</artifactId>
+                  <executions>
+                    <execution>
+                      <id>default-install</id>
+                      <phase>install</phase>
+                    </execution>
+                  </executions>
+                  <inherited>false</inherited>
+                </plugin>
+              </plugins>
+          </build>
+      </profile>
+    </profiles>
 </project>
