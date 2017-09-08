@@ -83,6 +83,6 @@ Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
   <modules>
     <module>at</module>
     <module>lra</module>
-    <module>io.narayana.sra</module>
+    <module>sra</module>
   </modules>
 </project>
