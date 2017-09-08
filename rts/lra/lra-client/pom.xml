@@ -66,6 +66,11 @@
             <version>${version.jaxrs.api}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jboss.narayana.rts</groupId>
+            <artifactId>lra-annotations</artifactId>
+            <version>5.6.5.Final-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <profiles>

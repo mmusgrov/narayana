@@ -27,7 +27,7 @@ Exception 0 :
 java.lang.IndexOutOfBoundsException: Index: 0, Size: 0
 	at java.util.ArrayList.rangeCheck(ArrayList.java:653)
 	at java.util.ArrayList.get(ArrayList.java:429)
-	at org.jboss.narayana.rts.lra.cdi.LraAnnotationProcessingExtension.processLraAnnotatedType(LraAnnotationProcessingExtension.java:162)
+	at LraAnnotationProcessingExtension.processLraAnnotatedType(LraAnnotationProcessingExtension.java:162)
 	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
 	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
 	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
@@ -70,7 +70,7 @@ Exception 0 :
 java.lang.IndexOutOfBoundsException: Index: 0, Size: 0
 	at java.util.ArrayList.rangeCheck(ArrayList.java:653)
 	at java.util.ArrayList.get(ArrayList.java:429)
-	at org.jboss.narayana.rts.lra.cdi.LraAnnotationProcessingExtension.processLraAnnotatedType(LraAnnotationProcessingExtension.java:162)
+	at LraAnnotationProcessingExtension.processLraAnnotatedType(LraAnnotationProcessingExtension.java:162)
 	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
 	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
 	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
@@ -106,7 +106,7 @@ Exception 0 :
 java.lang.IndexOutOfBoundsException: Index: 0, Size: 0
 	at java.util.ArrayList.rangeCheck(ArrayList.java:653)
 	at java.util.ArrayList.get(ArrayList.java:429)
-	at org.jboss.narayana.rts.lra.cdi.LraAnnotationProcessingExtension.processLraAnnotatedType(LraAnnotationProcessingExtension.java:162)
+	at LraAnnotationProcessingExtension.processLraAnnotatedType(LraAnnotationProcessingExtension.java:162)
 	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
 	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
 	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
