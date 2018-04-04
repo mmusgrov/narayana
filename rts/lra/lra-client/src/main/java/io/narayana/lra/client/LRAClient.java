@@ -30,6 +30,8 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public interface LRAClient {
+    String LRA_HTTP_HEADER = "Long-Running-Action";
+    String LRA_HTTP_RECOVERY_HEADER = "Long-Running-Action-Recovery";
 
     /**
      * Start a new LRA
