@@ -21,15 +21,16 @@
  */
 package io.narayana.lra.client;
 
-import io.narayana.lra.annotation.CompensatorStatus;
-
 import java.net.URI;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import org.eclipse.microprofile.lra.annotation.CompensatorStatus;
+import org.eclipse.microprofile.lra.client.GenericLRAException;
+import org.eclipse.microprofile.lra.client.LRAInfo;
 
-public interface LRAClient {
+public interface LRAOldClient {
     String LRA_HTTP_HEADER = "Long-Running-Action";
     String LRA_HTTP_RECOVERY_HEADER = "Long-Running-Action-Recovery";
 
@@ -58,7 +59,7 @@ public interface LRAClient {
      * @param lraId The unique identifier of the LRA (required)
      * @return the response MAY contain the final status of the LRA as reported by
      * {@link CompensatorStatus#name()}. If the final status is not returned the client can still discover
-     * the final state using the {@link LRAClient#getStatus(URL)} method
+     * the final state using the {@link LRAOldClient#getStatus(URL)} method
      * @throws GenericLRAException Communication error (the reason is availalbe via the
      * {@link GenericLRAException#getStatusCode()} method
      */
@@ -74,7 +75,7 @@ public interface LRAClient {
      *
      * @return the response MAY contain the final status of the LRA as reported by
      * {@link CompensatorStatus#name()}. If the final status is not returned the client can still discover
-     * the final state using the {@link LRAClient#getStatus(URL)} method
+     * the final state using the {@link LRAOldClient#getStatus(URL)} method
      * @throws GenericLRAException Communication error (the reason is availalbe via the
      * {@link GenericLRAException#getStatusCode()} method
      */
@@ -121,7 +122,7 @@ public interface LRAClient {
 
     /**
      * Indicates whether an LRA is active. The same information can be obtained via a call to
-     * {@link LRAClient#getStatus(URL)}.
+     * {@link LRAOldClient#getStatus(URL)}.
      *
      * @param lraId The unique identifier of the LRA (required)
      * @throws GenericLRAException if the request to the coordinator failed.
@@ -132,7 +133,7 @@ public interface LRAClient {
 
     /**
      * Indicates whether an LRA was compensated. The same information can be obtained via a call to
-     * {@link LRAClient#getStatus(URL)}.
+     * {@link LRAOldClient#getStatus(URL)}.
      *
      * @param lraId The unique identifier of the LRA (required)
      * @throws GenericLRAException if the request to the coordinator failed.
@@ -143,7 +144,7 @@ public interface LRAClient {
 
     /**
      * Indicates whether an LRA is complete. The same information can be obtained via a call to
-     * {@link LRAClient#getStatus(URL)}.
+     * {@link LRAOldClient#getStatus(URL)}.
      *
      * @param lraId The unique identifier of the LRA (required)
      * @throws GenericLRAException if the request to the coordinator failed.
@@ -176,7 +177,7 @@ public interface LRAClient {
     String joinLRA(URL lraId, Long timelimit, String body, String compensatorData) throws GenericLRAException;
 
     /**
-     * Similar to {@link LRAClient#joinLRA(URL, Long, String, String)} except that the various
+     * Similar to {@link LRAOldClient#joinLRA(URL, Long, String, String)} except that the various
      * participant URLs are passed in explicitly.
      */
     String joinLRA(URL lraId, Long timelimit,
@@ -185,12 +186,12 @@ public interface LRAClient {
 
     /**
      * Join an LRA passing in a class that will act as the participant.
-     * Similar to {@link LRAClient#joinLRA(URL, Long, String, String)} but the various participant URLs
+     * Similar to {@link LRAOldClient#joinLRA(URL, Long, String, String)} but the various participant URLs
      * are expressed as CDI annotations on the passed in resource class.
      *
      * @param lraId The unique identifier of the LRA (required)
-     * @param resourceClass An annotated class for the participant methods: {@link io.narayana.lra.annotation.Compensate},
-     *                      etc.
+     * @param resourceClass An annotated class for the participant methods:
+     * {@link org.eclipse.microprofile.lra.annotation.Compensate}, etc.
      * @param baseUri Base uri for the participant endpoints
      * @param compensatorData Compensator specific data that the coordinator will pass to the participant when the LRA
      *                        is closed or cancelled

@@ -21,19 +21,19 @@
  */
 package io.narayana.lra.filter;
 
-import io.narayana.lra.annotation.LRA;
-import io.narayana.lra.annotation.Compensate;
-import io.narayana.lra.annotation.Complete;
-import io.narayana.lra.annotation.Leave;
-import io.narayana.lra.annotation.NestedLRA;
-import io.narayana.lra.annotation.Status;
-import io.narayana.lra.annotation.Forget;
-import io.narayana.lra.annotation.TimeLimit;
 import io.narayana.lra.client.Current;
-import io.narayana.lra.client.GenericLRAException;
-import io.narayana.lra.client.IllegalLRAStateException;
 import io.narayana.lra.client.NarayanaLRAClient;
 import io.narayana.lra.logging.LRALogger;
+import org.eclipse.microprofile.lra.annotation.Compensate;
+import org.eclipse.microprofile.lra.annotation.Complete;
+import org.eclipse.microprofile.lra.annotation.Forget;
+import org.eclipse.microprofile.lra.annotation.LRA;
+import org.eclipse.microprofile.lra.annotation.Leave;
+import org.eclipse.microprofile.lra.annotation.NestedLRA;
+import org.eclipse.microprofile.lra.annotation.Status;
+import org.eclipse.microprofile.lra.annotation.TimeLimit;
+import org.eclipse.microprofile.lra.client.GenericLRAException;
+import org.eclipse.microprofile.lra.client.IllegalLRAStateException;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -79,11 +79,11 @@ public class ServerLRAFilter implements ContainerRequestFilter, ContainerRespons
 
     private void checkForTx(LRA.Type type, URL lraId, boolean shouldNotBeNull) {
         if (lraId == null && shouldNotBeNull) {
-            throw new GenericLRAException(Response.Status.PRECONDITION_FAILED.getStatusCode(),
-                    type.name() + " but no tx");
+            throw new GenericLRAException(null, Response.Status.PRECONDITION_FAILED.getStatusCode(),
+                    type.name() + " but no tx", null);
         } else if (lraId != null && !shouldNotBeNull) {
             throw new GenericLRAException(lraId, Response.Status.PRECONDITION_FAILED.getStatusCode(),
-                    type.name() + " but found tx");
+                    type.name() + " but found tx", null);
         }
     }
 
@@ -168,8 +168,8 @@ public class ServerLRAFilter implements ContainerRequestFilter, ContainerRespons
 
                 if (nested) {
                     // nested does not make sense
-                    throw new GenericLRAException(Response.Status.PRECONDITION_FAILED.getStatusCode(),
-                            type.name() + " but found Nested annnotation");
+                    throw new GenericLRAException(null, Response.Status.PRECONDITION_FAILED.getStatusCode(),
+                            type.name() + " but found Nested annnotation", null);
                 }
 
                 enlist = false;
@@ -179,8 +179,8 @@ public class ServerLRAFilter implements ContainerRequestFilter, ContainerRespons
             case NOT_SUPPORTED:
                 if (nested) {
                     // nested does not make sense
-                    throw new GenericLRAException(Response.Status.PRECONDITION_FAILED.getStatusCode(),
-                            type.name() + " but found Nested annnotation");
+                    throw new GenericLRAException(null, Response.Status.PRECONDITION_FAILED.getStatusCode(),
+                            type.name() + " but found Nested annnotation", null);
                 }
 
                 enlist = false;
@@ -257,7 +257,7 @@ public class ServerLRAFilter implements ContainerRequestFilter, ContainerRespons
             Current.putState("newLRA", newLRA);
         }
 
-        lraTrace(containerRequestContext, lraId, "ServerLRAFilter before: making LRA available to injected LRAClient");
+        lraTrace(containerRequestContext, lraId, "ServerLRAFilter before: making LRA available to injected LRAOldClient");
         lraClient.setCurrentLRA(lraId); // make the current LRA available to the called method
 
         // TODO make sure it is possible to do compensations inside a new LRA

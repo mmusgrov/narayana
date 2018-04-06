@@ -21,23 +21,25 @@
  */
 package io.narayana.lra.participant.api;
 
-import io.narayana.lra.annotation.Forget;
-import io.narayana.lra.client.GenericLRAException;
-import io.narayana.lra.client.InvalidLRAIdException;
-import io.narayana.lra.client.LRAClient;
 import io.narayana.lra.logging.LRALogger;
 import io.narayana.lra.participant.service.ActivityService;
-import io.narayana.lra.annotation.LRA;
-import io.narayana.lra.annotation.Compensate;
-import io.narayana.lra.annotation.Complete;
-import io.narayana.lra.annotation.Leave;
-import io.narayana.lra.annotation.NestedLRA;
-import io.narayana.lra.annotation.Status;
-import io.narayana.lra.annotation.TimeLimit;
-import io.narayana.lra.client.IllegalLRAStateException;
+
 import io.narayana.lra.client.NarayanaLRAClient;
 import io.narayana.lra.participant.model.Activity;
-import io.narayana.lra.annotation.CompensatorStatus;
+
+import org.eclipse.microprofile.lra.annotation.Compensate;
+import org.eclipse.microprofile.lra.annotation.CompensatorStatus;
+import org.eclipse.microprofile.lra.annotation.Complete;
+import org.eclipse.microprofile.lra.annotation.Forget;
+import org.eclipse.microprofile.lra.annotation.LRA;
+import org.eclipse.microprofile.lra.annotation.Leave;
+import org.eclipse.microprofile.lra.annotation.NestedLRA;
+import org.eclipse.microprofile.lra.annotation.Status;
+import org.eclipse.microprofile.lra.annotation.TimeLimit;
+import org.eclipse.microprofile.lra.client.GenericLRAException;
+import org.eclipse.microprofile.lra.client.IllegalLRAStateException;
+import org.eclipse.microprofile.lra.client.InvalidLRAIdException;
+import org.eclipse.microprofile.lra.client.LRAClient;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -81,11 +83,11 @@ public class ActivityController {
     public static final String ACTIVITIES_PATH = "activities";
     public static final String ACCEPT_WORK = "acceptWork";
 
-    @Inject
-    private LRAClient lraClient;
-
     private static final AtomicInteger completedCount = new AtomicInteger(0);
     private static final AtomicInteger compensatedCount = new AtomicInteger(0);
+
+    @Inject
+    private LRAClient lraClient;
 
     @Context
     private UriInfo context;
@@ -120,9 +122,9 @@ public class ActivityController {
 
     /**
      * Test that participants can leave an LRA using the {@link LRAClient} programatic API
-     * @param lraUrl
-     * @return
-     * @throws NotFoundException
+     * @param lraUrl the LRA that the participant should leave
+     * @return the id of the LRA that was left
+     * @throws NotFoundException if the requested LRA does not exist
      */
     @PUT
     @Path("/leave/{LraUrl}")
@@ -259,7 +261,7 @@ public class ActivityController {
         assert lraId != null;
         addWork(lraId, null);
 
-        return Response.ok(lraId == null ? "" : lraId).build();
+        return Response.ok(lraId).build();
     }
 
     @PUT
@@ -269,7 +271,7 @@ public class ActivityController {
         if (lraId != null)
             throw new WebApplicationException(Response.Status.NOT_ACCEPTABLE);
 
-        // manually start an LRA via the injection LRAClient api
+        // manually start an LRA via the injection LRAOldClient api
         URL lra = lraClient.startLRA(null,"subActivity", 0L, TimeUnit.SECONDS);
 
         lraId = lra.toString();
@@ -282,7 +284,7 @@ public class ActivityController {
         String id = restPutInvocation(lra,"supports", "");
 
         // check that the invoked method saw the LRA
-        if (lraId == null || id == null || !lraId.equals(id))
+        if (id == null || !lraId.equals(id))
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(Entity.text("Unequal LRA ids")).build();
 
         return Response.ok(id).build();
@@ -369,9 +371,6 @@ public class ActivityController {
 //        String txId = NarayanaLRAClient.getLRAId(lraId);
 
         System.out.printf("ActivityController: work id %s and rcvId %s %n", lraId, rcvId);
-
-        if (lraId == null)
-            return null;
 
         try {
             return activityService.getActivity(lraId);
@@ -543,12 +542,12 @@ public class ActivityController {
         }
     }
 
-    public static URL lraToURL(String lraId, String errorMessage) {
+    private static URL lraToURL(String lraId, String errorMessage) {
         try {
             return new URL(lraId);
         } catch (MalformedURLException e) {
             LRALogger.i18NLogger.error_urlConstructionFromStringLraId(lraId, e);
-            throw new GenericLRAException(lraId, BAD_REQUEST.getStatusCode(), errorMessage, e);
+            throw new GenericLRAException(null, BAD_REQUEST.getStatusCode(), errorMessage + ": lra id: " + lraId, e);
         }
     }
 }

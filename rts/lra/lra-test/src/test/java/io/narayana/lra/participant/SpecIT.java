@@ -45,13 +45,14 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 
+import io.narayana.lra.client.LRAInfoImpl;
 import io.narayana.lra.participant.api.ActivityController;
+import org.eclipse.microprofile.lra.client.LRAInfo;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import io.narayana.lra.client.Current;
 import io.narayana.lra.client.NarayanaLRAClient;
-import io.narayana.lra.client.LRAInfo;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.resolver.api.maven.Maven;
@@ -192,7 +193,7 @@ public class SpecIT {
 
         List<LRAInfo> lras = lraClient.getAllLRAs();
 
-        assertFalse(lras.contains(new LRAInfo(lra)));
+        assertFalse(lras.contains(new LRAInfoImpl(lra)));
     }
 
     @Test
@@ -200,7 +201,7 @@ public class SpecIT {
         URL lra = lraClient.startLRA("SpecTest#getActiveLRAs", LRA_TIMEOUT_MILLIS);
         List<LRAInfo> lras = lraClient.getActiveLRAs();
 
-        assertTrue(lras.contains(new LRAInfo(lra)));
+        assertTrue(lras.contains(new LRAInfoImpl(lra)));
 
         lraClient.closeLRA(lra);
     }
@@ -210,7 +211,7 @@ public class SpecIT {
         URL lra = lraClient.startLRA("SpecTest#getAllLRAs", LRA_TIMEOUT_MILLIS);
         List<LRAInfo> lras = lraClient.getAllLRAs();
 
-        assertTrue(lras.contains(new LRAInfo(lra)));
+        assertTrue(lras.contains(new LRAInfoImpl(lra)));
 
         lraClient.closeLRA(lra);
     }
@@ -259,7 +260,7 @@ public class SpecIT {
         List<LRAInfo> lras = lraClient.getActiveLRAs();
 
         // the resource /activities/work is annotated with Type.REQUIRED so the container should have ended it
-        assertFalse(lras.contains(new LRAInfo(lra)));
+        assertFalse(lras.contains(new LRAInfoImpl(lra)));
     }
 
     @Test
@@ -288,7 +289,7 @@ public class SpecIT {
         lras = lraClient.getActiveLRAs();
 
         // the resource /activities/work is annotated with Type.REQUIRED so the container should have ended it
-        assertFalse(lras.contains(new LRAInfo(nestedLraId)));
+        assertFalse(lras.contains(new LRAInfoImpl(nestedLraId)));
     }
 
     @Test
@@ -318,14 +319,14 @@ public class SpecIT {
 
         // validate that the LRA coordinator still knows about lraId
         List<LRAInfo> lras = lraClient.getActiveLRAs();
-        assertTrue(lras.contains(new LRAInfo(lra)));
+        assertTrue(lras.contains(new LRAInfoImpl(lra)));
 
         // close the LRA
         lraClient.closeLRA(lra);
 
         // check that LRA coordinator no longer knows about lraId
         lras = lraClient.getActiveLRAs();
-        assertFalse(lras.contains(new LRAInfo(lra)));
+        assertFalse(lras.contains(new LRAInfoImpl(lra)));
 
         // check that participant was told to complete
         int cnt2 = completedCount(true);
@@ -364,7 +365,7 @@ public class SpecIT {
         response = msTarget.path("activities").path("leave").request().header(NarayanaLRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
         checkStatusAndClose(response, Response.Status.OK.getStatusCode(), false);
 
-        // lraClient.leaveLRA(lra, "some participant"); // ask the MS for the participant url so we can test LRAClient
+        // lraClient.leaveLRA(lra, "some participant"); // ask the MS for the participant url so we can test LRAOldClient
 
         lraClient.closeLRA(lra);
 
@@ -396,7 +397,7 @@ public class SpecIT {
         }
         checkStatusAndClose(response, Response.Status.OK.getStatusCode(), false);
 
-        // lraClient.leaveLRA(lra, "some participant"); // ask the MS for the participant url so we can test LRAClient
+        // lraClient.leaveLRA(lra, "some participant"); // ask the MS for the participant url so we can test LRAOldClient
 
         lraClient.closeLRA(lra);
 
@@ -624,10 +625,10 @@ public class SpecIT {
 
         // check that the coordinator knows about the two nested LRAs started by the multiLevelNestedActivity method
         // NB even though they should have completed they are held in memory pending the enclosing LRA finishing
-        IntStream.rangeClosed(1, nestedCnt).forEach(i -> assertTrue(lras.contains(new LRAInfo(lraArray[i]))));
+        IntStream.rangeClosed(1, nestedCnt).forEach(i -> assertTrue(lras.contains(new LRAInfoImpl(lraArray[i]))));
 
         // and the mandatory lra seen by the multiLevelNestedActivity method
-        assertTrue(lras.contains(new LRAInfo(lraArray[0])));
+        assertTrue(lras.contains(new LRAInfoImpl(lraArray[0])));
 
         int[] cnt2 = {completedCount(true), completedCount(false)};
 
@@ -663,7 +664,7 @@ public class SpecIT {
         // validate that the top level and nested LRAs are gone
         final List<LRAInfo> lras2 = lraClient.getActiveLRAs();
 
-        IntStream.rangeClosed(0, nestedCnt).forEach(i -> assertFalse(lras2.contains(new LRAInfo(lraArray[i]))));
+        IntStream.rangeClosed(0, nestedCnt).forEach(i -> assertFalse(lras2.contains(new LRAInfoImpl(lraArray[i]))));
 
         int[] cnt3 = {completedCount(true), completedCount(false)};
 

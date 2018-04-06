@@ -63,8 +63,8 @@ import static io.narayana.lra.client.internal.proxy.ParticipantProxyResource.LRA
 
 @ApplicationScoped
 public class ProxyService implements LRAManagement {
-    private static final String COORDINATOR_PATH_NAME = "lra-coordinator"; // LRAClient.COORDINATOR_PATH_NAME
-    private static final String TIMELIMIT_PARAM_NAME = "TimeLimit";  // LRAClient.TIMELIMIT_PARAM_NAME
+    private static final String COORDINATOR_PATH_NAME = "lra-coordinator"; // LRAOldClient.COORDINATOR_PATH_NAME
+    private static final String TIMELIMIT_PARAM_NAME = "TimeLimit";  // LRAOldClient.TIMELIMIT_PARAM_NAME
 
     private static List<ParticipantProxy> participants; // TODO figure out why ProxyService is constructed twice
 
