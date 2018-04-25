@@ -53,6 +53,7 @@ import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.Path;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -176,11 +177,12 @@ public class NarayanaLRAClient implements LRAClient, Closeable {
         init(coordinatorUrl.getProtocol(), coordinatorUrl.getHost(), coordinatorUrl.getPort());
     }
 
-    private void init(String scheme, String host, int port) throws URISyntaxException {
+    @Override
+    public void setCoordinatorURI(URI uri) {
         if (client == null)
             client = ClientBuilder.newClient();
 
-        base = new URI(scheme, null, host, port, "/" + COORDINATOR_PATH_NAME, null, null);
+        base = uri;
         target = client.target(base);
 
         isUseable = true;
@@ -189,6 +191,15 @@ public class NarayanaLRAClient implements LRAClient, Closeable {
             postConstruct();
         else
             responseDataMap.clear();
+    }
+
+    @Override
+    public void setRecoveryCoordinatorURI(URI uri) {
+        // TODO
+    }
+
+    private void init(String scheme, String host, int port) throws URISyntaxException {
+        setCoordinatorURI(new URI(scheme, null, host, port, "/" + COORDINATOR_PATH_NAME, null, null));
     }
 
     /**
@@ -735,7 +746,8 @@ public class NarayanaLRAClient implements LRAClient, Closeable {
         }
 
         try {
-            if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode())
+            if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() ||
+                    response.getStatus() == Response.Status.NOT_FOUND.getStatusCode())
                 return Optional.empty();
 
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
@@ -844,6 +856,10 @@ public class NarayanaLRAClient implements LRAClient, Closeable {
                 LRALogger.i18NLogger.error_tooLateToJoin(lraUrl, response);
                 throw new IllegalLRAStateException(lraUrl.toString(),
                         "Too late to join with this LRA", "enlistCompensator");
+            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                LRALogger.logger.infof("Failed enlisting to LRA '%s', coordinator '%s' responded with status '%s'",
+                        lraUrl, base, Response.Status.NOT_FOUND.getStatusCode());
+                throw new NotFoundException(lraUrl.toExternalForm());
             } else if (response.getStatus() != Response.Status.OK.getStatusCode()) {
                 LRALogger.i18NLogger.error_failedToEnlist(lraUrl, base, response.getStatus());
 

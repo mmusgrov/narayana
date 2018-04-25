@@ -78,6 +78,7 @@ import static io.narayana.lra.client.NarayanaLRAClient.LRA_HTTP_RECOVERY_HEADER;
 import static io.narayana.lra.client.NarayanaLRAClient.PARENT_LRA_PARAM_NAME;
 import static io.narayana.lra.client.NarayanaLRAClient.STATUS_PARAM_NAME;
 import static io.narayana.lra.client.NarayanaLRAClient.TIMELIMIT_PARAM_NAME;
+import static org.eclipse.microprofile.lra.client.LRAClient.LRA_HTTP_HEADER;
 
 @ApplicationScoped
 @Path(COORDINATOR_PATH_NAME)

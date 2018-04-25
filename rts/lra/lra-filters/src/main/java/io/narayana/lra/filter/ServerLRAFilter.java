@@ -34,8 +34,10 @@ import org.eclipse.microprofile.lra.annotation.Status;
 import org.eclipse.microprofile.lra.annotation.TimeLimit;
 import org.eclipse.microprofile.lra.client.GenericLRAException;
 import org.eclipse.microprofile.lra.client.IllegalLRAStateException;
+import org.eclipse.microprofile.lra.client.LRAClient;
 
 import javax.inject.Inject;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
@@ -75,7 +77,17 @@ public class ServerLRAFilter implements ContainerRequestFilter, ContainerRespons
     protected ResourceInfo resourceInfo;
 
     @Inject
-    private NarayanaLRAClient lraClient;
+    private LRAClient lraClient;
+
+    // TODO hack because the injection point for lraClient is not satisfied when the filter is used as a swarm fraction
+    public ServerLRAFilter() throws Exception {
+        String rcHost = System.getProperty("lra.http.host", "localhost");
+        int rcPort = Integer.getInteger("lra.http.port", 8082);
+        String coordinatorPath = System.getProperty("lra.coordinator.path", "lra-coordinator");
+
+        lraClient = (LRAClient) Class.forName(NarayanaLRAClient.class.getCanonicalName()).getDeclaredConstructor().newInstance();
+        lraClient.setCoordinatorURI(new URI(String.format("http://%s:%d/%s", rcHost, rcPort, coordinatorPath)));
+    }
 
     private void checkForTx(LRA.Type type, URL lraId, boolean shouldNotBeNull) {
         if (lraId == null && shouldNotBeNull) {
@@ -280,6 +292,8 @@ public class ServerLRAFilter implements ContainerRequestFilter, ContainerRespons
                 } catch (IllegalLRAStateException e) {
                     lraTrace(containerRequestContext, lraId, "ServerLRAFilter before: aborting with " + e.getMessage());
                     throw e;
+                } catch (NotFoundException e) {
+                    throw e;
                 } catch (WebApplicationException e) {
                     lraTrace(containerRequestContext, lraId, "ServerLRAFilter before: aborting with " + e.getMessage());
                     throw new GenericLRAException(lraId, e.getResponse().getStatus(), e.getMessage(), e);
@@ -346,7 +360,11 @@ public class ServerLRAFilter implements ContainerRequestFilter, ContainerRespons
 
             if (newLRA != null) {
                 lraTrace(requestContext, (URL) newLRA, "ServerLRAFilter after: closing LRA");
-                lraClient.closeLRA((URL) newLRA);
+                try {
+                    lraClient.closeLRA((URL) newLRA);
+                } catch (GenericLRAException ignore) {
+                    // the LRAClient implementation should have logged something
+                }
             }
 
             if (responseContext.getStatus() == Response.Status.OK.getStatusCode() &&

@@ -36,8 +36,10 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
+//import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -47,9 +49,11 @@ import javax.ws.rs.core.Response;
 
 import io.narayana.lra.client.LRAInfoImpl;
 import io.narayana.lra.participant.api.ActivityController;
+//import org.eclipse.microprofile.lra.annotation.LRA;
+import org.eclipse.microprofile.lra.client.LRAClient;
 import org.eclipse.microprofile.lra.client.LRAInfo;
 import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.container.test.api.RunAsClient;
+//import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import io.narayana.lra.client.Current;
 import io.narayana.lra.client.NarayanaLRAClient;
@@ -70,7 +74,7 @@ import static io.narayana.lra.client.NarayanaLRAClient.RECOVERY_COORDINATOR_PATH
 import static io.narayana.lra.participant.api.ActivityController.ACTIVITIES_PATH;
 
 @RunWith(Arquillian.class)
-@RunAsClient
+//@RunAsClient
 public class SpecIT {
     private static final Long LRA_TIMEOUT_MILLIS = 50000L;
     private static URL MICRSERVICE_BASE_URL;
@@ -79,7 +83,8 @@ public class SpecIT {
     private static final int COORDINATOR_SWARM_PORT = 8082;
     private static final int TEST_SWARM_PORT = 8081;
 
-    private static NarayanaLRAClient lraClient;
+//    @Inject
+    private static LRAClient lraClient;
     private static Client msClient, rcClient;
 
     private WebTarget msTarget, recoveryTarget;
@@ -117,12 +122,15 @@ public class SpecIT {
         int servicePort = Integer.getInteger("service.http.port", TEST_SWARM_PORT);
         String rcHost = System.getProperty("lra.http.host", "localhost");
         int rcPort = Integer.getInteger("lra.http.port", COORDINATOR_SWARM_PORT);
+        String coordinatorPath = System.getProperty("lra.coordinator.path", "lra-coordinator");
 
         MICRSERVICE_BASE_URL = new URL(String.format("http://localhost:%d", servicePort));
         RC_BASE_URL = new URL(String.format("http://%s:%d", rcHost, rcPort));
 
         // setting up the client
-        lraClient = new NarayanaLRAClient(rcHost, rcPort);
+//        lraClient = new NarayanaLRAClient(rcHost, rcPort);
+        lraClient = (LRAClient) Class.forName("io.narayana.lra.client.NarayanaLRAClient").getDeclaredConstructor().newInstance();
+        lraClient.setCoordinatorURI(new URI(String.format("http://%s:%d/%s", rcHost, rcPort, coordinatorPath)));
         msClient = ClientBuilder.newClient();
         rcClient = ClientBuilder.newClient();
 
@@ -169,14 +177,14 @@ public class SpecIT {
 
     @Test
     public void startLRA() throws WebApplicationException {
-        URL lra = lraClient.startLRA("SpecTest#startLRA", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#startLRA", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
 
         lraClient.closeLRA(lra);
     }
 
     @Test
     public void cancelLRA() throws WebApplicationException {
-        URL lra = lraClient.startLRA("SpecTest#cancelLRA", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null,"SpecTest#cancelLRA", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
 
         lraClient.cancelLRA(lra);
 
@@ -187,7 +195,7 @@ public class SpecIT {
 
     @Test
     public void closeLRA() throws WebApplicationException {
-        URL lra = lraClient.startLRA("SpecTest#closelLRA", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#closelLRA", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
 
         lraClient.closeLRA(lra);
 
@@ -198,7 +206,7 @@ public class SpecIT {
 
     @Test
     public void getActiveLRAs() throws WebApplicationException {
-        URL lra = lraClient.startLRA("SpecTest#getActiveLRAs", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#getActiveLRAs", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
         List<LRAInfo> lras = lraClient.getActiveLRAs();
 
         assertTrue(lras.contains(new LRAInfoImpl(lra)));
@@ -208,7 +216,7 @@ public class SpecIT {
 
     @Test
     public void getAllLRAs() throws WebApplicationException {
-        URL lra = lraClient.startLRA("SpecTest#getAllLRAs", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#getAllLRAs", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
         List<LRAInfo> lras = lraClient.getAllLRAs();
 
         assertTrue(lras.contains(new LRAInfoImpl(lra)));
@@ -223,7 +231,7 @@ public class SpecIT {
 
     @Test
     public void isActiveLRA() throws WebApplicationException {
-        URL lra = lraClient.startLRA("SpecTest#isActiveLRA", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#isActiveLRA", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
 
         assertTrue(lraClient.isActiveLRA(lra));
 
@@ -233,7 +241,7 @@ public class SpecIT {
     // @Test
     // the coordinator cleans up when canceled
     public void isCompensatedLRA() throws WebApplicationException {
-        URL lra = lraClient.startLRA("SpecTest#isCompensatedLRA", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#isCompensatedLRA", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
 
         lraClient.cancelLRA(lra);
 
@@ -243,7 +251,7 @@ public class SpecIT {
     // @Test
     // the coordinator cleans up when completed
     public void isCompletedLRA() throws WebApplicationException {
-        URL lra = lraClient.startLRA("SpecTest#isCompletedLRA", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#isCompletedLRA", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
 
         lraClient.closeLRA(lra);
 
@@ -265,7 +273,7 @@ public class SpecIT {
 
     @Test
     public void nestedActivity() throws WebApplicationException {
-        URL lra = lraClient.startLRA("SpecTest#nestedActivity", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#nestedActivity", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
 
         Response response = msTarget
                 .path("activities").path("nestedActivity")
@@ -311,7 +319,7 @@ public class SpecIT {
     public void joinLRAViaHeader () throws WebApplicationException {
         int cnt1 = completedCount(true);
 
-        URL lra = lraClient.startLRA("SpecTest#joinLRAViaBody", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#joinLRAViaBody", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
 
         Response response = msTarget.path("activities").path("work")
                 .request().header(NarayanaLRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
@@ -337,7 +345,7 @@ public class SpecIT {
     public void join () throws WebApplicationException {
         List<LRAInfo> lras = lraClient.getActiveLRAs();
         int count = lras.size();
-        URL lra = lraClient.startLRA("SpecTest#join", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#join", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
 
         Response response = msTarget.path("activities").path("work")
                 .request().header(NarayanaLRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
@@ -352,7 +360,7 @@ public class SpecIT {
     @Test
     public void leaveLRA() throws WebApplicationException {
         int cnt1 = completedCount(true);
-        URL lra = lraClient.startLRA("SpecTest#leaveLRA", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#leaveLRA", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
 
         Response response = msTarget.path("activities").path("work").request().header(NarayanaLRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
         checkStatusAndClose(response, Response.Status.OK.getStatusCode(), false);
@@ -378,7 +386,7 @@ public class SpecIT {
     @Test
     public void leaveLRAViaAPI() throws WebApplicationException {
         int cnt1 = completedCount(true);
-        URL lra = lraClient.startLRA("SpecTest#leaveLRA", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#leaveLRA", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
 
         Response response = msTarget.path("activities").path("work").request().header(NarayanaLRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
         checkStatusAndClose(response, Response.Status.OK.getStatusCode(), false);
@@ -503,7 +511,7 @@ public class SpecIT {
 
     private void joinAndEnd(boolean waitForRecovery, boolean close, String path, String path2) throws WebApplicationException {
         int countBefore = lraClient.getActiveLRAs().size();
-        URL lra = lraClient.startLRA("SpecTest#join", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#join", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
 
         Response response = msTarget.path(path).path(path2)
                 .request().header(NarayanaLRAClient.LRA_HTTP_HEADER, lra).put(Entity.text(""));
@@ -597,7 +605,7 @@ public class SpecIT {
         if (how == CompletionType.mixed && nestedCnt <= 1)
             how = CompletionType.complete;
 
-        URL lra = lraClient.startLRA("SpecTest#multiLevelNestedActivity", LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#multiLevelNestedActivity", LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
         String lraId = lra.toString();
 
         Response response = msTarget
@@ -704,7 +712,7 @@ public class SpecIT {
 
     private void cancelCheck(String path) {
         int[] cnt1 = {completedCount(true), completedCount(false)};
-        URL lra = lraClient.startLRA("SpecTest#" + path, LRA_TIMEOUT_MILLIS);
+        URL lra = lraClient.startLRA(null, "SpecTest#" + path, LRA_TIMEOUT_MILLIS, TimeUnit.SECONDS);
         Response response = null;
 
         try {
