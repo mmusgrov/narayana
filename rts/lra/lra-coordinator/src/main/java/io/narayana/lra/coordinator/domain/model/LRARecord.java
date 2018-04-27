@@ -237,6 +237,9 @@ public class LRARecord extends AbstractRecord implements Comparable<AbstractReco
             endPath = completeURI;  // we are going to ask the participant to complete
         }
 
+ //       if (endPath == null)
+ //           return TwoPhaseOutcome.FINISH_OK; // would it be better to throw an exception?
+
         // NB trying to compensate when already completed is allowed
 
         Current.push(lraId); // make sure the lra id is set so that it can be included in the headers
