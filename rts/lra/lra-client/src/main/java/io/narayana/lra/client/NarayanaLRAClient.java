@@ -746,8 +746,10 @@ public class NarayanaLRAClient implements LRAClient, Closeable {
         }
 
         try {
-            if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode() ||
-                    response.getStatus() == Response.Status.NOT_FOUND.getStatusCode())
+            if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode())
+                throw new NotFoundException();
+
+            if (response.getStatus() == Response.Status.NO_CONTENT.getStatusCode())
                 return Optional.empty();
 
             if (response.getStatus() != Response.Status.OK.getStatusCode()) {
