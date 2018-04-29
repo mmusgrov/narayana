@@ -884,10 +884,16 @@ public class NarayanaLRAClient implements LRAClient, Closeable {
         try {
             response = getTarget().path(confirmUrl).request().put(Entity.text(""));
 
-            if(!isExpectedResponseStatus(response, Response.Status.OK, Response.Status.ACCEPTED)) {
+            if(!isExpectedResponseStatus(response, Response.Status.OK, Response.Status.ACCEPTED, Response.Status.NOT_FOUND)) {
                 LRALogger.i18NLogger.error_lraTerminationUnexpectedStatus(response.getStatus(), response);
                 throw new GenericLRAException(lra, INTERNAL_SERVER_ERROR.getStatusCode(),
                         "LRA finished with an unexpected status code: " + response.getStatus(), null);
+            }
+
+            if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                LRALogger.logger.infof("Could not %s LRA '%s': coordinator '%s' responded with status '%s'",
+                        confirm ? "close" : "compensate", lra, base, Response.Status.NOT_FOUND.getReasonPhrase());
+                throw new NotFoundException(lra.toExternalForm());
             }
 
             String responseData = response.readEntity(String.class);
