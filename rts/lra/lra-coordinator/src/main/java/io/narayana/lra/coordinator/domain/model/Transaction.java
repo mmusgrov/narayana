@@ -30,6 +30,7 @@ import com.arjuna.ats.arjuna.coordinator.BasicAction;
 import com.arjuna.ats.arjuna.coordinator.RecordList;
 import com.arjuna.ats.arjuna.coordinator.RecordListIterator;
 import com.arjuna.ats.arjuna.coordinator.RecordType;
+import com.arjuna.ats.txoj.LockMode;
 import io.narayana.lra.client.LRAInfoImpl;
 import io.narayana.lra.logging.LRALogger;
 import com.arjuna.ats.arjuna.state.InputObjectState;
@@ -76,11 +77,16 @@ public class Transaction extends AtomicAction {
     private ScheduledFuture<?> scheduledAbort;
     private boolean inFlight;
     private LRAService lraService;
+    private LRALock lock;
 
     public Transaction(LRAService lraService, String baseUrl, URL parentId, String clientId) throws MalformedURLException {
-        super(new Uid());
+        super(createLRAUid());
 
+        LRAUid lraUid = (LRAUid) get_uid();
+        lraUid.getLockUid().setLraId(get_uid());
+        this.lock = lraUid.getLockUid();
         this.lraService = lraService;
+//        this.id = new URL(String.format("%s/%s/%s", baseUrl, lock.get_uid().fileStringForm(), get_uid().fileStringForm()));
         this.id = new URL(String.format("%s/%s", baseUrl, get_uid().fileStringForm()));
         this.inFlight = true;
         this.parentId = parentId;
@@ -91,9 +97,10 @@ public class Transaction extends AtomicAction {
         this.scheduler = Executors.newScheduledThreadPool(1);
     }
 
-    public Transaction(LRAService lraService, Uid rcvUid) {
+    public Transaction(LRAService lraService, Uid rcvUid, LRALock lock) {
         super(rcvUid);
 
+        this.lock = lock;
         this.lraService = lraService;
         this.inFlight = false;
         this.id = null;
@@ -102,6 +109,37 @@ public class Transaction extends AtomicAction {
         this.finishTime = LocalDateTime.MAX;
         this.status = null; // means the LRA is active
         this.scheduler = Executors.newScheduledThreadPool(1);
+    }
+
+    private static Uid createLRAUid() {
+        return new LRAUid();
+    }
+
+    @Override
+    public boolean activate() {
+        return lock.doProtected(LockMode.READ, new Action() {
+            @Override
+            public boolean doIt() {
+                return doActivate();
+            }
+        });
+    }
+
+    public boolean deactivate() {
+        return lock.doProtected(LockMode.WRITE, new Action() {
+            @Override
+            public boolean doIt() {
+                return doDeactivate();
+            }
+        });
+    }
+
+    private boolean doActivate() {
+        return super.activate();
+    }
+
+    private boolean doDeactivate() {
+        return super.deactivate();
     }
 
     public LRAInfo getLRAInfo() {
@@ -126,6 +164,7 @@ public class Transaction extends AtomicAction {
         try {
             os.packString(id == null ? null : id.toString());
             os.packString(parentId == null ? null : parentId.toString());
+            lock.save_state(os, ot);
             os.packString(clientId);
             os.packLong(startTime == null ? 0L : startTime.toInstant(ZoneOffset.UTC).toEpochMilli());
             os.packLong(finishTime == null ? 0L : finishTime.toInstant(ZoneOffset.UTC).toEpochMilli());
@@ -136,6 +175,8 @@ public class Transaction extends AtomicAction {
                 os.packBoolean(true);
                 os.packString(status.name());
             }
+
+            lock.deactivate();
         } catch (IOException e) {
             return false;
         }
@@ -223,6 +264,8 @@ public class Transaction extends AtomicAction {
             id = s == null ? null : new URL(s);
             s = os.unpackString();
             parentId = s == null ? null : new URL(s);
+            lock = new LRALock();
+            lock.restore_state(os, ot);
             clientId = os.unpackString();
             long startMillis = os.unpackLong();
             startTime = startMillis == 0 ? null :
@@ -231,6 +274,14 @@ public class Transaction extends AtomicAction {
             finishTime = finishMillis == 0 ? null :
                     LocalDateTime.ofInstant(Instant.ofEpochMilli(finishMillis), ZoneOffset.UTC);
             status = os.unpackBoolean() ? CompensatorStatus.valueOf(os.unpackString()) : null;
+
+            if (id != null) {
+                String[] segments = id.getPath().split("/");
+                String id = segments[segments.length - 2];
+                lock =  new LRALock(new Uid(id), s);
+            }
+
+            lock.activate();
 
             return true;
         } catch (IOException e) {
@@ -464,7 +515,7 @@ public class Transaction extends AtomicAction {
 
         if (participant != null && findLRAParticipant(participantUrl, false) != null) {
             // need to remember that there is a new participant
-            deactivate(); // if it fails the superclass will have logged a warning
+            deactivate(); // if it fails the superclass will have logged a warning TODO need to tell the caller to retry
             savedIntentionList = true; // need this clean up if the LRA times out
         }
 

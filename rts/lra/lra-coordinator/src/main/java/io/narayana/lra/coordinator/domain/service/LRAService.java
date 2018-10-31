@@ -71,7 +71,11 @@ public class LRAService {
     public Transaction getTransaction(URL lraId) throws NotFoundException {
         if (!lras.containsKey(lraId)) {
             if (!recoveringLRAs.containsKey(lraId)) {
-                throw new NotFoundException(Response.status(404).entity("Invalid transaction id: " + lraId).build());
+                lraRecoveryModule.getRecoveringLRAs(recoveringLRAs); // see if it's on disk
+
+                if (!recoveringLRAs.containsKey(lraId)) {
+                    throw new NotFoundException(Response.status(404).entity("Invalid transaction id: " + lraId).build());
+                }
             }
 
             return recoveringLRAs.get(lraId);

@@ -24,6 +24,9 @@ package io.narayana.lra.coordinator.internal;
 import com.arjuna.ats.arjuna.coordinator.RecordType;
 import com.arjuna.ats.arjuna.coordinator.abstractrecord.RecordTypeManager;
 import com.arjuna.ats.arjuna.coordinator.abstractrecord.RecordTypeMap;
+import com.arjuna.ats.internal.txoj.lockstore.BasicPersistentLockStore;
+import com.arjuna.ats.txoj.common.txojPropertyManager;
+import io.narayana.lra.coordinator.domain.model.LRALock;
 import io.narayana.lra.coordinator.domain.model.LRARecord;
 
 /**
@@ -47,6 +50,18 @@ class LRACompensatorMap implements RecordTypeMap {
 
 }
 
+class LRALockMap implements RecordTypeMap {
+    @SuppressWarnings("unchecked")
+    public Class getRecordClass() {
+        return LRALock.class;
+    }
+
+    public int getType() {
+        return RecordType.USER_DEF_FIRST1;
+    }
+
+}
+
 public class Implementations {
 
     private static boolean _added = false;
@@ -54,8 +69,11 @@ public class Implementations {
     public static synchronized void install() {
         if (!_added) {
             RecordTypeManager.manager().add(new LRACompensatorMap());
+            RecordTypeManager.manager().add(new LRALockMap());
 
             _added = true;
+
+            txojPropertyManager.getTxojEnvironmentBean().setLockStoreType(BasicPersistentLockStore.class.getName());
         }
     }
 

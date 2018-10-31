@@ -27,6 +27,7 @@ import com.arjuna.ats.arjuna.coordinator.ActionStatus;
 import com.arjuna.ats.arjuna.coordinator.abstractrecord.RecordTypeManager;
 import com.arjuna.ats.arjuna.coordinator.abstractrecord.RecordTypeMap;
 import com.arjuna.ats.arjuna.exceptions.ObjectStoreException;
+import io.narayana.lra.coordinator.domain.model.LRALock;
 import io.narayana.lra.logging.LRALogger;
 import com.arjuna.ats.arjuna.objectstore.RecoveryStore;
 import com.arjuna.ats.arjuna.objectstore.StateStatus;
@@ -72,8 +73,14 @@ public class LRARecoveryModule implements RecoveryModule {
     public void periodicWorkFirstPass() {
         // uids per transaction type
         InputObjectState aa_uids = new InputObjectState();
+        // uids per lra lock type
+        InputObjectState lock_uids = new InputObjectState();
 
         try {
+            if (_recoveryStore.allObjUids(LRALock.getType(), lock_uids)) {
+                _lraLockUidVector = processTransactions(lock_uids);
+            }
+
             if (_recoveryStore.allObjUids(_transactionType, aa_uids)) {
                 _transactionUidVector = processTransactions(aa_uids);
             }
@@ -99,7 +106,7 @@ public class LRARecoveryModule implements RecoveryModule {
 //        boolean inFlight = false; // TODO figure out how to determine isTransactionInMidFlight(theStatus);
 
             try {
-                RecoveringLRA lra = new RecoveringLRA(lraService, recoverUid, theStatus);
+                RecoveringLRA lra = new RecoveringLRA(lraService, recoverUid, findLock(recoverUid), theStatus);
                 String Status = ActionStatus.stringForm(theStatus);
                 boolean inFlight = lraService.hasTransaction(lra.getId());
 
@@ -129,6 +136,22 @@ public class LRARecoveryModule implements RecoveryModule {
                     LRALogger.logger.infof("failed to recover Transaction %s: %s", recoverUid, ex.getMessage());
                 }
             }
+    }
+
+    private LRALock findLock(Uid recoverUid) {
+        Enumeration transactionUidEnum = _lraLockUidVector.elements();
+
+        while (transactionUidEnum.hasMoreElements()) {
+            Uid uid = (Uid) transactionUidEnum.nextElement();
+            LRALock lock = new LRALock(uid, null);
+
+            if (lock.activate() && lock.getLraId().equals(recoverUid)) {
+                return lock;
+            }
+        }
+
+        System.out.printf("Cannot find lock for %s%n", recoverUid);
+        return null;
     }
 
     private Vector<Uid> processTransactions(InputObjectState uids) {
@@ -174,7 +197,7 @@ public class LRARecoveryModule implements RecoveryModule {
             while (transactionUidEnum.hasMoreElements()) {
                 Uid currentUid = (Uid) transactionUidEnum.nextElement();
 
-                try {
+                try { // TODO take read lock
                     if (_recoveryStore.currentState(currentUid, _transactionType) != StateStatus.OS_UNKNOWN) {
                         doRecoverTransaction(currentUid);
                     }
@@ -198,7 +221,7 @@ public class LRARecoveryModule implements RecoveryModule {
             while (transactionUidEnum.hasMoreElements()) {
                 Uid currentUid = (Uid) transactionUidEnum.nextElement();
                 int status = _transactionStatusConnectionMgr.getTransactionStatus(_transactionType, currentUid);
-                RecoveringLRA lra = new RecoveringLRA(lraService, currentUid, status);
+                RecoveringLRA lra = new RecoveringLRA(lraService, currentUid, findLock(currentUid), status);
 
                 if (lra.isActivated()) {
                     lras.put(lra.getId(), lra);
@@ -216,6 +239,7 @@ public class LRARecoveryModule implements RecoveryModule {
 
     // Array of transactions found in the object store of the type LRA
     private Vector _transactionUidVector = null;
+    private Vector<Uid> _lraLockUidVector;
 
     // Reference to the Object Store.
     private static RecoveryStore _recoveryStore = null;

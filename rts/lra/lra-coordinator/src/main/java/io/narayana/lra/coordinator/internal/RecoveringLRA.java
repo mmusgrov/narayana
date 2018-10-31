@@ -27,6 +27,7 @@ import com.arjuna.ats.arjuna.coordinator.AbstractRecord;
 import com.arjuna.ats.arjuna.coordinator.ActionStatus;
 import com.arjuna.ats.arjuna.coordinator.RecordList;
 import com.arjuna.ats.arjuna.coordinator.RecordListIterator;
+import io.narayana.lra.coordinator.domain.model.LRALock;
 import io.narayana.lra.coordinator.domain.model.LRARecord;
 import io.narayana.lra.logging.LRALogger;
 import io.narayana.lra.coordinator.domain.model.Transaction;
@@ -38,10 +39,11 @@ class RecoveringLRA extends Transaction {
     /**
      * Re-creates/activates an LRA for the specified transaction Uid.
      */
-    RecoveringLRA(LRAService lraService, Uid rcvUid, int theStatus) {
-        super(lraService, rcvUid);
+    RecoveringLRA(LRAService lraService, Uid rcvUid, LRALock lock, int theStatus) {
+        super(lraService, rcvUid, lock);
 
         _theStatus = theStatus;
+        // lock the store
         _activated = activate(); // this should initialize the state
     }
 
