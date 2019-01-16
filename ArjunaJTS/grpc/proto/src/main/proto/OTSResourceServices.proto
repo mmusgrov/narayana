@@ -1,0 +1,130 @@
+
+syntax = "proto3";
+
+package org.jboss.narayana.ots.grpc;
+
+import "OTSCommonTypes.proto";
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+enum Vote {
+    VoteCommit = 0;
+    VoteRollback = 1;
+    VoteReadOnly = 2;
+};
+
+message ResourceId {
+    ServiceInstance instance = 1;
+}
+
+message SubtransactionAwareResourceId {
+    ServiceInstance instance = 1;
+}
+
+message SynchronizationId {
+    ServiceInstance instance = 1;
+}
+
+message VoteResponse {
+    Vote vote = 1;
+    repeated OTSException exceptions = 2;
+}
+
+message CommitSubTxnRequest {
+    otid_t current = 1;
+    Connection connection = 2;
+}
+message SyncACRequest {
+    otid_t current = 1;
+    Status result = 2;
+}
+
+/*
+ * The Transaction Service uses a two-phase commitment protocol to complete a top-
+ * level transaction with each registered resource. The Resource interface defines the
+ * operations invoked by the transaction service on each resource. Each object supporting
+ * the Resource interface is implicitly associated with a single top-level transaction.
+ * Note that in the case of failure, the completion sequence will continue after the failure
+ * is repaired. A resource should be prepared to receive duplicate requests for the
+ * commit or rollback operation and to respond consistently.
+ */
+service ResourceService {
+    rpc prepare(otid_t) returns (VoteResponse); // HeuristicMixed, HeuristicHazard
+    rpc rollback(otid_t) returns (ExceptionResponse); // HeuristicCommit, HeuristicMixed, HeuristicHazard
+    rpc commit(otid_t) returns (ExceptionResponse); // NotPrepared, HeuristicRollback, HeuristicMixed, HeuristicHazard
+    rpc commit_one_phase(otid_t) returns (ExceptionResponse); //HeuristicHazard
+    rpc forget(otid_t) returns (ExceptionResponse);
+}
+
+/*
+ * Recoverable objects that implement nested transaction behavior may support a
+ * specialization of the Resource interface called the
+ * SubtransactionAwareResource interface. A recoverable object can be notified of
+ * the completion of a subtransaction by registering a specialized resource object that
+ * offers the SubtransactionAwareResource interface with the Transaction Service.
+ */
+service SubtransactionAwareResourceService {
+    // extends Resource
+    rpc prepare(otid_t) returns (VoteResponse); // HeuristicMixed, HeuristicHazard
+    rpc rollback(otid_t) returns (ExceptionResponse); // HeuristicCommit, HeuristicMixed, HeuristicHazard
+    rpc commit(otid_t) returns (ExceptionResponse); // NotPrepared, HeuristicRollback, HeuristicMixed, HeuristicHazard
+    rpc commit_one_phase(otid_t) returns (ExceptionResponse); //HeuristicHazard
+    rpc forget(otid_t) returns (VoidResponse);
+
+    // additional methods introduced by SubtransactionAwareResource (ie not in the Resource interface)
+    /*
+     * This operation is invoked only if the resource has been registered with a subtransaction
+     * and the subtransaction has been committed. The Resource object is provided with a
+     * Coordinator that represents the parent transaction. This operation may raise a
+     * standard exception such as TRANSACTION_ROLLEDBACK .
+     *
+     * Note that the results of a committed subtransaction are relative to the completion of its
+     * ancestor transactions, that is, these results can be undone if any ancestor transaction is
+     * rolled back.
+     */
+    rpc commit_subtransaction(CommitSubTxnRequest) returns (VoidResponse); // Connect to a Coordinator
+
+    /*
+     * This operation is invoked only if the resource has been registered with a subtransaction
+     * and notifies the resource that the subtransaction has rolled back.
+     */
+    rpc rollback_subtransaction(otid_t) returns (VoidResponse);
+}
+
+/*
+ * The Transaction Service provides a synchronization protocol, which enables an object
+ * with transient state data that relies on an X/Open XA conformant Resource Manager
+ * for ensuring that data is made persistent to be notified before the start of the two-phase
+ * commitment protocol, and after its completion. If the transaction is instructed to roll
+ * back rather than be committed, the object will only be notified after rollback
+ * completes. An object with transient state data that relies on a Resource object for
+ * ensuring that data is made persistent can also make use of this protocol, provided that
+ * both objects are registered with the same Coordinator. Each object supporting the
+ * Synchronization interface is implicitly associated with a single top-level transaction.
+ */
+service SynchronizationService {
+    /*
+     * This operation is invoked prior to the start of the two-phase commit protocol within the
+     * coordinator the Synchronization has registered with. This operation will therefore be
+     * invoked prior to prepare being issued to Resource objects or X/Open Resource
+     * Managers registered with that same coordinator. The Synchronization object must
+     * ensure that any state data it has that needs to be made persistent is made available to
+     * the resource.
+     *
+     * Only standard exceptions may be raised. Unless there is a defined recovery procedure
+     * for the exception raised, the transaction should be marked rollback only.
+     */
+    rpc before_completion (otid_t) returns (VoidResponse);
+
+    /*
+     * Regardless of how the transaction was originally instructed to terminate, this operation
+     * is invoked after all commit or rollback responses have been received by this
+     * coordinator. The current status of the transaction (as determined by a get_status on
+     * the Coordinator) is provided as input.
+     *
+     * Only standard exceptions may be raised and they have no effect on the outcome of the
+     * transaction termination.
+     */
+    rpc after_completion (SyncACRequest) returns (VoidResponse);
+}

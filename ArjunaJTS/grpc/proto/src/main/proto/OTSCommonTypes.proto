@@ -1,0 +1,67 @@
+
+syntax = "proto3";
+
+package org.jboss.narayana.ots.grpc;
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+enum Status {
+    StatusActive = 0;
+    StatusMarkedRollback = 1;
+    StatusPrepared = 2;
+    StatusCommitted = 3;
+    StatusRolledBack = 4;
+    StatusUnknown = 5;
+    StatusPreparing = 6;
+    StatusCommitting = 7;
+    StatusRollingBack = 8;
+    StatusNoTransaction = 9;
+};
+
+enum OTSException {
+    // Heuristic exceptions
+    HeuristicRollback = 0;
+    HeuristicCommit = 1;
+    HeuristicMixed = 2;
+    HeuristicHazard = 3;
+
+    // Other transaction related exceptions
+    SubtransactionsUnavailable = 4;
+    NotSubtransaction = 5;
+    Inactive = 6;
+    NotPrepared = 7;
+    NoTransaction = 8;
+    InvalidControl = 9;
+    Unavailable = 10;
+    SynchronizationUnavailable = 11;
+}
+
+message Connection {
+    string target = 1; // can be either a valid NameResolver-compliant URI, or an authority string
+}
+
+/*
+ * a ServiceInstance represents a unique instance of some data in the context of a given connection
+ * the rpc methods to interact with the instance must be known by the caller
+ */
+message ServiceInstance {
+    string uid = 1;
+    Connection location = 2; // the endpoint where the instance can be contacted
+}
+
+message ExceptionResponse {
+    repeated OTSException exceptions = 1;
+}
+
+message VoidResponse {
+}
+
+message VoidRequest {
+}
+
+message otid_t {
+    sint32 formatID = 1;  /* format identifier. 0 is OSI TP */
+    sint32 bqual_length = 2;
+    bytes tid = 3;
+};
