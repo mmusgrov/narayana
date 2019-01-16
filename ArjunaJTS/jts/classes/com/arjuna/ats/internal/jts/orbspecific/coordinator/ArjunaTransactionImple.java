@@ -114,6 +114,7 @@ import com.arjuna.ats.jts.utils.Utility;
  * @since JTS 1.0.
  */
 
+@SuppressWarnings("CheckStyle")
 public class ArjunaTransactionImple extends
 		com.arjuna.ats.arjuna.coordinator.TwoPhaseCoordinator implements
 		com.arjuna.ArjunaOTS.ArjunaTransactionOperations

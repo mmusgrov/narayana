@@ -1,0 +1,360 @@
+
+syntax = "proto3";
+
+package org.jboss.narayana.ots.grpc;
+
+import "OTSCommonTypes.proto";
+import "OTSResourceServices.proto";
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+/*
+https://developers.google.com/protocol-buffers/docs/proto3#scalar
+
+Protobuf Type	Java Type	IDL Type	Range of Values
+sint32        	short	short	�215 ... 215 - 1 (16�bit)
+uint32       	short	unsigned short	0... 216 - 1 (16�bit)
+sint32       	int	long	-231 ... 231 - 1 (32�bit)
+uint32       	int	unsigned long	0 ... 232 - 1 (32�bit)
+float        	float	float	IEEE single-precision floating point numbers.
+double       	double	double	IEEE double-precision floating point numbers.
+--           	char	char	An 8-bit value.
+bool         	boolean	boolean	TRUE or FALSE.
+bytes        	byte	octet	An 8-bit value (will not undergo any conversion during transmission)
+--           	--	any	allows the specification of values that can express an arbitrary IDL type.
+*/
+
+message RecoveryCoordinatorId {
+    ServiceInstance instance = 1;
+}
+
+message PropagationContext {
+    uint32 timeout = 1;
+    otid_t current = 2; // OTS TransIdentity maps to otid_t
+    repeated otid_t parents = 3;
+    bytes implementation_specific_data = 4; // Any type
+    // or use the following
+//    import "google/protobuf/any.proto";
+//    google.protobuf.Any implementation_specific_data = 4
+}
+
+message PropagationContextResponse {
+    PropagationContext propagation_context = 1;
+    repeated OTSException exceptions = 2;
+}
+
+message ControlResponse {
+    otid_t current = 1;
+    Connection terminator = 2; // the endpoint where the Terminator service can be contacted
+    Connection coordinator = 3; // the endpoint where the Coordinaotr service can be contacted
+    repeated OTSException exceptions = 4;
+}
+
+message TerminatorRequest {
+    otid_t current = 1;
+    bool report_heuristics = 2;
+}
+
+// Coordinator request messages
+message OTSRecoveryCoordinatorResponse {
+    RecoveryCoordinatorId id = 1;
+    repeated OTSException exceptions = 2;
+}
+message CoordinatorRelationshipRequest {
+    otid_t current = 1;
+    otid_t tc = 2;
+    Connection coordinator = 3;
+//    optional Connection coordinator = 3 [default = xx];
+}
+message CoordinatorResourceRequest {
+    otid_t current = 1;
+    ResourceId r = 2;
+}
+message CoordinatorSynchronizationRequest {
+    otid_t current = 1;
+    SynchronizationId sync = 2;
+    repeated OTSException exceptions = 3;
+}
+message CoordinatorSubtransactionAwareResourceRequest {
+    otid_t current = 1;
+    SubtransactionAwareResourceId r = 2;
+    repeated OTSException exceptions = 3;
+}
+message OTSStatusValue {
+    Status result = 1;
+}
+message OTSBoolValue {
+    bool result = 1;
+}
+message OTSLongValue {
+    sint32 result = 1;
+}
+message ULongValue {
+    uint32 time_out = 1;
+}
+
+/*
+ * The TransactionFactory interface is provided to allow the transaction originator to
+ * begin a transaction. This interface defines two operations, create and recreate, which
+ * create a new representation of a top-level transaction.
+ */
+service TransactionFactoryService {
+    /*
+     * A new top-level transaction is created and a Control object is returned. The Control
+     * object can be used to manage or to control participation in the new transaction. An
+     * implementation of the Transaction Service may restrict the ability for the Control
+     * object to be transmitted to or used in other execution environments. At a minimum, it
+     * can be used by the client thread.
+     * If the parameter has a nonzero value n, then the new transaction will be subject to
+     * being rolled back if it does not complete before n seconds have elapsed. If the
+     * parameter is zero, then no application specified time-out is established.
+     */
+    rpc create (ULongValue) returns (ControlResponse);
+
+    /* 
+     * A new representation is created for an existing transaction defined by the
+     * PropagationContext and a Control object is returned. The Control object can be
+     * used to manage or to control participation in the transaction. An implementation of the
+     * Transaction Service, which supports interposition (see Section 2.14.2, “ORB/TS
+     * Implementation Considerations,” on page 2-51) uses recreate to create a new
+     * representation of the transaction being imported, subordinate to the representation in
+     * ctx. The recreate operation can also be used to import a transaction that originated
+     * outside of the Transaction Service.
+     */
+    rpc recreate(PropagationContext) returns (ControlResponse);
+}
+
+/*
+ * The Terminator interface supports operations to commit or rollback a transaction.
+ * Typically, these operations are used by the transaction originator.
+ *
+ * An implementation of the Transaction Service may restrict the scope in which a
+ * Terminator can be used. At a minimum, it can be used within a single thread.
+ */
+service TerminatorService {
+    /*
+     * If the transaction has not been marked rollback only, and all of the participants in the
+     * transaction agree to commit, the transaction is committed and the operation terminates
+     * normally. Otherwise, the transaction is rolled back (as described below) and the
+     * TRANSACTION_ROLLEDBACK standard exception is raised.
+     * The report_heurisitcs parameter allows the application to control how long it will
+     * block after issuing a commit. If the report_heuristics parameter is true, the call will
+     * block until phase 2 of the commit protocol is complete and all heuristic outcomes are
+     * known. The Transaction Service will report inconsistent or possibly inconsistent
+     * outcomes using the HeuristicMixed and HeuristicHazard exceptions (defined in
+     * Section 1.3.6, “Exceptions,” on page 1-16). If the parameter is false, a conforming
+     * Transaction Service must not raise these exceptions. Transaction Service
+     * implementations may make use of this fact to block only to the end of phase 1 when
+     * the outcome is known, but heuristics are still possible. Heuristics that do occur may be
+     * reported to some management interface that is more suited to taking recovery action
+     * than the application.
+     * The commit operation may rollback the transaction if there are subtransactions of the
+     * transaction that have not themselves been committed or rolled back, or if there are
+     * existing or potential activities associated with the transaction that have not completed.
+     * The nature and extent of such error checking is implementation-dependent.
+     * When a top-level transaction is committed, all changes to recoverable objects made in
+     * the scope of this transaction are made permanent and visible to other transactions or
+     * clients. When a subtransaction is committed, the changes are made visible to other
+     * related transactions as appropriate to the degree of isolation enforced by the resources.
+     */
+
+    rpc commit(TerminatorRequest) returns (ExceptionResponse); // HeuristicMixed, HeuristicHazard
+    /*
+     * The transaction is rolled back. When a transaction is rolled back, all changes to
+     * recoverable objects made in the scope of this transaction (including changes made by
+     * descendant transactions) are rolled back. All resources locked by the transaction are
+     * made available to other transactions as appropriate to the degree of isolation enforced
+     * by the resources.
+     */
+    rpc rollback(otid_t) returns (VoidResponse);
+}
+
+/*
+ * The Coordinator interface provides operations that are used by participants in a
+ * transaction. These participants are typically either recoverable objects or agents of
+ * recoverable objects, such as subordinate coordinators. Each object supporting the
+ * Coordinator interface is implicitly associated with a single transaction.
+ */
+service CoordinatorService {
+    /*
+     * This operation returns the status of the transaction associated with the target object
+     */
+    rpc get_status (otid_t) returns (OTSStatusValue);
+
+    /*
+     * If the transaction associated with the target object is a top-level transaction, then this
+     * operation is equivalent to the get_status operation. Otherwise, this operation returns
+     * the status of the parent of the transaction associated with the target object.
+     */
+    rpc get_parent_status (otid_t) returns (OTSStatusValue);
+
+    /*
+     * This operation returns the status of the top-level ancestor of the transaction associated
+     * with the target object. If the transaction is a top-level transaction, then this operation is
+     * equivalent to the get_status operation.
+     */
+    rpc get_top_level_status (otid_t) returns (OTSStatusValue);
+
+    /*
+     * This operation returns true if, and only if, the target object and the parameter object
+     * both refer to the same transaction.
+     */
+    rpc is_same_transaction (CoordinatorRelationshipRequest) returns (OTSBoolValue);
+
+    /*
+     * This operation returns true if, and only if, the transaction associated with the target
+     * object is an ancestor of the transaction associated with the parameter object. A
+     * transaction T1 is an ancestor of a transaction T2 if, and only if, T1 is the same as T2
+     * or T1 is an ancestor of the parent of T2.
+     */
+    rpc is_ancestor_transaction (CoordinatorRelationshipRequest) returns (OTSBoolValue);
+
+    /*
+     * This operation returns true if, and only if, the transaction associated with the target
+     * object is a descendant of the transaction associated with the parameter object. A
+     * transaction T1 is a descendant of a transaction T2 if, and only if, T2 is an ancestor of
+     * T1 (see above).
+     */
+    rpc is_descendant_transaction (CoordinatorRelationshipRequest) returns (OTSBoolValue);
+
+    /*
+     * This operation returns true if, and only if, the transaction associated with the target
+     * object is related to the transaction associated with the parameter object. A transaction
+     * T1 is related to a transaction T2 if, and only if, there exists a transaction T3 such that
+     * T3 is an ancestor of T1 and T3 is an ancestor of T2.
+     */
+    rpc is_related_transaction (CoordinatorRelationshipRequest) returns (OTSBoolValue);
+
+    /*
+     * This operation returns true if, and only if, the transaction associated with the target
+     * object is a top-level transaction. A transaction is a top-level transaction if it has no
+     * parent.
+     */
+    rpc is_top_level_transaction (otid_t) returns (OTSBoolValue);
+
+    /*
+     * This operation returns a hash code for the transaction associated with the target object.
+     * Each transaction has a single hash code. Hash codes for transactions should be
+     * uniformly distributed.
+     */
+    rpc hash_transaction (otid_t) returns (OTSLongValue);
+
+    /*
+     * This operation returns the hash code for the top-level ancestor of the transaction
+     * associated with the target object. This operation is equivalent to the
+     * hash_transaction operation when the transaction associated with the target object is
+     * a top-level transaction.
+     */
+    rpc hash_top_level_tran (otid_t) returns (OTSLongValue);
+
+    /*
+     * This operation registers the specified resource as a participant in the transaction
+     * associated with the target object. When the transaction is terminated, the resource will
+     * receive requests to commit or rollback the updates performed as part of the transaction.
+     * These requests are described in the description of the Resource interface. The
+     * Inactive exception is raised if the transaction has already been prepared. The standard
+     * exception TRANSACTION_ROLLEDBACK may be raised if the transaction has
+     * been marked rollback only.
+     * If the resource is a subtransaction aware resource (it supports the
+     * SubtransactionAwareResource interface) and the transaction associated with the
+     * target object is a subtransaction, then this operation registers the specified resource
+     * with the subtransaction and indirectly with the top-level transaction when the
+     * subtransaction’s ancestors have committed.
+     * If the resource is not a subtransaction aware resource and the transaction associated
+     * with the target object is a subtransaction, then the resource is registered as a participant
+     * of this subtransaction. It is registered with the parent of this subtransaction only if and
+     * when this subtransaction is committed. Otherwise (the transaction is a top-level
+     * transaction), the resource is registered as a participant in this transaction.
+     * This operation returns a RecoveryCoordinator that can be used by this resource
+     * during recovery.
+     */
+    rpc register_resource(CoordinatorResourceRequest) returns (OTSRecoveryCoordinatorResponse);
+
+    /*
+     * This operation registers the specified Synchronization object such that it will be
+     * notified to perform necessary processing prior to prepare being driven to resources
+     * registered with this Coordinator. These requests are described in the description of
+     * the Synchronization interface. The Inactive exception is raised if the transaction
+     * has already been prepared. The SynchronizationUnavailable exception is raised if
+     * the Coordinator does not support synchronization. The standard exception
+     * TRANSACTION_ROLLEDBACK may be raised if the transaction has been
+     * marked rollback only.
+     * A synchronization cannot be registered with a subtransaction. A call to
+     * register_synchronization on a subtransaction always raises
+     * SynchronizationUnavailable .
+     */
+    rpc register_synchronization(CoordinatorSynchronizationRequest) returns (ExceptionResponse);
+
+    /*
+     * This operation registers the specified subtransaction aware resource such that it will be
+     * notified when the subtransaction has committed or rolled back. These requests are
+     * described in the description of the SubtransactionAwareResource interface.
+     * Note that this operation registers the specified resource only with the subtransaction.
+     * This operation cannot be used to register the resource as a participant in the
+     * transaction.
+     * The NotSubtransaction exception is raised if the current transaction is not a
+     * subtransaction. The Inactive exception is raised if the subtransaction (or any ancestor)
+     * is terminating, or has already been terminated. The standard exception
+     * TRANSACTION_ROLLEDBACK may be raised if the subtransaction (or any
+     * ancestor) has been marked rollback only.
+     */
+    rpc register_subtran_aware(CoordinatorSubtransactionAwareResourceRequest) returns (ExceptionResponse);
+
+    /*
+     * The transaction associated with the target object is modified so that the only possible
+     * outcome is to rollback the transaction. The Inactive exception is raised if the
+     * transaction has already been prepared.
+     */
+    rpc rollback_only(otid_t) returns (ExceptionResponse);
+
+    /*
+     * This operation returns a printable string describing the transaction associated with the
+     * target object. The returned string is intended to support debugging.
+     */
+    rpc get_transaction_name(otid_t) returns (VoidResponse);
+
+    /*
+     * A new subtransaction is created whose parent is the transaction associated with the
+     * target object. The Inactive exception is raised if the target transaction is terminating,
+     * or has already been terminated. An implementation of the Transaction Service is not
+     * required to support nested transactions. If nested transactions are not supported, the
+     * exception SubtransactionsUnavailable is raised.
+     * The create_subtransaction operation returns a Control object, which enables the
+     * subtransaction to be terminated and allows recoverable objects to participate in the
+     * subtransaction. An implementation of the Transaction Service may restrict the ability
+     * for the Control object to be transmitted to or used in other execution environments.
+     */
+    rpc create_subtransaction(otid_t) returns (ControlResponse);
+
+    /*
+     * The get_txcontext operation returns a PropagationContext object, which is used
+     * by one Transaction Service domain to export the current transaction to a new
+     * Transaction Service domain. An implementation of the Transaction Service may also
+     * use the PropagationContext to assist in the implementation of the
+     * is_same_transaction operation when the input Coordinator has been generated by
+     * a different Transaction Service implementation.
+     * The Unavailable exception is raised if the Transaction Service implementation
+     * chooses to restrict the availability of the PropagationContext.
+     */
+    rpc get_txcontext(otid_t) returns (PropagationContextResponse);
+}
+
+/*
+ * A recoverable object uses a RecoveryCoordinator to drive the recovery process in
+ * certain situations. The object reference for an object supporting the
+ * RecoveryCoordinator interface, as returned by the register_resource operation,
+ * is implicitly associated with a single resource registration request and may only be
+ * used by that resource.
+ */
+service RecoveryCoordinatorService {
+    /*
+     * This operation can be invoked at any time after the associated resource has been
+     * prepared. The Resource must be passed as the parameter. Performing this operation
+     * provides a hint to the Coordinator that the commit or rollback operations have not
+     * been performed on the resource. This hint may be required in certain failure cases.
+     * This non-blocking operation returns the current status of the transaction. The
+     * NotPrepared exception is raised if the resource has not been prepared.
+     */
+    rpc replay_completion (ResourceId) returns (OTSStatusValue);
+}
