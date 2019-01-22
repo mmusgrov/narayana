@@ -13,9 +13,20 @@ import org.jboss.narayana.ots.grpc.OTSException;
 import org.jboss.narayana.ots.grpc.otid_t;
 import org.omg.CORBA.Any;
 import org.omg.CORBA.SystemException;
+import org.omg.CORBA.UserException;
 import org.omg.CORBA.portable.UnknownException;
 import org.omg.CosTransactions.Control;
+import org.omg.CosTransactions.HeuristicCommit;
+import org.omg.CosTransactions.HeuristicHazard;
+import org.omg.CosTransactions.HeuristicMixed;
+import org.omg.CosTransactions.HeuristicRollback;
+import org.omg.CosTransactions.Inactive;
+import org.omg.CosTransactions.InvalidControl;
 import org.omg.CosTransactions.NoTransaction;
+import org.omg.CosTransactions.NotPrepared;
+import org.omg.CosTransactions.NotSubtransaction;
+import org.omg.CosTransactions.SubtransactionsUnavailable;
+import org.omg.CosTransactions.SynchronizationUnavailable;
 import org.omg.CosTransactions.TransIdentity;
 import org.omg.CosTransactions.Unavailable;
 
@@ -92,5 +103,41 @@ public class Utility {
         }
 
         return Utility.toGrpcOtid(ots_otid);
+    }
+
+    static org.omg.CORBA.UserException checkForException(ExceptionResponse response) {
+        if (response.getExceptionsCount() != 0) {
+
+            switch (response.getExceptions(0).ordinal()) {
+                case OTSException.HeuristicRollback_VALUE:
+                    return new HeuristicRollback();
+                case OTSException.HeuristicCommit_VALUE:
+                    return new HeuristicCommit();
+                case OTSException.HeuristicMixed_VALUE:
+                    return new HeuristicMixed();
+                case OTSException.HeuristicHazard_VALUE:
+                    return new HeuristicHazard();
+                case OTSException.SubtransactionsUnavailable_VALUE:
+                    return new SubtransactionsUnavailable();
+                case OTSException.NotSubtransaction_VALUE:
+                    return new NotSubtransaction();
+                case OTSException.Inactive_VALUE:
+                    return new Inactive();
+                case OTSException.NotPrepared_VALUE:
+                    return new NotPrepared();
+                case OTSException.NoTransaction_VALUE:
+                    return new NoTransaction();
+                case OTSException.InvalidControl_VALUE:
+                    return new InvalidControl();
+                case OTSException.Unavailable_VALUE:
+                    return new Unavailable();
+                case OTSException.SynchronizationUnavailable_VALUE:
+                    return new SynchronizationUnavailable();
+                default:
+//                    return new SystemException();
+            }
+        }
+
+        return null;
     }
 }

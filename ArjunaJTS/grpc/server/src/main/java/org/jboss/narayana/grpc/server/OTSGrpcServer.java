@@ -27,7 +27,7 @@ public class OTSGrpcServer {
   private final String name;
   private Server server;
 
-  public OTSGrpcServer(String name) {
+  private OTSGrpcServer(String name) {
     this.name = name;
   }
 
@@ -38,15 +38,11 @@ public class OTSGrpcServer {
   public static OTSGrpcServer startControlServices(String name, int port) throws Exception {
     OTSGrpcServer.initTM();
 
-    OTSGrpcServer otsGrpcServer = new OTSGrpcServer(name);
-
-    otsGrpcServer.start(port,
+    return new OTSGrpcServer(name).start(port,
             new RecoveryCoordinatorServiceImpl(CONTROL_SERVER_TARGET),
             new TransactionFactoryServiceImpl(CONTROL_SERVER_TARGET),
             new TerminatorServiceImpl(CONTROL_SERVER_TARGET),
             new CoordinatorServiceImpl(CONTROL_SERVER_TARGET));
-
-    return otsGrpcServer;
   }
 
   public void stopServices() throws InterruptedException {
@@ -54,7 +50,7 @@ public class OTSGrpcServer {
     server.awaitTermination();
   }
 
-  public void start(int port, BindableService... services) throws Exception {
+  private OTSGrpcServer start(int port, BindableService... services) throws Exception {
     ServerBuilder builder = ServerBuilder.forPort(port);
     Stream.of(services).forEach(builder::addService);
 
@@ -66,11 +62,14 @@ public class OTSGrpcServer {
       System.err.println(name + " is shutting down");
       try {
         OTSGrpcServer.this.stopServices();
-      } catch (Exception ignore) {
+      } catch (InterruptedException ignore) {
+      } finally {
+        JavaIdlRCServiceInit.shutdownRCService();
+        System.err.println(name + " is shut down");
       }
-      JavaIdlRCServiceInit.shutdownRCService();
-      System.err.println(name + " is shut down");
     }));
+
+    return this;
   }
 
   private static void initTM() throws Exception {

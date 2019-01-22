@@ -35,6 +35,7 @@ enum OTSException {
     InvalidControl = 9;
     Unavailable = 10;
     SynchronizationUnavailable = 11;
+    SystemException = 12;
 }
 
 message Connection {
@@ -50,8 +51,18 @@ message ServiceInstance {
     Connection location = 2; // the endpoint where the instance can be contacted
 }
 
+enum CompletionStatus {
+    COMPLETED_YES = 0;
+    COMPLETED_NO = 1;
+    COMPLETED_MAYBE = 2;
+}
+
 message ExceptionResponse {
     repeated OTSException exceptions = 1;
+    string exceptionType = 2; // for mapping SystemException
+    string reason = 3;
+    uint32 minor = 4;
+    CompletionStatus completed = 5;
 }
 
 message VoidResponse {

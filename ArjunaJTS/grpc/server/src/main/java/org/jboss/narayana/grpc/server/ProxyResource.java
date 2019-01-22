@@ -75,7 +75,9 @@ public class ProxyResource extends org.omg.CosTransactions.ResourcePOA {
     }
 
     public void commit_one_phase() throws HeuristicHazard, SystemException {
-        proxyRequest((otid, stub) -> stub.commitOnePhase(otid));
+        ExceptionResponse response = proxyRequest((otid, stub) -> stub.commitOnePhase(otid));
+
+        Utility.checkForException(response);
     }
 
     private ExceptionResponse proxyRequest(BiFunction<otid_t, ResourceServiceGrpc.ResourceServiceBlockingStub, ExceptionResponse> action) {
@@ -90,19 +92,6 @@ public class ProxyResource extends org.omg.CosTransactions.ResourcePOA {
             return ExceptionResponse.newBuilder()
                     .setExceptions(0, OTSException.Unavailable)
                     .build();
-        } finally {
-            channel.shutdown();
-        }
-    }
-    private ExceptionResponse xxproxyRequest(BiFunction<otid_t, ResourceServiceGrpc.ResourceServiceBlockingStub, ExceptionResponse> action) {
-        ManagedChannel channel = Utility.getChannel(grpcResource.getInstance().getLocation().getTarget());
-
-        try {
-            otid_t otid = Utility.getCurrentOtid();
-            ResourceServiceGrpc.ResourceServiceBlockingStub stub = ResourceServiceGrpc.newBlockingStub(channel);
-
-            return action.apply(otid, stub);
-
         } finally {
             channel.shutdown();
         }
