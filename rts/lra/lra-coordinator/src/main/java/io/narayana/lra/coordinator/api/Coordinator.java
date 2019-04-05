@@ -84,7 +84,7 @@ import static io.narayana.lra.LRAConstants.STATUS_PARAM_NAME;
 import static io.narayana.lra.LRAConstants.TIMELIMIT_PARAM_NAME;
 import static java.util.stream.Collectors.toList;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVERY_HEADER;
 
 @ApplicationScoped
@@ -238,7 +238,7 @@ public class Coordinator {
             @QueryParam(TIMELIMIT_PARAM_NAME) @DefaultValue("0") Long timelimit,
             @ApiParam(value = "The enclosing LRA if this new LRA is nested", required = false)
             @QueryParam(PARENT_LRA_PARAM_NAME) @DefaultValue("") String parentLRA,
-            @HeaderParam(LRA_HTTP_HEADER) String parentId) throws WebApplicationException, InvalidLRAIdException {
+            @HeaderParam(LRA_HTTP_CONTEXT_HEADER) String parentId) throws WebApplicationException, InvalidLRAIdException {
 
         URI parentLRAUrl = null;
 
@@ -280,7 +280,7 @@ public class Coordinator {
 
         return Response.status(Response.Status.CREATED)
                 .entity(lraId)
-                .header(LRA_HTTP_HEADER, Current.getContexts())
+                .header(LRA_HTTP_CONTEXT_HEADER, Current.getContexts())
                 .build();
     }
 

@@ -551,7 +551,7 @@ public class Transaction extends AtomicAction {
 
         } catch (MalformedURLException | URISyntaxException ignore) {
             String pUrl = LRARecord.extractCompensator(id, participantUrl);
-            rec = findLRAParticipant(pUrl, remove, pendingList, pendingList, preparedList, heuristicList, failedList);
+            rec = findLRAParticipant(pUrl, remove, pendingList, preparedList, heuristicList, failedList);
         }
 
         return rec;

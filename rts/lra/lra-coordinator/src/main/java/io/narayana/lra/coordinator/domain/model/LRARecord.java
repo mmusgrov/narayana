@@ -58,7 +58,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_RECOVERY_HEADER;
 
 public class LRARecord extends AbstractRecord implements Comparable<AbstractRecord> {
@@ -106,6 +106,8 @@ public class LRARecord extends AbstractRecord implements Comparable<AbstractReco
 
                 if (parseException[0] != null) {
                     throw new InvalidLRAIdException(lraId, "Invalid link URI", parseException[0]);
+                } else if (compensateURI == null) {
+                    throw new InvalidLRAIdException(lraId, "Invalid link URI: missing compensator");
                 }
             } else {
                 this.compensateURI = new URI(String.format("%s/compensate", linkURI));
@@ -300,9 +302,9 @@ public class LRARecord extends AbstractRecord implements Comparable<AbstractReco
             try {
                 // ask the participant to complete or compensate
                 Future<Response> asyncResponse = target.request()
-                        .header(LRA_HTTP_HEADER, lraId.toASCIIString())
+                        .header(LRA_HTTP_CONTEXT_HEADER, lraId.toASCIIString())
                         .header(LRA_HTTP_RECOVERY_HEADER, recoveryURI.toASCIIString())
-                        .property(LRA_HTTP_HEADER, lraId) // make the context available to the jaxrs filters
+                        .property(LRA_HTTP_CONTEXT_HEADER, lraId) // make the context available to the jaxrs filters
                         .async()
                         .put(Entity.entity(compensatorData, MediaType.APPLICATION_JSON));
                 // the catch block below catches any Timeout exception
@@ -449,9 +451,9 @@ public class LRARecord extends AbstractRecord implements Comparable<AbstractReco
 
                 // since this method is called from the recovery thread do not block
                 Future<Response> asyncResponse = target.request()
-                        .header(LRA_HTTP_HEADER, lraId.toASCIIString())
+                        .header(LRA_HTTP_CONTEXT_HEADER, lraId.toASCIIString())
                         .header(LRA_HTTP_RECOVERY_HEADER, recoveryURI.toASCIIString())
-                        .property(LRA_HTTP_HEADER, lraId)  // make the context available to the jaxrs filters
+                        .property(LRA_HTTP_CONTEXT_HEADER, lraId)  // make the context available to the jaxrs filters
                         .async()
                         .get();
 
@@ -494,9 +496,9 @@ public class LRARecord extends AbstractRecord implements Comparable<AbstractReco
                                     // let the participant know he can clean up
                                     WebTarget target2 = client.target(forgetURI);
                                     Future<Response> asyncResponse2 = target2.request()
-                                            .header(LRA_HTTP_HEADER, lraId.toASCIIString())
+                                            .header(LRA_HTTP_CONTEXT_HEADER, lraId.toASCIIString())
                                             .header(LRA_HTTP_RECOVERY_HEADER, recoveryURI.toASCIIString())
-                                            .property(LRA_HTTP_HEADER, lraId)  // make the context available to the jaxrs filters
+                                            .property(LRA_HTTP_CONTEXT_HEADER, lraId)  // make the context available to the jaxrs filters
                                             .async()
                                             .delete();
 

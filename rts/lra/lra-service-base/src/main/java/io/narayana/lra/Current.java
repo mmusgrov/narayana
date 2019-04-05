@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 
 public class Current {
     private static final ThreadLocal<Current> lraContexts = new ThreadLocal<>();
@@ -154,14 +154,14 @@ public class Current {
         URI lraId = Current.peek();
 
         if (lraId != null) {
-            responseContext.getHeaders().put(LRA_HTTP_HEADER, getContexts());
+            responseContext.getHeaders().put(LRA_HTTP_CONTEXT_HEADER, getContexts());
         } else {
-            responseContext.getHeaders().remove(LRA_HTTP_HEADER);
+            responseContext.getHeaders().remove(LRA_HTTP_CONTEXT_HEADER);
         }
     }
 
     public static void updateLRAContext(URI lraId, MultivaluedMap<String, String> headers) {
-        headers.putSingle(LRA_HTTP_HEADER, lraId.toString());
+        headers.putSingle(LRA_HTTP_CONTEXT_HEADER, lraId.toString());
         push(lraId);
     }
 
@@ -175,16 +175,16 @@ public class Current {
         URI lraId = Current.peek();
 
         if (lraId != null) {
-            if (!context.getHeaders().containsKey(LRA_HTTP_HEADER)) {
-                context.getHeaders().putSingle(LRA_HTTP_HEADER, lraId);
+            if (!context.getHeaders().containsKey(LRA_HTTP_CONTEXT_HEADER)) {
+                context.getHeaders().putSingle(LRA_HTTP_CONTEXT_HEADER, lraId);
             }
         } else {
-            Object lraContext = context.getProperty(LRA_HTTP_HEADER);
+            Object lraContext = context.getProperty(LRA_HTTP_CONTEXT_HEADER);
 
             if (lraContext != null) {
-                context.getHeaders().putSingle(LRA_HTTP_HEADER, lraContext);
+                context.getHeaders().putSingle(LRA_HTTP_CONTEXT_HEADER, lraContext);
             } else {
-                context.getHeaders().remove(LRA_HTTP_HEADER);
+                context.getHeaders().remove(LRA_HTTP_CONTEXT_HEADER);
             }
         }
     }
@@ -194,7 +194,7 @@ public class Current {
     }
 
     public static void clearContext(MultivaluedMap<String, String> headers) {
-        headers.remove(LRA_HTTP_HEADER);
+        headers.remove(LRA_HTTP_CONTEXT_HEADER);
         popAll();
     }
 

@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_HEADER;
+import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 
 public class ClientLRAResponseFilter implements ClientResponseFilter {
     @Context
@@ -40,10 +40,10 @@ public class ClientLRAResponseFilter implements ClientResponseFilter {
 
     @Override
     public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext) throws IOException {
-        Object incomingLRA = Current.getLast(responseContext.getHeaders().get(LRA_HTTP_HEADER));
+        Object incomingLRA = Current.getLast(responseContext.getHeaders().get(LRA_HTTP_CONTEXT_HEADER));
 
         if (incomingLRA == null) {
-            incomingLRA = requestContext.getProperty(LRA_HTTP_HEADER);
+            incomingLRA = requestContext.getProperty(LRA_HTTP_CONTEXT_HEADER);
         }
 
         /*
