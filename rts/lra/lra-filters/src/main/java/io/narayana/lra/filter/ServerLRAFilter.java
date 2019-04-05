@@ -337,6 +337,8 @@ public class ServerLRAFilter implements ContainerRequestFilter, ContainerRespons
             containerRequestContext.setProperty(NEW_LRA_PROP, newLRA);
         }
 
+        Current.push(lraId);
+
         lraTrace(containerRequestContext, lraId, "ServerLRAFilter before: making LRA available to injected NarayanaLRAClient");
         lraClient.setCurrentLRA(lraId); // make the current LRA available to the called method
 

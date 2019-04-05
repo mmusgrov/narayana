@@ -174,7 +174,7 @@ public class Current {
     public static void updateLRAContext(ClientRequestContext context) {
         MultivaluedMap<String, Object> headers = context.getHeaders();
 
-        if (headers.containsKey(LRA_HTTP_HEADER)) {
+        if (headers.containsKey(LRA_HTTP_CONTEXT_HEADER)) {
             // LRA context is explicitly set
             return;
         }
@@ -182,14 +182,14 @@ public class Current {
         URI lraId = Current.peek();
 
         if (lraId != null) {
-            headers.putSingle(LRA_HTTP_HEADER, lraId);
+            headers.putSingle(LRA_HTTP_CONTEXT_HEADER, lraId);
         } else {
             Object lraContext = context.getProperty(LRA_HTTP_CONTEXT_HEADER);
 
             if (lraContext != null) {
-                headers.putSingle(LRA_HTTP_HEADER, lraContext);
+                headers.putSingle(LRA_HTTP_CONTEXT_HEADER, lraContext);
             } else {
-                headers.remove(LRA_HTTP_HEADER);
+                headers.remove(LRA_HTTP_CONTEXT_HEADER);
             }
         }
     }

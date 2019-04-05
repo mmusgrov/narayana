@@ -30,7 +30,6 @@ import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Context;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import static org.eclipse.microprofile.lra.annotation.ws.rs.LRA.LRA_HTTP_CONTEXT_HEADER;
 
@@ -40,16 +39,16 @@ public class ClientLRAResponseFilter implements ClientResponseFilter {
 
     @Override
     public void filter(ClientRequestContext requestContext, ClientResponseContext responseContext) throws IOException {
-        Object incomingLRA = Current.getLast(responseContext.getHeaders().get(LRA_HTTP_CONTEXT_HEADER));
+/*        Object incomingLRA = Current.getLast(responseContext.getHeaders().get(LRA_HTTP_CONTEXT_HEADER));
 
         if (incomingLRA == null) {
             incomingLRA = requestContext.getProperty(LRA_HTTP_CONTEXT_HEADER);
         }
 
-        /*
+        *//*
          * if the incoming response contains a context make it the current one
          * (note we never popped the context in the request filter so we don't need to push outgoingLRA
-         */
+         *//*
         if (incomingLRA != null) {
             try {
                 Current.push(new URI(incomingLRA.toString()));
@@ -65,6 +64,12 @@ public class ClientLRAResponseFilter implements ClientResponseFilter {
             // any previous context must have been ended by the invoked service otherwise incomingLRA
             // would have been present
             Current.pop();
+        }*/
+
+        Object callingContext = requestContext.getProperty(LRA_HTTP_CONTEXT_HEADER);
+
+        if (callingContext != null) {
+            Current.push((URI) callingContext);
         }
     }
 }
