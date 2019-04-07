@@ -489,10 +489,6 @@ public class LRARecord extends AbstractRecord implements Comparable<AbstractReco
                                     compensate, target.getUri(), status);
 
                             if (forgetURI != null) {
-                                forgetURI = statusURI; // forget is equivalent to HTTP delete on the status URI
-                            }
-
-                            if (forgetURI != null) {
                                 try {
                                     // let the participant know he can clean up
                                     WebTarget target2 = client.target(forgetURI);
