@@ -23,6 +23,9 @@
 package io.narayana.lra.coordinator.api;
 
 import io.narayana.lra.Current;
+import io.narayana.lra.GenericLRAException;
+import io.narayana.lra.IllegalLRAStateException;
+import io.narayana.lra.InvalidLRAIdException;
 import io.narayana.lra.coordinator.domain.model.LRAData;
 import io.narayana.lra.coordinator.domain.model.LRAStatusHolder;
 import io.narayana.lra.coordinator.domain.model.Transaction;
@@ -69,9 +72,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.microprofile.lra.annotation.LRAStatus;
-import org.eclipse.microprofile.lra.client.GenericLRAException;
-import org.eclipse.microprofile.lra.client.IllegalLRAStateException;
-import org.eclipse.microprofile.lra.client.InvalidLRAIdException;
 
 import static io.narayana.lra.LRAConstants.CLIENT_ID_PARAM_NAME;
 import static io.narayana.lra.LRAConstants.COMPENSATE;

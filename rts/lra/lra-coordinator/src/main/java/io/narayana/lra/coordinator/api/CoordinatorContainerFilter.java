@@ -22,7 +22,7 @@
 package io.narayana.lra.coordinator.api;
 
 import io.narayana.lra.Current;
-import org.eclipse.microprofile.lra.client.GenericLRAException;
+import io.narayana.lra.GenericLRAException;
 
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
