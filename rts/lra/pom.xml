@@ -58,7 +58,7 @@
             <dependency>
                 <groupId>io.thorntail</groupId>
                 <artifactId>bom-all</artifactId>
-                <version>${version.wildfly-thorntail}</version>
+                <version>${version.thorntail}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
