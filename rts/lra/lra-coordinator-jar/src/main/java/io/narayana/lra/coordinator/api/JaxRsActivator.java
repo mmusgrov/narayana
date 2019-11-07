@@ -10,7 +10,7 @@ import javax.ws.rs.core.Application;
 // mark the war as a JAX-RS archive
 @ApplicationPath("/")
 @OpenAPIDefinition(
-    info = @Info(title = "LRA Coordinator", version = "1.0"),
+    info = @Info(title = "LRA Coordinator", version = "1.0-RC1"),
     tags = @Tag(name = "LRA Coordinator")
 )
 public class JaxRsActivator extends Application {

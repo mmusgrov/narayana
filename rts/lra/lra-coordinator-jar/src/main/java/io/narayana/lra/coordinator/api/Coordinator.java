@@ -275,6 +275,22 @@ public class Coordinator {
         }
 
         String coordinatorUrl = String.format("%s%s", context.getBaseUri(), COORDINATOR_PATH_NAME);
+/*
+        String host = context.getBaseUri().getHost();
+
+        if (host.equals("127.0.0.1") || host.equals(":1")) {
+            try {
+                URI uri = context.getBaseUri();
+                URI nuri = new URI(uri.getScheme(), uri.getUserInfo(), "localhost", uri.getPort(),
+                        uri.getPath(), uri.getQuery(), uri.getFragment());
+
+                coordinatorUrl = String.format("%s%s", nuri, COORDINATOR_PATH_NAME);
+            } catch (URISyntaxException e) {
+                LRALogger.i18NLogger.error_invalidStringFormatOfUrl(coordinatorUrl, e);
+            }
+        }
+*/
+
         URI lraId = lraService.startLRA(coordinatorUrl, parentLRAUrl, clientId, timelimit);
 
         if (parentLRAUrl != null) {

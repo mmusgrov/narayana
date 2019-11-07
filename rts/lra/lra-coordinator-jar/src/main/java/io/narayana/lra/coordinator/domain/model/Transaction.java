@@ -54,6 +54,7 @@ import java.net.URLEncoder;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -78,14 +79,16 @@ public class Transaction extends AtomicAction {
     private LRAStatus status;
     private String responseData;
     private LocalDateTime startTime;
-    private LocalDateTime finishTime; // TODO make sure this acted upon during restore_state()
+    private LocalDateTime finishTime;
     private ScheduledFuture<?> scheduledAbort;
     private boolean inFlight;
     private LRAService lraService;
+    private String uid;
 
     public Transaction(LRAService lraService, String baseUrl, URI parentId, String clientId) throws URISyntaxException {
         super(new Uid());
 
+        this.uid = get_uid().fileStringForm();
         this.lraService = lraService;
         this.id = new URI(String.format("%s/%s", baseUrl, get_uid().fileStringForm()));
         this.inFlight = true;
@@ -100,6 +103,7 @@ public class Transaction extends AtomicAction {
     public Transaction(LRAService lraService, Uid rcvUid) {
         super(rcvUid);
 
+        this.uid = rcvUid.fileStringForm();
         this.lraService = lraService;
         this.inFlight = false;
         this.id = null;
@@ -133,8 +137,20 @@ public class Transaction extends AtomicAction {
             os.packString(id == null ? null : id.toString());
             os.packString(parentId == null ? null : parentId.toString());
             os.packString(clientId);
-            os.packLong(startTime == null ? 0L : startTime.toInstant(ZoneOffset.UTC).toEpochMilli());
-            os.packLong(finishTime == null ? 0L : finishTime.toInstant(ZoneOffset.UTC).toEpochMilli());
+
+            if (startTime == null) {
+                os.packBoolean(false);
+            } else {
+                os.packBoolean(true);
+                os.packLong(startTime.toInstant(ZoneOffset.UTC).toEpochMilli());
+            }
+
+            if (finishTime == null) {
+                os.packBoolean(false);
+            } else {
+                os.packBoolean(true);
+                os.packLong(finishTime.toInstant(ZoneOffset.UTC).toEpochMilli());
+            }
 
             if (status == null) {
                 os.packBoolean(false);
@@ -234,18 +250,16 @@ public class Transaction extends AtomicAction {
             return false;
         }
 
+        uid = get_uid().fileStringForm();
+
         try {
             String s = os.unpackString();
             id = s == null ? null : new URI(s);
             s = os.unpackString();
             parentId = s == null ? null : new URI(s);
             clientId = os.unpackString();
-            long startMillis = os.unpackLong();
-            startTime = startMillis == 0 ? null :
-                    LocalDateTime.ofInstant(Instant.ofEpochMilli(startMillis), ZoneOffset.UTC);
-            long finishMillis = os.unpackLong();
-            finishTime = finishMillis == 0 ? null :
-                    LocalDateTime.ofInstant(Instant.ofEpochMilli(finishMillis), ZoneOffset.UTC);
+            startTime = os.unpackBoolean() ? LocalDateTime.ofInstant(Instant.ofEpochMilli(os.unpackLong()), ZoneOffset.UTC) : null;
+            finishTime = os.unpackBoolean() ? LocalDateTime.ofInstant(Instant.ofEpochMilli(os.unpackLong()), ZoneOffset.UTC) : null;
             status = os.unpackBoolean() ? LRAStatus.valueOf(os.unpackString()) : null;
 
             int cnt = os.unpackInt();
@@ -257,6 +271,25 @@ public class Transaction extends AtomicAction {
                 for (int i = 0; i < cnt; i++) {
                     afterLRAListeners.add(new AfterLRAListener(new URI(os.unpackString()), new URI(os.unpackString())));
                 }
+            }
+
+            /*
+             * If the time limit has already been reached then the difference between now and the scheduled
+             * abort time will be negative. Since scheduling a task with a negative time will run it immediately
+             * we must ensure that the setTimeLimit call is placed after the state has been fully re-hydrated.
+             */
+            if (finishTime != null) {
+                long ttl = ChronoUnit.MILLIS.between(LocalDateTime.now(ZoneOffset.UTC), finishTime);
+
+                if (ttl <= 0) {
+                    System.out.printf("TIMER has expired since last reload%n");
+
+                    status = LRAStatus.Cancelling;
+                } else {
+                    System.out.printf("RESTARTING TIMER%n");
+                }
+
+                setTimeLimit(ttl);
             }
 
             return true;
@@ -490,7 +523,7 @@ public class Transaction extends AtomicAction {
 
         responseData = isActive() ? null : status.name();
 
-        finishTime = LocalDateTime.now();
+        finishTime = LocalDateTime.now(ZoneOffset.UTC);
 
         return res;
     }
@@ -537,6 +570,7 @@ public class Transaction extends AtomicAction {
 
         if (participant != null) {
             // need to remember that there is a new participant
+            updateAfterLRAListeners(pendingList);
             deactivate(); // if it fails the superclass will have logged a warning
             savedIntentionList = true; // need this clean up if the LRA times out
         }
@@ -554,9 +588,7 @@ public class Transaction extends AtomicAction {
         p.setRecoveryURI(recoveryUrlBase, txId, pid);
 
         if (add(p) != AddOutcome.AR_REJECTED) {
-            if (timeLimit > 0) {
-                setTimeLimit(timeLimit);
-            }
+            setTimeLimit(timeLimit);
 
             return p;
         }
@@ -579,7 +611,10 @@ public class Transaction extends AtomicAction {
     }
 
     private void savePendingList() {
-        if (pendingList == null || pending != null) {
+        if (pendingList == null) {
+            savedIntentionList = true;
+            return;
+        } else if (pending != null) {
             return;
         }
 
@@ -720,44 +755,59 @@ public class Transaction extends AtomicAction {
     public int begin(Long timeLimit) {
         int res = super.begin(); // no timeout because the default timeunit (SECONDS) is too course
 
-        startTime = LocalDateTime.now();
+        startTime = LocalDateTime.now(ZoneOffset.UTC);
 
         setTimeLimit(timeLimit);
+
+        deactivate();
 
         return res;
     }
 
     public int setTimeLimit(Long timeLimit) {
+        if (timeLimit <= 0L) {
+            if (scheduledAbort != null) {
+                scheduledAbort.cancel(false);
+                scheduledAbort = null;
+            }
+
+            return Response.Status.OK.getStatusCode();
+        }
+
         return scheduleCancelation(this::abortLRA, timeLimit);
     }
 
     private int scheduleCancelation(Runnable runnable, Long timeLimit) {
+        assert timeLimit > 0L;
+
         if (status() != ActionStatus.RUNNING) {
+            System.out.printf("IGNORING TIMER since txn statis is %d%n", status());
+
             return Response.Status.PRECONDITION_FAILED.getStatusCode();
         }
 
-        if (timeLimit > 0) {
-            if (finishTime != null) {
-                // check whether the new time limit is less than the current one
-                LocalDateTime ft = LocalDateTime.now().plusNanos(timeLimit * 1000000);
+        if (finishTime != null) {
+            // check whether the new time limit is less than the current one
+            LocalDateTime ft = LocalDateTime.now().plusNanos(timeLimit * 1000000);
 
-                if (ft.isAfter(finishTime)) {
-                    // the existing timer finishes before the requested one so there is nothing to do
-                    return Response.Status.OK.getStatusCode();
-                }
-
-                // it is earlier so cancel the current timer
-                finishTime = ft;
-
-                if (scheduledAbort != null) {
-                    scheduledAbort.cancel(false);
-                }
-            } else {
-                finishTime = LocalDateTime.now().plusNanos(timeLimit * 1000000);
+            if (ft.isAfter(finishTime)) {
+                System.out.printf("IGNORING TIMER since there is an earlier one already scheduled%n");
+                // the existing timer finishes before the requested one so there is nothing to do
+                return Response.Status.OK.getStatusCode();
             }
 
-            scheduledAbort = scheduler.schedule(runnable, timeLimit, TimeUnit.MILLISECONDS);
+            // it is earlier so cancel the current timer
+            finishTime = ft;
+
+            if (scheduledAbort != null) {
+                scheduledAbort.cancel(false);
+            }
+        } else {
+            // if timeLimit is negative the abort will be scheduled immediately
+            finishTime = LocalDateTime.now(ZoneOffset.UTC).plusNanos(timeLimit * 1000000);
         }
+
+        scheduledAbort = scheduler.schedule(runnable, timeLimit, TimeUnit.MILLISECONDS);
 
         return Response.Status.OK.getStatusCode();
     }
@@ -878,6 +928,10 @@ public class Transaction extends AtomicAction {
         }
 
         return notifiedAll;
+    }
+
+    public String getUid() {
+        return uid;
     }
 
     static class AfterLRAListener {
