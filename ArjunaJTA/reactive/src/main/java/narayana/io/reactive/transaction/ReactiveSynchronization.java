@@ -13,16 +13,16 @@ public interface ReactiveSynchronization {
      * This method is invoked before the start of the commit
      * process. The method invocation is done in the context of the
      * transaction that is about to be committed.
-     * @return the callback function
+     * @return a Uni for the asynchronous beforeCompletion action
      */
-    Function<ReactiveTransaction, Uni<Void>> beforeCompletion();
+    Uni<Void> beforeCompletion(ReactiveTransaction txn);
 
     /**
      * This method is invoked after the transaction has committed or
      * rolled back.
      *
      * @param status The status of the completed transaction.
-     * @return the callback function
+     * @return a Uni for the asynchronous beforeCompletion action
      */
-    BiFunction<ReactiveTransaction, Integer, Uni<Void>> afterCompletion(int status);
+    Uni<Void> afterCompletion(int status);
 }

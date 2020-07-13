@@ -182,26 +182,17 @@ public class ReactiveTransactionTest {
         int status = -1;
         int callbackCount = 0;
 
-        Function<ReactiveTransaction, Uni<Void>> beforeCompletion = txn -> {
+        @Override
+        public Uni<Void> beforeCompletion(ReactiveTransaction txn) {
             out.printf("%s: before synch txn=%s%n", this.hashCode(), txn);
             callbackCount += 1;
-            return Uni.createFrom().voidItem();
-        };
-        BiFunction<ReactiveTransaction, Integer, Uni<Void>> afterCompletion = (txn, status) -> {
-            out.printf("%s: after sync txn=%s status=%s%n", this.hashCode(), txn, status);
-            callbackCount += 1;
-            return Uni.createFrom().voidItem();
-        };
+            return Uni.createFrom().voidItem();        }
 
         @Override
-        public Function<ReactiveTransaction, Uni<Void>> beforeCompletion() {
-            return beforeCompletion;
-        }
-
-        @Override
-        public BiFunction<ReactiveTransaction, Integer, Uni<Void>> afterCompletion(int status) {
+        public Uni<Void> afterCompletion(int status) {
             this.status = status;
-            return afterCompletion;
-        }
+            out.printf("%s: after sync txn=%s status=%s%n", this.hashCode(), "txn", status);
+            callbackCount += 1;
+            return Uni.createFrom().voidItem();        }
     }
 }

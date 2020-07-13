@@ -86,13 +86,13 @@ public class TransactionManagerImpl implements ReactiveTransactionManager {
                 @Override
                 public void beforeCompletion() {
                     // TODO await only as long as the transaction timeout allows
-                    sync.beforeCompletion().apply(wrapTransaction()).await().indefinitely();
+                    sync.beforeCompletion(wrapTransaction()).await().indefinitely();
                 }
 
                 @Override
                 public void afterCompletion(int status) {
                     // TODO await only as long as the transaction timeout allows
-                    sync.afterCompletion(status).apply(wrapTransaction(), status).await().indefinitely();
+                    sync.afterCompletion(status).await().indefinitely();
                 }
             };
         }
