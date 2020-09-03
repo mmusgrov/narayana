@@ -54,6 +54,8 @@ import com.arjuna.ats.jta.common.JTAEnvironmentBean;
 
 import com.arjuna.common.internal.util.propertyservice.BeanPopulator;
 
+import com.arjuna.ats.jta.logging.jtaLogger;
+
 /**
  * A {@link DelegatingTransactionManager} in {@linkplain
  * ApplicationScoped application scope} that uses the return value
@@ -246,6 +248,7 @@ class NarayanaTransactionManager extends DelegatingTransactionManager {
           temp = JTASupplier.get(jtaEnvironmentBean.getTransactionManagerJNDIContext(),
                                  jtaEnvironmentBean::getTransactionManager);
         } catch (final NamingException namingException) {
+          jtaLogger.i18NLogger.warn_TransactionManager_jndifailure(namingException);
           throw new CreationException(namingException.getMessage(), namingException);
         } finally {
           returnValue = temp;

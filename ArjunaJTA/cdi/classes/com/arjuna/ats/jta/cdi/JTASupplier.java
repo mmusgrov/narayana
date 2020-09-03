@@ -104,7 +104,9 @@ final class JTASupplier {
         // CDI SE situations.
       } catch (final NamingException namingException) {
         e = namingException;
-        throw namingException;
+        if (fallback == null) {
+          throw namingException;
+        }
       } finally {
         try {
           initialContext.close();
@@ -114,7 +116,9 @@ final class JTASupplier {
           } else {
             e = namingException;
           }
-          throw e;
+          if (fallback == null) {
+            throw e;
+          }
         }
       }
 
