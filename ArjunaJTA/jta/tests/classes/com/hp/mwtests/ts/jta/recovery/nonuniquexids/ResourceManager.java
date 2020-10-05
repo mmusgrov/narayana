@@ -33,7 +33,7 @@ public class ResourceManager implements XAResourceRecoveryHelper {
 
     private final String name;
     private final boolean wrapResources;
-    private final List<Xid> doubts = new ArrayList<>();
+    private final List<Xid> doubts = new ArrayList<Xid>();
 
     public ResourceManager(String name, boolean wrapResources) {
         this.name = name;

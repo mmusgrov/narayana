@@ -42,8 +42,6 @@ import javax.transaction.xa.Xid;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.arjuna.ats.internal.arjuna.FormatConstants.XTS_BRIDGE_FORMAT_ID;
-
 // unit test based on a Jonathan Halliday's code
 /**
  * If two resources are enlisted with a transaction and they have the same branch id
@@ -66,7 +64,7 @@ public class ImportNonUniqueBranchTest {
     @BeforeClass
     public static void beforeClass() {
         RecoveryEnvironmentBean environmentBean = BeanPopulator.getDefaultInstance(RecoveryEnvironmentBean.class);
-        List<String> moduleNames = new ArrayList<>();
+        List<String> moduleNames = new ArrayList<String>();
         moduleNames.add("com.arjuna.ats.internal.jta.recovery.arjunacore.SubordinateAtomicActionRecoveryModule");
         moduleNames.add("com.arjuna.ats.internal.jta.recovery.arjunacore.XARecoveryModule");
         environmentBean.setRecoveryModuleClassNames(moduleNames);
@@ -98,8 +96,10 @@ public class ImportNonUniqueBranchTest {
     @Test
     public void testNotWrapped() throws Exception {
         test(false);
-        Assert.assertNotEquals("resource commit should have failed", 0, XAResourceImpl.getErrorCount());
+        Assert.assertFalse("resource commit should have failed", 0 == XAResourceImpl.getErrorCount());
     }
+
+    static final int XARESOURCE_FORMAT_ID = 131080; // see BridgeDurableParticipant.XARESOURCE_FORMAT_ID = 131080;
 
     public void test(boolean wrap) throws Exception {
         XAResourceImpl.clearErrorCount();
@@ -111,7 +111,7 @@ public class ImportNonUniqueBranchTest {
 
         // create an Xid that is different from JTA_FORMAT_ID in order to exercise the non JTA code path
         // (see XARecoveryModule#getTheKey())
-        Xid xid = XATxConverter.getXid(new Uid(), false, XTS_BRIDGE_FORMAT_ID);
+        Xid xid = XATxConverter.getXid(new Uid(), false, XARESOURCE_FORMAT_ID);
         Transaction tx = SubordinationManager.getTransactionImporter().importTransaction(xid, 10000);
         XATerminator xaTerminator = SubordinationManager.getXATerminator();
 
