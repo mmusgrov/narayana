@@ -23,6 +23,8 @@ package com.arjuna.ats.internal.jta.recovery.arjunacore;
 import javax.transaction.xa.XAResource;
 import java.util.Objects;
 
+import static com.arjuna.ats.internal.jta.recovery.arjunacore.NameScopedXid.USE_JNDI_NAME;
+
 public class NameScopedXAResource implements NameScopedElement {
 
     private final XAResource xaResource;
@@ -30,7 +32,7 @@ public class NameScopedXAResource implements NameScopedElement {
 
     public NameScopedXAResource(XAResource xaResource, String jndiName) {
         this.xaResource = xaResource;
-        this.jndiName = jndiName;
+        this.jndiName = USE_JNDI_NAME ? jndiName :null;;
     }
 
     public XAResource getXaResource() {

@@ -25,12 +25,13 @@ import java.util.Objects;
 
 class NameScopedXid implements NameScopedElement {
 
+    static boolean USE_JNDI_NAME = Boolean.getBoolean("PATCH-JBTM-3361");
     private final Xid xid;
     private final String jndiName;
 
     NameScopedXid(Xid xid, String jndiName) {
         this.xid = xid;
-        this.jndiName = jndiName;
+        this.jndiName = USE_JNDI_NAME ? jndiName :null;
     }
 
     Xid getXid() {
