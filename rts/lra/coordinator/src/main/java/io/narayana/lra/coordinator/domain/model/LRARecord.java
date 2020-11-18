@@ -854,13 +854,14 @@ public class LRARecord extends AbstractRecord implements Comparable<AbstractReco
     }
 
     private static int getTypeId() {
-        return RecordType.USER_DEF_FIRST0; // RecordType.LRA_RECORD; TODO we depend on thorntail for narayana which is using an earlier version
+        return RecordType.LRA_RECORD;
     }
 
     public int typeIs() {
         return getTypeId();
     }
 
+    // Remark: we cannot use the support that ArjunaCore provides for nested
     public int nestedAbort() {
         return TwoPhaseOutcome.FINISH_OK;
     }
@@ -909,7 +910,7 @@ public class LRARecord extends AbstractRecord implements Comparable<AbstractReco
 
     @Override
     public Object value() {
-        return null; // LRA does not support heuristics
+        return null; // not used
     }
 
     @Override

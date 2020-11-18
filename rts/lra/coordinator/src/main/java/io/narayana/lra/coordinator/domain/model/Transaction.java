@@ -64,8 +64,11 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+/**
+ *  An LRA extends AtomicAction since we want core to manager timeouts {@link AtomicAction#begin(int)}
+ */
 public class Transaction extends AtomicAction {
-    private static final String LRA_TYPE = "/StateManager/BasicAction/TwoPhaseCoordinator/LRA";
+    private static final String LRA_TYPE = "/StateManager/BasicAction/TwoPhaseCoordinator/AtomicAction/LRA";
     private final ScheduledExecutorService scheduler;
     private URI id;
     private URI parentId;
@@ -82,7 +85,6 @@ public class Transaction extends AtomicAction {
     public Transaction(LRAService lraService, String baseUrl, URI parentId, String clientId) throws URISyntaxException {
         super(new Uid());
 
-        this.uid = get_uid().fileStringForm();
         this.lraService = lraService;
 
         if (parentId != null) {
@@ -400,15 +402,11 @@ public class Transaction extends AtomicAction {
         }
     }
 
-    private int cancelLRA() {
-        return end(true);
-    }
-
     protected ReentrantLock tryLockTransaction() {
         return lraService.tryLockTransaction(getId());
     }
 
-    public int end(boolean cancel) {
+    private int cancelLRA() {
         ReentrantLock lock = null;
 
         try {
@@ -427,7 +425,7 @@ public class Transaction extends AtomicAction {
                 return doEnd(true);
             }
 
-            return doEnd(cancel);
+            return doEnd(true);
         } finally {
             if (lock != null) {
                 lock.unlock();
@@ -798,12 +796,14 @@ public class Transaction extends AtomicAction {
         return null;
     }
 
+    /**
+     *
+     * @return true if this LRA has no LRAs nested below it
+     */
+    // remark: we do not use BasicAction.parent() since a parent LRA may be in a different process
+    // and we only store their id (which is a URI)
     public boolean isTopLevel() {
         return parentId == null;
-    }
-
-    public BasicAction currentLRA() {
-        return ThreadActionData.currentAction();
     }
 
     public int getHttpStatus() {
@@ -987,7 +987,7 @@ public class Transaction extends AtomicAction {
     }
 
     public String getUid() {
-        return uid;
+        return get_uid().fileStringForm();
     }
 
     private boolean hasElements(RecordList list) {
