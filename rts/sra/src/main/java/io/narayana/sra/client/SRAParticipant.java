@@ -33,9 +33,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import javax.ws.rs.GET;
 import javax.ws.rs.HEAD;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Context;
@@ -43,6 +45,7 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -100,42 +103,43 @@ public abstract class SRAParticipant {
     }
 
     @PUT
-    @Path("/commit")
+    @Path("/commit/{txid}")
     @Produces(MediaType.APPLICATION_JSON)
     @Commit
-    public Response commitWork() throws NotFoundException {
-        return updateState(SRAStatus.TransactionCommitted, getCurrentActivityId());
+    public Response commitWork(@HeaderParam(SRA_HTTP_HEADER) String atId,
+                               @PathParam("txid")String sraId) throws NotFoundException {
+        return updateState(SRAStatus.TransactionCommitted, sraId);//getCurrentActivityId());
     }
 
     @PUT
-    @Path("/prepare")
+    @Path("/prepare/{txid}")
     @Produces(MediaType.APPLICATION_JSON)
     @Prepare
-    public Response prepareWork() throws NotFoundException {
-        return updateState(SRAStatus.TransactionPrepared, getCurrentActivityId());
+    public Response prepareWork(@PathParam("txid")String sraId) throws NotFoundException {
+        return updateState(SRAStatus.TransactionPrepared, sraId);//getCurrentActivityId());
     }
 
     @PUT
-    @Path("/rollback")
+    @Path("/rollback/{txid}")
     @Produces(MediaType.APPLICATION_JSON)
     @Rollback
-    public Response rollbackWork() throws NotFoundException {
-        return updateState(SRAStatus.TransactionRolledBack, getCurrentActivityId());
+    public Response rollbackWork(@PathParam("txid")String sraId) throws NotFoundException {
+        return updateState(SRAStatus.TransactionRolledBack, sraId);//getCurrentActivityId());
     }
 
     @GET
-    @Path("/status")
+    @Path("/status/{txid}")
     @Produces(MediaType.APPLICATION_JSON)
     @Status
     @Transactional(Transactional.TxType.NOT_SUPPORTED)
-    public Response status() throws NotFoundException {
-        String lraId = getCurrentActivityId();
+    public Response status(@PathParam("txid")String sraId) throws NotFoundException {
+//        String lraId = getCurrentActivityId();
 
-        if (lraId == null)
+        if (sraId == null)
             throw new InvalidSRAId("null", "not present on SRAParticipant#status request", null);
 
-        if (!sraParticipantStatusMap.containsKey(lraId))
-            throw new InvalidSRAId(lraId, "SRAParticipant#status request: unknown lra id", null);
+        if (!sraParticipantStatusMap.containsKey(sraId))
+            throw new InvalidSRAId(sraId, "SRAParticipant#status request: unknown lra id", null);
 
         // return status ok together with optional completion data or one of the other codes with a url that
         // returns
@@ -152,7 +156,7 @@ public abstract class SRAParticipant {
          * reason about, otherwise some other suitable status code is returned together with one of he valid
          * compensator states.
          */
-        return updateState(sraParticipantStatusMap.get(lraId), lraId);
+        return updateState(sraParticipantStatusMap.get(sraId), sraId);
     }
 
     @PostConstruct
@@ -189,7 +193,7 @@ public abstract class SRAParticipant {
         }
     }
 
-    private String getStatusUrl(String lraId) {
-        return String.format("%s/%s/activity/status", context.getBaseUri(), SRAClient.getSRAId(lraId));
+    private String getStatusUrl(String sraId) {
+        return String.format("%s/%s/activity/status", context.getBaseUri(), SRAClient.getSRAId(sraId));
     }
 }

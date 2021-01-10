@@ -40,6 +40,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import static io.narayana.sra.client.SRAClient.SRA_HTTP_HEADER;
+
 @RequestScoped
 @Path(FlightController.FLIGHT_PATH)
 @SRA(SRA.Type.SUPPORTS)
@@ -56,12 +58,12 @@ public class FlightController extends SRAParticipant {
     @Path("/book")
     @Produces(MediaType.APPLICATION_JSON)
     @SRA(SRA.Type.REQUIRED)
-    public Booking bookFlight(@HeaderParam("txid") String lraId,
+    public Booking bookFlight(@HeaderParam(SRA_HTTP_HEADER) String sraId,
                               @QueryParam(FLIGHT_NUMBER_PARAM) @DefaultValue("") String flightNumber,
                               @QueryParam(FLIGHT_SEATS_PARAM) @DefaultValue("1") Integer seats,
                               @QueryParam("mstimeout") @DefaultValue("500") Long timeout) {
 
-        return flightService.book(lraId, flightNumber, seats);
+        return flightService.book(sraId, flightNumber, seats);
     }
 
     @GET

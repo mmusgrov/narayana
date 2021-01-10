@@ -219,7 +219,7 @@ public class ServerSRAFilter implements ContainerRequestFilter, ContainerRespons
         if (!endAnnotation && enlist) { // don't enlist for methods marked with Compensate, Complete or Leave
             URI baseUri = containerRequestContext.getUriInfo().getBaseUri();
 
-            Map<String, String> terminateURIs = lraClient.getTerminationUris(resourceInfo.getResourceClass(), baseUri, true);
+            Map<String, String> terminateURIs = lraClient.getTerminationUris(lraId, resourceInfo.getResourceClass(), baseUri, true);
             String timeLimitStr = terminateURIs.get(SRAClient.TIMELIMIT_PARAM_NAME);
             long timeLimit = timeLimitStr == null ? SRAClient.DEFAULT_TIMEOUT_MILLIS : Long.valueOf(timeLimitStr);
 

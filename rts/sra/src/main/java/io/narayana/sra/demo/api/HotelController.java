@@ -32,12 +32,15 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+
+import static io.narayana.sra.client.SRAClient.SRA_HTTP_HEADER;
 
 @RequestScoped
 @Path(HotelController.HOTEL_PATH)
@@ -54,7 +57,8 @@ public class HotelController extends SRAParticipant {
     @Path("/book")
     @Produces(MediaType.APPLICATION_JSON)
     @SRA(SRA.Type.REQUIRED)
-    public Booking bookRoom(@QueryParam(HOTEL_NAME_PARAM) @DefaultValue("Default") String hotelName,
+    public Booking bookRoom(@HeaderParam(SRA_HTTP_HEADER) String sraId,
+                            @QueryParam(HOTEL_NAME_PARAM) @DefaultValue("Default") String hotelName,
                             @QueryParam(HOTEL_BEDS_PARAM) @DefaultValue("1") Integer beds,
                             @QueryParam("mstimeout") @DefaultValue("500") Long timeout) {
         return hotelService.book(getCurrentActivityId(), hotelName, beds);
