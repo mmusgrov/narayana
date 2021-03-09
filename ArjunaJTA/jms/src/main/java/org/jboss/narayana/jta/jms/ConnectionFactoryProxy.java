@@ -25,8 +25,12 @@ import com.arjuna.ats.jta.logging.jtaLogger;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.JMSContext;
 import javax.jms.JMSException;
+import javax.jms.JMSRuntimeException;
 import javax.jms.XAConnectionFactory;
+import javax.jms.XAJMSContext;
+import java.util.function.Supplier;
 
 /**
  * Proxy connection factory to wrap around provided {@link XAConnectionFactory}.
@@ -85,4 +89,43 @@ public class ConnectionFactoryProxy implements ConnectionFactory {
         return connection;
     }
 
+    public JMSContext createContext(Supplier<XAJMSContext> contextSupplier) {
+        try {
+            if (transactionHelper.isTransactionAvailable()) {
+                XAJMSContext context = contextSupplier.get();
+
+                transactionHelper.registerXAResource(context.getXAResource());
+
+                return new ContextProxy(context, transactionHelper);
+            }
+
+            return new ContextProxy(contextSupplier.get(), transactionHelper);
+        } catch (JMSException e) {
+            throw new JMSRuntimeException(e.getMessage());
+        }
+    }
+
+    @Override
+    public JMSContext createContext() {
+        return createContext(xaConnectionFactory::createXAContext);
+    }
+
+    @Override
+    public JMSContext createContext(String userName, String password) {
+        return createContext(() -> xaConnectionFactory.createXAContext(userName, password));
+    }
+
+    @Override
+    public JMSContext createContext(String userName, String password, int sessionMode) {
+        // note that in the following call chain there is an intermediate createXAContext which is not explicitly closed
+        // the assumption is closing the second context cleans up any resources
+        return createContext(() -> xaConnectionFactory.createXAContext(userName, password)).createContext(sessionMode);
+    }
+
+    @Override
+    public JMSContext createContext(int sessionMode) {
+        // note that in the following call chain there is an intermediate createXAContext which is not explicitly closed
+        // the assumption is closing the second context cleans up any resources
+        return createContext(xaConnectionFactory::createXAContext).createContext(sessionMode);
+    }
 }
