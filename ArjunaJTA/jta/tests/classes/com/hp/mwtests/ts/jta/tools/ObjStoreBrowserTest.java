@@ -89,6 +89,21 @@ public class ObjStoreBrowserTest {
         osb.stop();
     }
 
+    @Test
+    public void multipleStores() throws MBeanException {
+	    String store1 = "/home/mmusgrov/src/forks/narayana/narayana/ArjunaJTA/store-data/store1";
+	    String store2 = "/home/mmusgrov/src/forks/narayana/narayana/ArjunaJTA/store-data/store2";
+
+        for (String store : new String[] { store1, store2 }) {
+            ObjStoreBrowser osb = new ObjStoreBrowser(store);
+            osb.setType("com.arjuna.ats.arjuna.AtomicAction", "com.arjuna.ats.arjuna.tools.osb.mbean.ActionBean");
+            osb.start();
+            osb.probe();
+            System.out.printf("Browser has : %s%n", osb.dump(new StringBuilder()).toString());
+            osb.stop();
+        }
+    }
+
 	@Test
 	public void testXAResourceRecordBean() throws Exception {
 		com.arjuna.common.tests.simple.EnvironmentBeanTest.testBeanByReflection(new XAResourceRecordBean(new UidWrapper(Uid.nullUid())));
