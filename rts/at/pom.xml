@@ -35,6 +35,10 @@ Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
     <module>webservice</module>
     <module>integration</module>
     <module>bridge</module>
+    <module>util-jakarta</module>
+    <module>tx-jakarta</module>
+    <module>integration-jakarta</module>
+    <module>bridge-jakarta</module>
   </modules>
   <properties>
     <checkstyle.skip>false</checkstyle.skip>

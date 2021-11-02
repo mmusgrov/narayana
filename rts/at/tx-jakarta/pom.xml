@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    JBoss, Home of Professional Open Source Copyright 2010, Red Hat
+    Middleware LLC, and others contributors as indicated by the @authors
+    tag. All rights reserved. See the copyright.txt in the distribution
+    for a full listing of individual contributors. This copyrighted
+    material is made available to anyone wishing to use, modify, copy, or
+    redistribute it subject to the terms and conditions of the GNU Lesser
+    General Public License, v. 2.1. This program is distributed in the
+    hope that it will be useful, but WITHOUT A WARRANTY; without even the
+    implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+    PURPOSE. See the GNU Lesser General Public License for more details.
+    You should have received a copy of the GNU Lesser General Public
+    License, v.2.1 along with this distribution; if not, write to the Free
+    Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+    02110-1301, USA.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.jboss.narayana.rts</groupId>
+    <artifactId>restat</artifactId>
+    <version>5.12.2.Final-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <artifactId>restat-api-jakarta</artifactId>
+  <packaging>jar</packaging>
+  <name>Narayana: restat tx (Jakarta version)</name>
+  <description>A JAX-RS service that implements the RESTAT specification (Jakarta version)</description>
+  <properties>
+    <javaee6.with.tools.version>1.0.0.M7</javaee6.with.tools.version>
+    <maven.build.timestamp.format>yyyyMMdd'T'HHmmss</maven.build.timestamp.format>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- ssl debug: -Djavax.net.debug=ssl:handshake  http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#Debug
+     -->
+    <spdy.args>-Xbootclasspath/p:${basedir}/src/test/resources/grizzly-npn-bootstrap-1.0.jar -Drts.usespdy=true -Djavax.net.ssl.trustStore=keystore.jks -Djavax.net.ssl.trustStorePassword=123456</spdy.args>
+    <ssl.args>-Drts.usessl=true -Djavax.net.ssl.trustStore=keystore.jks -Djavax.net.ssl.trustStorePassword=123456</ssl.args>
+
+    <version.org.jboss.resteasy-cdi>4.5.5.Final</version.org.jboss.resteasy-cdi>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.jboss.narayana.rts</groupId>
+      <artifactId>restat-util</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>log4j</groupId>
+      <artifactId>log4j</artifactId>
+      <version>${version.log4j}</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.sun.jmx</groupId>
+          <artifactId>jmxri</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.sun.jdmk</groupId>
+          <artifactId>jmxtools</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>javax.jms</groupId>
+          <artifactId>jms</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>javax.mail</groupId>
+          <artifactId>mail</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.spec.javax.servlet</groupId>
+      <artifactId>jboss-servlet-api_3.0_spec</artifactId>
+      <version>${version.org.jboss.spec.javax.servlet}</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- Jersey -->
+    <dependency>
+      <groupId>asm</groupId>
+      <artifactId>asm-all</artifactId>
+      <version>${version.asm}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.grizzly</groupId>
+      <artifactId>grizzly-servlet-webserver</artifactId>
+      <version>${version.com.sun.grizzly}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- end Jersey -->
+
+    <dependency>
+      <groupId>org.jboss.narayana</groupId>
+      <artifactId>test-utils</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.narayana.jta</groupId>
+      <artifactId>narayana-jta</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-client-api</artifactId>
+      <version>${version.org.jboss.resteasy}</version>
+      <scope>provided</scope>
+      <!-- filter out unwanted jars -->
+      <exclusions>
+        <exclusion>
+          <groupId>commons-httpclient</groupId>
+          <artifactId>commons-httpclient</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>javax.servlet</groupId>
+          <artifactId>servlet-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-core-spi</artifactId>
+      <version>${version.org.jboss.resteasy}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-netty4</artifactId>
+      <version>${version.org.jboss.resteasy}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-cdi</artifactId>
+      <version>${version.org.jboss.resteasy-cdi}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-jaxb-provider</artifactId>
+      <version>${version.org.jboss.resteasy}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-httpclient</groupId>
+      <artifactId>commons-httpclient</artifactId>
+      <version>${version.commons-httpclient}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.logging</groupId>
+      <artifactId>jboss-logging</artifactId>
+      <version>${version.org.jboss.logging.jboss-logging}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>${version.com.h2database}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>${version.junit}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- grizzly with SPDY -->
+    <dependency>
+      <groupId>org.glassfish.jersey.containers</groupId>
+      <artifactId>jersey-container-grizzly2-servlet</artifactId>
+      <version>2.7</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.glassfish.grizzly</groupId>
+      <artifactId>grizzly-spdy</artifactId>
+      <version>2.3.11</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.glassfish.grizzly</groupId>
+      <artifactId>grizzly-npn-bootstrap</artifactId>
+      <version>1.0</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- end grizzly with spdy -->
+
+    <dependency>
+      <groupId>com.squareup.okhttp</groupId>
+      <artifactId>okhttp</artifactId>
+      <version>1.5.4</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- undertow with RestEasy -->
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-client</artifactId>
+      <version>${version.org.jboss.resteasy}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-undertow</artifactId>
+      <version>${version.org.jboss.resteasy}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.undertow</groupId>
+      <artifactId>undertow-servlet</artifactId>
+      <version>[2.0.21,)</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.undertow</groupId>
+      <artifactId>undertow-core</artifactId>
+      <version>[2.0.21,)</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- end undertow with RestEasy -->
+    <dependency>
+      <groupId>org.jboss.spec.javax.interceptor</groupId>
+      <artifactId>jboss-interceptors-api_1.2_spec</artifactId>
+      <version>${version.org.jboss.spec.javax.interceptor}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.enterprise</groupId>
+      <artifactId>cdi-api</artifactId>
+      <version>${version.javax.enterprise}</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.jboss.interceptor</groupId>
+          <artifactId>jboss-interceptor-api</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>javax.annotation</groupId>
+          <artifactId>jsr250-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>javax.json</groupId>
+      <artifactId>javax.json-api</artifactId>
+      <version>1.1.4</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.spec.javax.transaction</groupId>
+      <artifactId>jboss-transaction-api_1.2_spec</artifactId>
+      <version>${version.org.jboss.spec.javax.transaction}</version>
+      <scope>provided</scope>
+    </dependency>
+
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <inherited>false</inherited>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <!--
+          <compilerArgument>-Xlint:all</compilerArgument>
+          <showWarnings>false</showWarnings>
+-->
+          <showDeprecation>false</showDeprecation>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <configuration>
+          <forceCreation>true</forceCreation>
+          <includePom>true</includePom>
+        </configuration>
+        <executions>
+          <execution>
+            <id>create_sources_jar</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <phase>prepare-package</phase>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <forkMode>pertest</forkMode>
+          <!--
+                  <argLine>${surefireArgLine}</argLine>
+                  -->
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>org.eclipse.transformer</groupId>
+            <artifactId>org.eclipse.transformer.cli</artifactId>
+            <version>0.2.0</version>
+          </dependency>
+          <dependency>
+            <groupId>ant-contrib</groupId>
+            <artifactId>ant-contrib</artifactId>
+            <version>1.0b3</version>
+            <exclusions>
+              <exclusion>
+                <groupId>ant</groupId>
+                <artifactId>ant</artifactId>
+              </exclusion>
+            </exclusions>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <id>transform-jar</id>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <target>
+                <property name="plugin_classpath" refid="maven.plugin.classpath"></property>
+                <java classname="org.eclipse.transformer.jakarta.JakartaTransformer">
+                  <arg value="${org.jboss.narayana.rts:restat-api:jar}"></arg>
+                  <arg value="${project.build.directory}/${project.build.finalName}.jar"></arg>
+                  <arg value="-q"></arg>
+                  <arg value="-o"></arg>
+                  <arg value="-tr"></arg>
+                  <arg value="${project.basedir}/../rules/jakarta-renames.properties"></arg>
+                  <classpath>
+                    <pathelement path="${plugin_classpath}"></pathelement>
+                  </classpath>
+                </java>
+              </target>
+            </configuration>
+          </execution>
+          <execution>
+            <id>transform-sources-jar</id>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <target>
+                <property name="plugin_classpath" refid="maven.plugin.classpath"></property>
+                <ac:propertyregex xmlns:ac="antlib:net.sf.antcontrib" global="true" input="${org.jboss.narayana.rts:restat-api:jar}" property="source" regexp="\.jar$" replace="-sources.jar"></ac:propertyregex>
+                <java classname="org.eclipse.transformer.jakarta.JakartaTransformer">
+                  <arg value="${source}"></arg>
+                  <arg value="${project.build.directory}/${project.build.finalName}-sources.jar"></arg>
+                  <arg value="-q"></arg>
+                  <arg value="-o"></arg>
+                  <arg value="-tr"></arg>
+                  <arg value="${project.basedir}/../rules/jakarta-renames.properties"></arg>
+                  <classpath>
+                    <pathelement path="${plugin_classpath}"></pathelement>
+                  </classpath>
+                </java>
+              </target>
+            </configuration>
+          </execution>
+          <execution>
+            <id>transform-javadoc</id>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <phase>package</phase>
+            <configuration>
+              <target>
+                <property name="plugin_classpath" refid="maven.plugin.classpath"></property>
+                <ac:propertyregex xmlns:ac="antlib:net.sf.antcontrib" global="true" input="${org.jboss.narayana.rts:restat-api:jar}" property="source" regexp="\.jar$" replace="-javadoc.jar"></ac:propertyregex>
+                <java classname="org.eclipse.transformer.jakarta.JakartaTransformer">
+                  <arg value="${source}"></arg>
+                  <arg value="${project.build.directory}/${project.build.finalName}-javadoc.jar"></arg>
+                  <arg value="-q"></arg>
+                  <arg value="-o"></arg>
+                  <arg value="-tr"></arg>
+                  <arg value="${project.basedir}/../rules/jakarta-renames.properties"></arg>
+                  <classpath>
+                    <pathelement path="${plugin_classpath}"></pathelement>
+                  </classpath>
+                </java>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!--
+          -->
+    </plugins>
+  </build>
+  <profiles>
+    <profile>
+      <id>ssl</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+
+      <dependencies></dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <!--
+                <argLine>${ssl.args} ${surefireArgLine}</argLine>
+                -->
+              <argLine>${ssl.args}</argLine>
+            </configuration>
+          </plugin>
+        </plugins>
+
+      </build>
+    </profile>
+    <profile>
+      <id>spdy</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+
+      <dependencies></dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <!--
+                <argLine>${spdy.args} ${surefireArgLine}</argLine>
+                -->
+              <argLine>${spdy.args}</argLine>
+            </configuration>
+          </plugin>
+        </plugins>
+
+      </build>
+    </profile>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-install-plugin</artifactId>
+            <inherited>false</inherited>
+            <executions>
+              <execution>
+                <id>default-install</id>
+                <phase>install</phase>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <source>8</source>
+              <detectOfflineLinks>false</detectOfflineLinks>
+            </configuration>
+            <executions>
+              <execution>
+                <id>create_javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <phase>prepare-package</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>j9</id>
+      <activation>
+        <jdk>[1.9,11)</jdk>
+      </activation>
+      <properties>
+        <jvm.args.modular>--add-opens=java.base/java.lang=ALL-UNNAMED</jvm.args.modular>
+      </properties>
+    </profile>
+  </profiles>
+</project>
