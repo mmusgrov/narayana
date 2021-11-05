@@ -127,9 +127,12 @@
     <module>XTS</module>
     <module>rts</module>
     <module>txbridge</module>
+    <module>txbridge-jakarta</module>
     <module>STM</module>
     <module>txframework</module>
+    <module>txframework-jakarta</module>
     <module>compensations</module>
+    <module>compensations-jakarta</module>
     <module>osgi</module>
     <module>vertx</module>
   </modules>
@@ -322,6 +325,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
+          <version>3.2.0</version>
           <configuration>
             <archive>
               <manifestEntries>
@@ -370,6 +374,11 @@
               <include>**/*.java</include>
             </includes>
           </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>3.0.0</version>
         </plugin>
         <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
         <plugin>

@@ -19,9 +19,9 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>jbosstxbridge</artifactId>
-    <name>Narayana: txbridge</name>
-    <description>Narayana: txbridge</description>
+    <artifactId>jbosstxbridge-jakarta</artifactId>
+    <name>Narayana: txbridge-jakarta</name>
+    <description>Narayana: txbridge-jakarta</description>
     <packaging>jar</packaging>
     <properties>
         <byteman.home>${project.build.directory}/byteman</byteman.home>
@@ -113,7 +113,105 @@
                             <goal>run</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <id>transform-jar</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <property name="plugin_classpath" refid="maven.plugin.classpath"/>
+                                <java classname="org.eclipse.transformer.jakarta.JakartaTransformer">
+                                    <arg value="${org.jboss.narayana:jbosstxbridge:jar}"/>
+                                    <arg value="${project.build.directory}/${project.build.finalName}.jar"/>
+                                    <arg value="-q"/>
+                                    <arg value="-o"/>
+                                    <arg value="-tr"/>
+                                    <arg value="${project.basedir}/../jakarta-rules/jakarta-renames.properties"/>
+                                    <classpath>
+                                        <pathelement path="${plugin_classpath}"/>
+                                    </classpath>
+                                </java>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>transform-sources-jar</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <property name="plugin_classpath" refid="maven.plugin.classpath"/>
+                                <ac:propertyregex xmlns:ac="antlib:net.sf.antcontrib" global="true"
+                                                  input="${org.jboss.narayana:jbosstxbridge:jar}"
+                                                  property="source" regexp="\.jar$" replace="-sources.jar"/>
+                                <java classname="org.eclipse.transformer.jakarta.JakartaTransformer">
+                                    <arg value="${source}"/>
+                                    <arg value="${project.build.directory}/${project.build.finalName}-sources.jar"/>
+                                    <arg value="-q"/>
+                                    <arg value="-o"/>
+                                    <arg value="-tr"/>
+                                    <arg value="${project.basedir}/../jakarta-rules/jakarta-renames.properties"/>
+                                    <classpath>
+                                        <pathelement path="${plugin_classpath}"/>
+                                    </classpath>
+                                </java>
+                            </target>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>transform-javadoc</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <property name="plugin_classpath" refid="maven.plugin.classpath"/>
+                                <ac:propertyregex xmlns:ac="antlib:net.sf.antcontrib" global="true"
+                                                  input="${org.jboss.narayana:jbosstxbridge:jar}"
+                                                  property="source" regexp="\.jar$" replace="-javadoc.jar"/>
+                                <java classname="org.eclipse.transformer.jakarta.JakartaTransformer">
+                                    <arg value="${source}"/>
+                                    <arg value="${project.build.directory}/${project.build.finalName}-javadoc.jar"/>
+                                    <arg value="-q"/>
+                                    <arg value="-o"/>
+                                    <arg value="-tr"/>
+                                    <arg value="${project.basedir}/../jakarta-rules/jakarta-renames.properties"/>
+                                    <classpath>
+                                        <pathelement path="${plugin_classpath}"/>
+                                    </classpath>
+                                </java>
+                            </target>
+                        </configuration>
+                    </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.eclipse.transformer</groupId>
+                        <artifactId>org.eclipse.transformer.cli</artifactId>
+                        <version>0.2.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>ant-contrib</groupId>
+                        <artifactId>ant-contrib</artifactId>
+                        <version>1.0b3</version>
+                        <exclusions>
+                            <exclusion>
+                                <groupId>ant</groupId>
+                                <artifactId>ant</artifactId>
+                            </exclusion>
+                        </exclusions>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.jboss.narayana</groupId>
+                        <artifactId>jbosstxbridge</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <artifactId>maven-clean-plugin</artifactId>
@@ -176,6 +274,11 @@
         </pluginManagement>
     </build>
     <dependencies>
+        <dependency>
+            <groupId>org.jboss.narayana</groupId>
+            <artifactId>jbosstxbridge</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.jboss.spec.javax.transaction</groupId>
             <artifactId>jboss-transaction-api_1.2_spec</artifactId>

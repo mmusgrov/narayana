@@ -24,7 +24,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <groupId>org.jboss.narayana.compensations</groupId>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>compensations</artifactId>
+    <artifactId>compensations-jakarta</artifactId>
     <packaging>jar</packaging>
     <name>Narayana: compensations</name>
     <description>Narayana: compensations</description>
@@ -77,10 +77,115 @@
                     </execution>
                 </executions>
             </plugin>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+          <executions>
+              <execution>
+                  <id>transform-jar</id>
+                  <goals>
+                      <goal>run</goal>
+                  </goals>
+                  <phase>package</phase>
+                  <configuration>
+                      <target>
+                          <property name="plugin_classpath" refid="maven.plugin.classpath"/>
+                          <java classname="org.eclipse.transformer.jakarta.JakartaTransformer">
+                              <arg value="${org.jboss.narayana.compensations:compensations:jar}"/>
+                              <arg value="${project.build.directory}/${project.build.finalName}.jar"/>
+                              <arg value="-q"/>
+                              <arg value="-o"/>
+                              <arg value="-tr"/>
+                              <arg value="${project.basedir}/../jakarta-rules/jakarta-renames.properties"/>
+                              <classpath>
+                                  <pathelement path="${plugin_classpath}"/>
+                              </classpath>
+                          </java>
+                      </target>
+                  </configuration>
+              </execution>
+              <execution>
+                  <id>transform-sources-jar</id>
+                  <goals>
+                      <goal>run</goal>
+                  </goals>
+                  <phase>package</phase>
+                  <configuration>
+                      <target>
+                          <property name="plugin_classpath" refid="maven.plugin.classpath"/>
+                          <ac:propertyregex xmlns:ac="antlib:net.sf.antcontrib" global="true"
+                                            input="${org.jboss.narayana.compensations:compensations:jar}"
+                                            property="source" regexp="\.jar$"
+                                            replace="-sources.jar"/>
+                          <java classname="org.eclipse.transformer.jakarta.JakartaTransformer">
+                              <arg value="${source}"/>
+                              <arg value="${project.build.directory}/${project.build.finalName}-sources.jar"/>
+                              <arg value="-q"/>
+                              <arg value="-o"/>
+                              <arg value="-tr"/>
+                              <arg value="${project.basedir}/../jakarta-rules/jakarta-renames.properties"/>
+                              <classpath>
+                                  <pathelement path="${plugin_classpath}"/>
+                              </classpath>
+                          </java>
+                      </target>
+                  </configuration>
+              </execution>
+              <execution>
+                  <id>transform-javadoc</id>
+                  <goals>
+                      <goal>run</goal>
+                  </goals>
+                  <phase>package</phase>
+                  <configuration>
+                      <target>
+                          <property name="plugin_classpath" refid="maven.plugin.classpath"/>
+                          <ac:propertyregex xmlns:ac="antlib:net.sf.antcontrib" global="true"
+                                            input="${org.jboss.narayana.compensations:compensations:jar}"
+                                            property="source" regexp="\.jar$"
+                                            replace="-javadoc.jar"/>
+                          <java classname="org.eclipse.transformer.jakarta.JakartaTransformer">
+                              <arg value="${source}"/>
+                              <arg value="${project.build.directory}/${project.build.finalName}-javadoc.jar"/>
+                              <arg value="-q"/>
+                              <arg value="-o"/>
+                              <arg value="-tr"/>
+                              <arg value="${project.basedir}/../jakarta-rules/jakarta-renames.properties"/>
+                              <classpath>
+                                  <pathelement path="${plugin_classpath}"/>
+                              </classpath>
+                          </java>
+                      </target>
+                  </configuration>
+              </execution>
+          </executions>
+        <dependencies>                                                                                                                                                                                                                        
+          <dependency>                                                                                                                                                                                                                        
+            <groupId>org.eclipse.transformer</groupId>                                                                                                                                                                                        
+            <artifactId>org.eclipse.transformer.cli</artifactId>                                                                                                                                                                              
+            <version>0.2.0</version>                                                                                                                                                                                                          
+          </dependency>                                                                                                                                                                                                                       
+          <dependency>                                                                                                                                                                                                                        
+            <groupId>ant-contrib</groupId>                                                                                                                                                                                                    
+            <artifactId>ant-contrib</artifactId>                                                                                                                                                                                              
+            <version>1.0b3</version>                                                                                                                                                                                                          
+            <exclusions>                                                                                                                                                                                                                      
+              <exclusion>                                                                                                                                                                                                                     
+                <groupId>ant</groupId>                                                                                                                                                                                                        
+                <artifactId>ant</artifactId>                                                                                                                                                                                                  
+              </exclusion>                                                                                                                                                                                                                    
+            </exclusions>                                                                                                                                                                                                                     
+          </dependency>                                                                                                                                                                                                                       
+        </dependencies>                                                                                                                                                                                                                       
+      </plugin>
         </plugins>
     </build>
 
     <dependencies>
+        <dependency>
+            <groupId>org.jboss.narayana.compensations</groupId>
+            <artifactId>compensations</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.jboss.narayana.arjunacore</groupId>
             <artifactId>arjunacore</artifactId>
@@ -470,6 +575,11 @@
             <build>
                 <plugins>
                     <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <inherited>false</inherited>
+                    </plugin>
+                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-install-plugin</artifactId>
                         <executions>
@@ -485,34 +595,38 @@
                         <artifactId>build-helper-maven-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>add-source</id>
-                                <phase>generate-sources</phase>
+                                <id>javadoc</id>
+                                <phase>package</phase>
                                 <goals>
-                                    <goal>add-source</goal>
+                                    <goal>attach-artifact</goal>
                                 </goals>
                                 <configuration>
-                                    <sources>
-                                        <source>src/main/java</source>
-                                    </sources>
+                                    <artifacts>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-javadoc.jar</file>
+                                            <type>jar</type>
+                                            <classifier>javadoc</classifier>
+                                        </artifact>
+                                    </artifacts>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>sources</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>attach-artifact</goal>
+                                </goals>
+                                <configuration>
+                                    <artifacts>
+                                        <artifact>
+                                            <file>${project.build.directory}/${project.artifactId}-${project.version}-sources.jar</file>
+                                            <type>jar</type>
+                                            <classifier>sources</classifier>
+                                        </artifact>
+                                    </artifacts>
                                 </configuration>
                             </execution>
                         </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <source>8</source>
-                            <detectOfflineLinks>false</detectOfflineLinks>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
