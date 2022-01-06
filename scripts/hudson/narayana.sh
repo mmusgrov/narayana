@@ -455,34 +455,62 @@ function tests_as {
 }
 
 function download_as {
-  echo "Downloading WildFly Build"
+##<<<<<<< HEAD
+##  echo "Downloading WildFly Build"
+##
+##  cd $WORKSPACE
+##
+##  # clean up any previously downloaded zip files (this will not clean up old directories)
+##  rm -f artifacts.zip wildfly-*.zip
+##
+##  if [ "$_jdk" -lt 11 ]; then
+##    # download the last wildfly version that ran on Java 8
+##    AS_VERSION="26.1.0.Beta1"
+##    AS_LOCATION="https://github.com/wildfly/wildfly/releases/download/${AS_VERSION}/wildfly-${AS_VERSION}.zip"
+##    wget --user=guest --password=guest -nv ${AS_LOCATION}
+##    [ $? -ne 0 ] && fatal "Cannot wget WildFly '${AS_LOCATION}'"
+##    zip=wildfly-${AS_VERSION}.zip
+##  else
+##    # download the latest wildfly nighly build (which we know supports Java 11)
+##    AS_LOCATION=${AS_LOCATION:-https://ci.wildfly.org/httpAuth/repository/downloadAll/WF_Nightly/.lastSuccessful/artifacts.zip}
+##    wget --user=guest --password=guest -nv ${AS_LOCATION}
+##    ### The following sequence of unzipping wrapping zip files is a way how to process the WildFly nightly build ZIP structure
+##    ### which is changing time to time
+##    # the artifacts.zip may be wrapping several zip files: artifacts.zip -> wildfly-latest-SNAPSHOT.zip -> wildfly-###-SNAPSHOT.zip
+##    [ $? -ne 0 ] && fatal "Cannot wget WildFly '${AS_LOCATION}'"
+##    unzip -j artifacts.zip wildfly-latest-SNAPSHOT.zip
+##    [ $? -ne 0 ] && fatal "Cannot unzip artifacts.zip"
+##    unzip -qo wildfly-latest-SNAPSHOT.zip
+##    [ $? -ne 0 ] && fatal "Cannot unzip wildfly-latest-SNAPSHOT.zip"
+##    rm wildfly-latest-SNAPSHOT.zip
+##    zip=$(ls wildfly-*-SNAPSHOT.zip) # example the current latest is wildfly-preview-27.0.0.Beta1-SNAPSHOT.zip
+##=======
+  echo "Download WildFly Preview Build"
 
   cd $WORKSPACE
+  AS_LOCATION=${AS_LOCATION:-https://ci.wildfly.org/httpAuth/repository/downloadAll/WF_WildflyPreviewNightly/.lastSuccessful/artifacts.zip}
+  wget --user=guest --password=guest -nv ${AS_LOCATION}
+  local zipFileName=${AS_LOCATION##*/}
+  unzip -qo "$zipFileName"
+  export JBOSS_HOME=${JBOSS_HOME:-"${PWD}/${zipFileName%.zip}"}
 
-  # clean up any previously downloaded zip files (this will not clean up old directories)
-  rm -f artifacts.zip wildfly-*.zip
-
-  if [ "$_jdk" -lt 11 ]; then
-    # download the last wildfly version that ran on Java 8
-    AS_VERSION="26.1.0.Beta1"
-    AS_LOCATION="https://github.com/wildfly/wildfly/releases/download/${AS_VERSION}/wildfly-${AS_VERSION}.zip"
-    wget --user=guest --password=guest -nv ${AS_LOCATION}
-    [ $? -ne 0 ] && fatal "Cannot wget WildFly '${AS_LOCATION}'"
-    zip=wildfly-${AS_VERSION}.zip
-  else
-    # download the latest wildfly nighly build (which we know supports Java 11)
-    AS_LOCATION=${AS_LOCATION:-https://ci.wildfly.org/httpAuth/repository/downloadAll/WF_Nightly/.lastSuccessful/artifacts.zip}
-    wget --user=guest --password=guest -nv ${AS_LOCATION}
-    ### The following sequence of unzipping wrapping zip files is a way how to process the WildFly nightly build ZIP structure
-    ### which is changing time to time
-    # the artifacts.zip may be wrapping several zip files: artifacts.zip -> wildfly-latest-SNAPSHOT.zip -> wildfly-###-SNAPSHOT.zip
-    [ $? -ne 0 ] && fatal "Cannot wget WildFly '${AS_LOCATION}'"
-    unzip -j artifacts.zip wildfly-latest-SNAPSHOT.zip
-    [ $? -ne 0 ] && fatal "Cannot unzip artifacts.zip"
-    unzip -qo wildfly-latest-SNAPSHOT.zip
-    [ $? -ne 0 ] && fatal "Cannot unzip wildfly-latest-SNAPSHOT.zip"
-    rm wildfly-latest-SNAPSHOT.zip
-    zip=$(ls wildfly-*-SNAPSHOT.zip) # example the current latest is wildfly-preview-27.0.0.Beta1-SNAPSHOT.zip
+  ### The following sequence of unzipping wrapping zip files is a way how to process the WildFly nightly build ZIP structure
+  ### which is changing time to time
+  # the artifacts.zip may be wrapping several zip files: artifacts.zip -> wildfly-preview-latest-SNAPSHOT.zip -> wildfly-###-SNAPSHOT.zip
+  local wildflyLatestZipWrapper=$(ls wildfly-preview-latest-*.zip | head -n 1)
+  if [ -f "${wildflyLatestZipWrapper}" ]; then # wrapper zip exists, let's unzip it to proceed further to distro zip
+    unzip -qo "${wildflyLatestZipWrapper}"
+    [ $? -ne 0 ] && fatal "Cannot unzip WildFly Preview nightly build wrapper zip file '${wildflyLatestZipWrapper}'"
+    rm -f $wildflyLatestZipWrapper
+    export JBOSS_HOME="${PWD}/${wildflyLatestZipWrapper%.zip}"
+  fi
+  # if SNAPSHOT zip still exists, unzip it further
+  local wildflyDistZip=$(ls wildfly-preview-*-SNAPSHOT.zip | head -n 1)
+  if [ -f "${wildflyDistZip}" ]; then
+    unzip -qo "${wildflyDistZip}"
+    [ $? -ne 0 ] && fatal "Cannot unzip WildFly Preview nightly build distribution zip file '${wildflyDistZip}'"
+    export JBOSS_HOME="${PWD}/${wildflyDistZip%.zip}"
+>>>>>>> ead7de415 (JBTM-3532 Add LRA support for EE 9)
   fi
 
   export JBOSS_HOME=${JBOSS_HOME:-"${PWD}/${zip%.*}"}
