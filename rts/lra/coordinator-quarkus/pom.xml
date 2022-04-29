@@ -58,7 +58,6 @@
   </dependencies>
 
   <build>
-    <finalName>lra-coordinator</finalName>
     <plugins>
       <plugin>
         <groupId>io.quarkus</groupId>

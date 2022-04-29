@@ -233,19 +233,22 @@
 			<destName>xts_third_party_licenses.txt</destName>
 		</file>
 		<file>
-			<source>../rts/lra/coordinator-quarkus/target/lra-coordinator-runner.jar</source>
+			<source>../rts/lra/coordinator-quarkus/target/lra-coordinator-quarkus-${version}-runner.jar</source>
 			<fileMode>0755</fileMode>
 			<outputDirectory>rts/lra/</outputDirectory>
+			<destName>lra-coordinator-runner.jar</destName>
 		</file>
 		<file>
-			<source>../rts/lra/coordinator/target/lra-coordinator.jar</source>
+			<source>../rts/lra/coordinator/target/lra-coordinator-jar-${version}.jar</source>
 			<fileMode>0644</fileMode>
 			<outputDirectory>rts/lra/</outputDirectory>
+			<destName>lra-coordinator.jar</destName>
 		</file>
 		<file>
-			<source>../rts/lra/coordinator-war/target/lra-coordinator.war</source>
+			<source>../rts/lra/coordinator-war/target/lra-coordinator-war-${version}.war</source>
 			<fileMode>0644</fileMode>
 			<outputDirectory>rts/lra/</outputDirectory>
+			<destName>lra-coordinator.war</destName>
 		</file>
 	</files>
 	<fileSets>

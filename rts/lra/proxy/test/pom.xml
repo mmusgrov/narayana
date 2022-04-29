@@ -79,7 +79,6 @@
   </dependencies>
 
   <build>
-    <finalName>lra-proxy-test</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

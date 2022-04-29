@@ -52,10 +52,6 @@
     </dependency>
   </dependencies>
 
-  <build>
-    <finalName>lra-client</finalName>
-  </build>
-
   <profiles>
     <profile>
       <id>release</id>

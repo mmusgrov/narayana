@@ -20,10 +20,6 @@
     </dependency>
   </dependencies>
 
-  <build>
-    <finalName>lra-coordinator</finalName>
-  </build>
-
   <profiles>
     <profile>
       <id>release</id>

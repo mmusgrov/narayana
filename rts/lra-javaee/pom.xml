@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2017 Red Hat, Inc. and/or its affiliates.
+  ~
+  ~ Licensed under the Apache License version 2.0, available at http://www.apache.org/licenses/LICENSE-2.0
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.jboss.narayana.rts</groupId>
+    <artifactId>rest-tx</artifactId>
+    <version>5.12.7.Final-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>lra-parent-javaee</artifactId>
+  <packaging>pom</packaging>
+  <name>LRA Parent (Java EE)</name>
+  <description>LRA Parent (Java EE)</description>
+
+  <modules>
+    <module>service-base</module>
+    <module>client</module>
+    <module>coordinator</module>
+    <module>proxy</module>
+    <module>jaxrs</module>
+  </modules>
+
+  <properties>
+    <checkstyle.skip>false</checkstyle.skip>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <server.jvm.args>${jvm.args.other} ${jvm.args.memory} ${jvm.args.debug} ${jvm.args.modular}</server.jvm.args>
+    <sortpom.skip>true</sortpom.skip>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.eclipse.transformer</groupId>
+	<artifactId>org.eclipse.transformer.cli</artifactId>
+	<version>${version.org.eclipse.transformer}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-install-plugin</artifactId>
+            <inherited>false</inherited>
+            <executions>
+              <execution>
+                <id>default-install</id>
+                <phase>install</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

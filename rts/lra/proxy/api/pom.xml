@@ -88,10 +88,6 @@
     </dependency>
   </dependencies>
 
-  <build>
-    <finalName>lra-proxy-api</finalName>
-  </build>
-
   <profiles>
     <profile>
       <id>release</id>
