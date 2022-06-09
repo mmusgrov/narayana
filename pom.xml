@@ -213,6 +213,7 @@
     <version.javax.inject>1</version.javax.inject>
     <version.javax.javaee-api>7.0</version.javax.javaee-api>
     <version.javax.ws.rs-api>2.0.1.Final</version.javax.ws.rs-api>
+    <version.jaxb>2.3.0</version.jaxb>
     <version.jaxws-ri>2.3.5</version.jaxws-ri>
     <version.jfree>1.0.9</version.jfree>
     <version.jnpserver>5.0.3.GA</version.jnpserver>
@@ -255,6 +256,8 @@
     <version.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>1.0.0.Final</version.org.jboss.spec.javax.jms.jboss-jms-api_2.0_spec>
     <version.org.jboss.spec.javax.servlet>1.0.2.Final</version.org.jboss.spec.javax.servlet>
     <version.org.jboss.spec.javax.transaction>1.1.0.Final</version.org.jboss.spec.javax.transaction>
+    <version.org.jboss.spec.javax.xml.bind.jboss-jaxb-api_2.3_spec>1.0.1.Final</version.org.jboss.spec.javax.xml.bind.jboss-jaxb-api_2.3_spec>
+    <version.org.jboss.spec.javax.xml.ws.jboss-jaxws-api_2.3_spec>1.0.0.Final</version.org.jboss.spec.javax.xml.ws.jboss-jaxws-api_2.3_spec>
     <version.org.jboss.weld>2.3.5.Final</version.org.jboss.weld>
     <version.org.jboss.ws>1.0.2.Final</version.org.jboss.ws>
     <version.org.mockito>3.8.0</version.org.mockito>
