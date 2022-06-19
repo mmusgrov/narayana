@@ -1039,8 +1039,8 @@ public class LRAParticipantRecord extends AbstractRecord implements Comparable<A
     }
 
     private void trace_progress(String reason) {
-        if (LRALogger.logger.isTraceEnabled()) {
-            LRALogger.logger.tracef("%s: LRA id: %s, Participant id: %s, reason: %s, state: %s, accepted: %b",
+        if (LRALogger.logger.isInfoEnabled()) {
+            LRALogger.logger.debugf("%s: LRA id: %s, Participant id: %s, reason: %s, state: %s, accepted: %b",
                     LocalDateTime.now(ZoneOffset.UTC), // use the same time function as used for LRA timeouts
                     lraId,
                     participantPath,

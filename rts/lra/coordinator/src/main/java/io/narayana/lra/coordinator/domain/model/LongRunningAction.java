@@ -449,6 +449,7 @@ public class LongRunningAction extends BasicAction {
 
         if (status == LRAStatus.Active) {
             updateState(cancel ? LRAStatus.Cancelling : LRAStatus.Closing);
+            trace_progress("doEnd:");
         } else if (isFinished()) {
             trace_progress("finished");
             return res;
@@ -585,6 +586,8 @@ public class LongRunningAction extends BasicAction {
 
             trace_progress("runPostLRAActions");
             super.phase2Commit(true);
+        } else {
+            trace_progress("doEnd: no runPostLRAActions");
         }
     }
 
@@ -1079,8 +1082,8 @@ public class LongRunningAction extends BasicAction {
     }
 
     private void trace_progress(String reason) {
-        if (LRALogger.logger.isTraceEnabled()) {
-            LRALogger.logger.tracef("%s: LRA id: %s (%s) parent: %s reason: %s state: %s created: %s ttl: %s",
+        if (LRALogger.logger.isInfoEnabled()) {
+            LRALogger.logger.infof("%s: LRA id: %s (%s) parent: %s reason: %s state: %s created: %s ttl: %s",
                     LocalDateTime.now(ZoneOffset.UTC), // use the same time function as used for LRA timeouts
                     id,
                     clientId,

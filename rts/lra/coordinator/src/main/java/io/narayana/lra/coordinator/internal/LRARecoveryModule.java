@@ -55,6 +55,7 @@ public class LRARecoveryModule implements RecoveryModule {
 
         _transactionStatusConnectionMgr = new TransactionStatusConnectionManager();
         Implementations.install();
+        LRALogger.logger.infof("LRARecoveryModule: using store %s", StoreManager.getRecoveryStore().getStoreName());
     }
 
     public static LRAService getService() {

@@ -499,6 +499,7 @@ public class ShadowingStore extends FileSystemStore
                 String fname = genPathName(objUid, name, ft);
                 File fd = openAndLock(fname, FileLock.F_WRLCK, false);
 
+                tsLogger.logger.infof("ShadowingStore:remove_state %s (%s)", objUid.fileStringForm(), name);
                 if (fd != null)
                 {
                     if (!fd.canWrite())
