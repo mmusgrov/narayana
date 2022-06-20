@@ -168,11 +168,16 @@ public class LRAService {
     }
 
     public void finished(LongRunningAction transaction, boolean fromHierarchy) {
+        LRALogger.logger.infof("LRAService:finished %s", transaction.getId());
         if (transaction.isFailed()) {
+            LRALogger.logger.infof("LRAService:finished moving %s", transaction.getId());
             getRM().moveEntryToFailedLRAPath(transaction.get_uid());
+            LRALogger.logger.infof("LRAService:finished: moved %s", transaction.getId());
         }
         if (transaction.isRecovering()) {
+            LRALogger.logger.infof("LRAService:finished recoveringLRAs.put()", transaction.getId());
             recoveringLRAs.put(transaction.getId(), transaction);
+            LRALogger.logger.infof("LRAService:finished recoveringLRAs.put() ok", transaction.getId());
         } else if (fromHierarchy || transaction.isTopLevel()) {
             // the LRA is top level or it's a nested LRA that was closed by a
             // parent LRA (ie when fromHierarchy is true) then it's okay to forget about the LRA
@@ -180,7 +185,13 @@ public class LRAService {
             if (!transaction.hasPendingActions()) {
                 // this call is only required to clean up cached LRAs (JBTM-3250 will remove this cache).
                 remove(transaction);
+                LRALogger.logger.infof("LRAService:finished: moving %s", transaction.getId());
+            } else {
+                LRALogger.logger.infof("LRAService:finished fromHierarchy || transaction.isTopLevel()",
+                        transaction.getId());
             }
+        } else {
+           LRALogger.logger.infof("LRAService:finished else no action", transaction.getId());
         }
     }
 
@@ -190,6 +201,7 @@ public class LRAService {
      * @return true if the record was either removed or was not present
      */
     public boolean removeLog(String lraId) {
+        LRALogger.logger.infof("LRAService:removeLog %s", lraId);
         // LRA ids are URIs with the arjuna uid forming the last segment
         String uid = LRAConstants.getLRAUid(lraId);
 

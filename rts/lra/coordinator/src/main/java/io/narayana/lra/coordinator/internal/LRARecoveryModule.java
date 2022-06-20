@@ -55,7 +55,8 @@ public class LRARecoveryModule implements RecoveryModule {
 
         _transactionStatusConnectionMgr = new TransactionStatusConnectionManager();
         Implementations.install();
-        LRALogger.logger.infof("LRARecoveryModule: using store %s", StoreManager.getRecoveryStore().getStoreName());
+        LRALogger.logger.infof("LRARecoveryModule: using store %s",
+                com.arjuna.ats.arjuna.common.arjPropertyManager.getObjectStoreEnvironmentBean().getObjectStoreDir());
     }
 
     public static LRAService getService() {
@@ -255,6 +256,7 @@ public class LRARecoveryModule implements RecoveryModule {
      */
     public boolean removeCommitted(Uid lraUid) {
         try {
+            LRALogger.logger.infof("LRARecoveryModule.removeCommitted %s", lraUid);
             return _recoveryStore.remove_committed(lraUid, _transactionType);
         } catch (ObjectStoreException e) {
             if (LRALogger.logger.isTraceEnabled()) {
