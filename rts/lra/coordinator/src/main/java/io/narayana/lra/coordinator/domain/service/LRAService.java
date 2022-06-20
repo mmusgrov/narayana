@@ -153,6 +153,7 @@ public class LRAService {
      */
     public List<LRAData> getAllRecovering(boolean scan) {
         if (scan) {
+            LRALogger.logger.infof("LRAService:finished scanning store");
             RecoveryManager.manager().scan();
         }
 
@@ -408,13 +409,13 @@ public class LRAService {
     }
 
     private void lraTrace(URI lraId, String reason) {
-        if (LRALogger.logger.isTraceEnabled()) {
+        if (LRALogger.logger.isInfoEnabled()) {
             if (lraId != null && lras.containsKey(lraId)) {
                 LongRunningAction lra = lras.get(lraId);
-                LRALogger.logger.tracef("LRAService: '%s' (%s) in state %s: %s%n",
+                LRALogger.logger.infof("LRAService: '%s' (%s) in state %s: %s%n",
                         reason, lra.getClientId(), ActionStatus.stringForm(lra.status()), lra.getId());
             } else {
-                LRALogger.logger.tracef("LRAService: '%s', not found: %s%n", reason, lraId);
+                LRALogger.logger.infof("LRAService: '%s', not found: %s%n", reason, lraId);
             }
         }
     }

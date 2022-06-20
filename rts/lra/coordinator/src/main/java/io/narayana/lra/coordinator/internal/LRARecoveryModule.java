@@ -97,14 +97,14 @@ public class LRARecoveryModule implements RecoveryModule {
      * This is called periodically by the RecoveryManager
      */
     public void periodicWorkFirstPass() {
-        if (LRALogger.logger.isTraceEnabled()) {
-            LRALogger.logger.trace("LRARecoveryModule: first pass");
+        if (LRALogger.logger.isInfoEnabled()) {
+            LRALogger.logger.info("LRARecoveryModule: first pass");
         }
     }
 
     public void periodicWorkSecondPass() {
-        if (LRALogger.logger.isTraceEnabled()) {
-            LRALogger.logger.trace("LRARecoveryModule: second pass");
+        if (LRALogger.logger.isInfoEnabled()) {
+            LRALogger.logger.info("LRARecoveryModule: second pass");
         }
 
         recoverTransactions();
@@ -128,18 +128,25 @@ public class LRARecoveryModule implements RecoveryModule {
             boolean inFlight = (lra.getLRAStatus() == LRAStatus.Active);
 
             LRAStatus lraStatus = lra.getLRAStatus();
+            LRALogger.logger.infof("LRARecoverModule:processTransactionsStatus: found %s status %s:",
+                    recoverUid.fileStringForm(), lra.getLRAStatus());
+
             if (LRAStatus.FailedToCancel.equals(lraStatus) || LRAStatus.FailedToClose.equals(lraStatus)) {
+                LRALogger.logger.infof("LRARecoverModule:processTransactionsStatus: moving %s status %s:",
+                        recoverUid.fileStringForm(), lra.getLRAStatus());
                 moveEntryToFailedLRAPath(recoverUid);
                 return;
             }
 
             if (!service.hasTransaction(lra.getId())) {
                 // make sure LRAService knows about it
+                LRALogger.logger.infof("LRARecoverModule:processTransactionsStatus: found %s adding to LRAService:",
+                        recoverUid.fileStringForm());
                 service.addTransaction(lra);
             }
 
-            if (LRALogger.logger.isDebugEnabled()) {
-                LRALogger.logger.debug("LRARecoverModule: transaction type is " + _transactionType + " uid is " +
+            if (LRALogger.logger.isInfoEnabled()) {
+                LRALogger.logger.info("LRARecoverModule: transaction type is " + _transactionType + " uid is " +
                         recoverUid.toString() + "\n Status is " + lraStatus +
                         " in flight is " + inFlight);
             }
@@ -147,6 +154,8 @@ public class LRARecoveryModule implements RecoveryModule {
             if (!inFlight && lra.hasPendingActions()) {
                 lra.replayPhase2();
 
+                LRALogger.logger.infof(
+                        "LRARecoverModule:  replayPhase2 for %s status %s", lra, lra.getLRAStatus());
                 if (!lra.isRecovering()) {
                     service.finished(lra, false);
                 }
@@ -210,12 +219,13 @@ public class LRARecoveryModule implements RecoveryModule {
         // Process the collection of transaction Uids
         uids.forEach(uid -> {
             try {
+                LRALogger.logger.infof("LRARecoverModule:processTransactionsStatus: process %s:", uid.fileStringForm());
                 if (_recoveryStore.currentState(uid, _transactionType) != StateStatus.OS_UNKNOWN) {
                     doRecoverTransaction(uid);
                 }
             } catch (ObjectStoreException e) {
-                if (LRALogger.logger.isTraceEnabled()) {
-                    LRALogger.logger.tracef(e,
+                if (LRALogger.logger.isInfoEnabled()) {
+                    LRALogger.logger.infof(e,
                             "LRARecoverModule: Object store exception '%s' while reading the current state of LRA record %s:",
                             e.getMessage(), uid.fileStringForm());
                 } else if (LRALogger.logger.isInfoEnabled()) {
@@ -259,8 +269,8 @@ public class LRARecoveryModule implements RecoveryModule {
             LRALogger.logger.infof("LRARecoveryModule.removeCommitted %s", lraUid);
             return _recoveryStore.remove_committed(lraUid, _transactionType);
         } catch (ObjectStoreException e) {
-            if (LRALogger.logger.isTraceEnabled()) {
-                LRALogger.logger.tracef(e,
+            if (LRALogger.logger.isInfoEnabled()) {
+                LRALogger.logger.infof(e,
                         "LRARecoveryModule: Object store exception '%s' while removing LRA record %s",
                         e.getMessage(), lraUid.fileStringForm());
             } else if (LRALogger.logger.isInfoEnabled()) {
@@ -299,8 +309,8 @@ public class LRARecoveryModule implements RecoveryModule {
             try {
                 return _recoveryStore.allObjUids(type, aa_uids);
             } catch (ObjectStoreException e) {
-                if (LRALogger.logger.isTraceEnabled()) {
-                    LRALogger.logger.tracef(e,
+                if (LRALogger.logger.isInfoEnabled()) {
+                    LRALogger.logger.infof(e,
                             "LRARecoverModule: Object store exception %s while unpacking records of type %s",
                             e.getMessage(), type);
                 } else if (LRALogger.logger.isInfoEnabled()) {
@@ -337,8 +347,8 @@ public class LRARecoveryModule implements RecoveryModule {
 
                 consumer.accept(uid);
             } catch (IOException e) {
-                if (LRALogger.logger.isTraceEnabled()) {
-                    LRALogger.logger.tracef(e,
+                if (LRALogger.logger.isInfoEnabled()) {
+                    LRALogger.logger.infof(e,
                             "LRARecoverModule: Object store exception %s while unpacking a record of type %s",
                             e.getMessage(), transactionType);
                 } else if (LRALogger.logger.isInfoEnabled()) {
