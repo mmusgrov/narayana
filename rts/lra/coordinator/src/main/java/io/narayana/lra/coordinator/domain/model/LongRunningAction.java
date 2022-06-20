@@ -703,8 +703,14 @@ public class LongRunningAction extends BasicAction {
                 timeLimit, compensatorData);
 
         if (participant != null) {
+            LRARecoveryModule.getInstance().readCommitted(get_uid());
+            LRALogger.logger.infof("enlistParticipant deactivating %s", get_uid());
+
             // need to remember that there is a new participant
             deactivate(); // if it fails the superclass will have logged a warning
+            LRARecoveryModule.getInstance().readCommitted(get_uid());
+            LRALogger.logger.infof("enlistParticipant deactivated %s", get_uid());
+
             savedIntentionList = true; // need this clean up if the LRA times out
         }
 
@@ -724,18 +730,14 @@ public class LongRunningAction extends BasicAction {
             setTimeLimit(timeLimit);
 
             trace_progress("enlisted " + p.getParticipantPath());
-            deactivate();
-            LRARecoveryModule.getInstance().readCommitted(get_uid());
 
             return p;
         } else if (isRecovering() && p.getCompensator() == null && p.getEndNotificationUri() != null) {
             // the participant is an AfterLRA listener so manually add it to heuristic list
             LRARecoveryModule.getInstance().readCommitted(get_uid());
             heuristicList.putRear(p);
-//            LRALogger.logger.infof("LongRunningAction.enlistParticipant deactivating %s", get_uid().fileStringForm());
-            deactivate();
+            updateState(status); // TODO
 
-            LRARecoveryModule.getInstance().readCommitted(get_uid());
             trace_progress("enlisted listener " + p.getParticipantPath());
 
             return p;
