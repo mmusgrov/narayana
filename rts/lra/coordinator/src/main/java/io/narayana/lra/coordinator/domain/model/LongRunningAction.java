@@ -31,6 +31,7 @@ import com.arjuna.ats.arjuna.coordinator.RecordListIterator;
 import com.arjuna.ats.arjuna.coordinator.RecordType;
 import io.narayana.lra.Current;
 import io.narayana.lra.LRAData;
+import io.narayana.lra.coordinator.internal.LRARecoveryModule;
 import io.narayana.lra.logging.LRALogger;
 import com.arjuna.ats.arjuna.state.InputObjectState;
 import com.arjuna.ats.arjuna.state.OutputObjectState;
@@ -418,6 +419,8 @@ public class LongRunningAction extends BasicAction {
             trace_progress("finishing");
         }
 
+        LRARecoveryModule.getInstance().readCommitted(get_uid());
+
         try {
             lock = lraService.tryLockTransaction(getId());
 
@@ -547,6 +550,9 @@ public class LongRunningAction extends BasicAction {
             }
         }
 
+        LRALogger.logger.infof("LongRunningAction.doEnd %s", get_uid());
+        LRARecoveryModule.getInstance().readCommitted(get_uid());
+
         if (getSize(heuristicList) != 0) {
             updateState(cancel ? LRAStatus.Cancelling : LRAStatus.Closing);
         } else if (getSize(failedList) != 0) {
@@ -561,16 +567,22 @@ public class LongRunningAction extends BasicAction {
         }
 
         trace_progress("doEnd update finishTime");
+        LRARecoveryModule.getInstance().readCommitted(get_uid());
 
         updateState(); // ensure the record is removed if it finished otherwise persisted the state
+        LRARecoveryModule.getInstance().readCommitted(get_uid());
 
         if (!isRecovering()) {
+            LRALogger.logger.infof("LongRunningAction.doEnd not recovering %s (%b)",
+                    get_uid().fileStringForm(), lraService == null);
             if (lraService != null) {
                 lraService.finished(this, false);
+                LRARecoveryModule.getInstance().readCommitted(get_uid());
             }
         }
 
         trace_progress("doEnd finished");
+        LRARecoveryModule.getInstance().readCommitted(get_uid());
 
         return res;
     }
@@ -717,8 +729,10 @@ public class LongRunningAction extends BasicAction {
         } else if (isRecovering() && p.getCompensator() == null && p.getEndNotificationUri() != null) {
             // the participant is an AfterLRA listener so manually add it to heuristic list
             heuristicList.putRear(p);
-            updateState();
+            LRALogger.logger.infof("LongRunningAction.enlistParticipant deactivating %s", get_uid().fileStringForm());
+            deactivate();
 
+            LRARecoveryModule.getInstance().readCommitted(get_uid());
             trace_progress("enlisted listener " + p.getParticipantPath());
 
             return p;

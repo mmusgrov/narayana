@@ -283,6 +283,22 @@ public class LRARecoveryModule implements RecoveryModule {
         return false;
     }
 
+
+    public InputObjectState readCommitted(Uid uid) {
+        try {
+            InputObjectState ios = _recoveryStore.read_committed(uid, _transactionType);
+            LRALogger.logger.infof(
+                    "LRARecoveryModule:readCommitted: read InputObjectState for %s",
+                    uid.fileStringForm());
+            return ios;
+        } catch (ObjectStoreException e) {
+            LRALogger.logger.infof(
+                        "LRARecoveryModule:readCommitted: Exception %s reading %s",
+                        e.getMessage(), uid.fileStringForm());
+            return null;
+        }
+    }
+
     public void recover() {
         recoverTransactions();
     }
