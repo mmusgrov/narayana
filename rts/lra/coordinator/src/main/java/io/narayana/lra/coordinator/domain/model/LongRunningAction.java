@@ -728,6 +728,7 @@ public class LongRunningAction extends BasicAction {
             return p;
         } else if (isRecovering() && p.getCompensator() == null && p.getEndNotificationUri() != null) {
             // the participant is an AfterLRA listener so manually add it to heuristic list
+            LRARecoveryModule.getInstance().readCommitted(get_uid());
             heuristicList.putRear(p);
             LRALogger.logger.infof("LongRunningAction.enlistParticipant deactivating %s", get_uid().fileStringForm());
             deactivate();
