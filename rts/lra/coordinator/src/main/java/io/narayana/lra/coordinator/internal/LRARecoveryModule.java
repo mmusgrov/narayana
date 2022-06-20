@@ -212,10 +212,12 @@ public class LRARecoveryModule implements RecoveryModule {
 
         forEach(uids, uidUnpacker, _transactionType);
 
+        LRALogger.logger.debugf("LRARecoverModule:processTransactions found %d LRAs", uids.size());
         return uidCollection;
     }
 
     private void processTransactionsStatus(Collection<Uid> uids) {
+        LRALogger.logger.infof("recovering %d LRAs", uids.size());
         // Process the collection of transaction Uids
         uids.forEach(uid -> {
             try {
@@ -246,10 +248,12 @@ public class LRARecoveryModule implements RecoveryModule {
             Collection<Uid> uids = processTransactions(aa_uids);
             uids.forEach(uid -> {
                 int status = _transactionStatusConnectionMgr.getTransactionStatus(_transactionType, uid);
+                LRALogger.logger.infof("LRARecoverModule: found recovering LRA %s", uid.fileStringForm());
                 RecoveringLRA lra = new RecoveringLRA(service, uid, status);
 
                 if (lra.isActivated()) {
                     lras.put(lra.getId(), lra);
+                    LRALogger.logger.infof("LRARecoverModule: found %s", lra.getId());
                 } else {
                     LRALogger.logger.infof("LRARecoverModule: failed to activate LRA record %s",
                             uid.fileStringForm());
@@ -326,6 +330,7 @@ public class LRARecoveryModule implements RecoveryModule {
     }
 
     private boolean getUids(final String type, InputObjectState aa_uids) {
+        LRALogger.logger.infof("LRARecoverModule: recovery pass for %s", type);
         synchronized (this) {
             try {
                 return _recoveryStore.allObjUids(type, aa_uids);
@@ -362,6 +367,7 @@ public class LRARecoveryModule implements RecoveryModule {
             try {
                 Uid uid = new Uid(uids.unpackBytes());
 
+                LRALogger.logger.infof("LRARecoverModule:forEach unpacked %s", uid.fileStringForm());
                 if (uid.equals(Uid.nullUid())) {
                     return;
                 }

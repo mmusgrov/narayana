@@ -94,9 +94,11 @@ public class NarayanaLRARecovery implements LRARecoveryService {
 
             if (json.contains(lraId.toASCIIString())) {
                 // intended LRA didn't recover
+                log.debugf("NarayanaLRARecovery.recoverLRAs %s still not recovered", lraId);
                 return false;
             }
 
+            log.debugf("NarayanaLRARecovery.recoverLRAs %s has been recovered", lraId);
             return true;
         } finally {
             recoveryCoordinatorClient.close();
