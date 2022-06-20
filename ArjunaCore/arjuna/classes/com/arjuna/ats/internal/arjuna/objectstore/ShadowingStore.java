@@ -483,9 +483,7 @@ public class ShadowingStore extends FileSystemStore
     protected boolean remove_state (Uid objUid, String name, int ft)
             throws ObjectStoreException
     {
-        if (tsLogger.logger.isTraceEnabled()) {
-            tsLogger.logger.trace("ShadowingStore.remove_state(" + objUid + ", " + name + ", " + StateType.stateTypeString(ft) + ")");
-        }
+        tsLogger.logger.warn("ShadowingStore.remove_state(" + objUid + ", " + name + ", " + StateType.stateTypeString(ft) + ")");
 
         boolean removeOk = true;
 
@@ -499,7 +497,7 @@ public class ShadowingStore extends FileSystemStore
                 String fname = genPathName(objUid, name, ft);
                 File fd = openAndLock(fname, FileLock.F_WRLCK, false);
 
-                tsLogger.logger.infof("ShadowingStore:remove_state %s (%s)", objUid.fileStringForm(), name);
+                tsLogger.logger.warnf("ShadowingStore:remove_state %s (%s)", objUid.fileStringForm(), name);
                 if (fd != null)
                 {
                     if (!fd.canWrite())

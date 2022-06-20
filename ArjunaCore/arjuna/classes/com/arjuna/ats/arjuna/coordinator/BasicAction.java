@@ -3303,6 +3303,7 @@ public class BasicAction extends StateManager
                 {
                     if (savedIntentionList)
                     {
+                        tsLogger.logger.warnf("removing uid %s (%s)", getSavingUid(), get_uid());
                         if (transactionStore.remove_committed(getSavingUid(), type()))
                         {
                             savedIntentionList = false;
