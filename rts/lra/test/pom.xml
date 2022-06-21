@@ -275,11 +275,17 @@
                 <!-- qualifier used to identify the Wildfly container where lra-coordinator will be deployed-->
                 <arquillian.lra.coordinator.container.qualifier>${lra.coordinator.container.qualifier}</arquillian.lra.coordinator.container.qualifier>
                 <!-- qualifier used to identify the Wildfly container where lra-participant will be deployed-->
+		<!-- TODO just experimenting with running the participants with the coordinator 
                 <arquillian.lra.participant.container.qualifier>${lra.participant.container.qualifier}</arquillian.lra.participant.container.qualifier>
+		-->
+                <arquillian.lra.participant.container.qualifier>${lra.coordinator.container.qualifier}</arquillian.lra.participant.container.qualifier>
                 <!-- qualifier used to identify the lra-coordinator deployment-->
                 <arquillian.lra.coordinator.deployment.qualifier>${lra.coordinator.deployment.qualifier}</arquillian.lra.coordinator.deployment.qualifier>
                 <!-- qualifier used to identify the lra-participant deployment-->
+		<!-- TODO ditto here as well
                 <arquillian.lra.participant.deployment.qualifier>${lra.participant.deployment.qualifier}</arquillian.lra.participant.deployment.qualifier>
+		-->
+                <arquillian.lra.participant.deployment.qualifier>${lra.coordinator.deployment.qualifier}</arquillian.lra.participant.deployment.qualifier>
                 <!-- sharing with Arquillian the names of the XML standalone configurations for Wildfly instances -->
                 <lra.coordinator.xml.filename>${lra.coordinator.xml.filename}</lra.coordinator.xml.filename>
                 <lra.participant.xml.filename>${lra.participant.xml.filename}</lra.participant.xml.filename>
