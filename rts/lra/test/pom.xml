@@ -200,6 +200,8 @@
                   <target>
                     <copy file="${env.JBOSS_HOME}/standalone/configuration/standalone.xml" tofile="${env.JBOSS_HOME}/standalone/configuration/${lra.coordinator.xml.filename}"></copy>
                     <copy file="${env.JBOSS_HOME}/standalone/configuration/standalone.xml" tofile="${env.JBOSS_HOME}/standalone/configuration/${lra.participant.xml.filename}"></copy>
+
+                    <replace file="${env.JBOSS_HOME}/standalone/configuration/${lra.participant.xml.filename}" token="tx-object-store" value="tx-participant-object-store" />
                   </target>
                 </configuration>
               </execution>
