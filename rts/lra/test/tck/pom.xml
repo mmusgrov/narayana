@@ -12,6 +12,8 @@
   <name>LRA tests: MicroProfile TCK</name>
 
   <properties>
+    <jvm.args.debug>-Xrunjdwp:transport=dt_socket,address=${lra.coordinator.debug.port},server=y,suspend=n</jvm.args.debug>
+    <lra.coordinator.debug.port>8788</lra.coordinator.debug.port>
     <lra.coordinator.jar.path>${project.basedir}/../../coordinator-quarkus/target/lra-coordinator-runner.jar</lra.coordinator.jar.path>
     <!-- TCK TckTests#timeLimit test needs a short, but non zero, delay -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

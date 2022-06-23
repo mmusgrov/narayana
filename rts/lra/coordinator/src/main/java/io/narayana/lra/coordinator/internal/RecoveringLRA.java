@@ -65,8 +65,8 @@ class RecoveringLRA extends LongRunningAction {
      * Replays phase 2 of the commit protocol.
      */
     private void tryReplayPhase2() {
-        if (LRALogger.logger.isDebugEnabled()) {
-            LRALogger.logger.debugf("RecoveringLRA.replayPhase2 recovering %s ActionStatus is %s",
+        if (LRALogger.logger.isInfoEnabled()) {
+            LRALogger.logger.infof("RecoveringLRA.replayPhase2 recovering %s ActionStatus is %s",
                     get_uid(), ActionStatus.stringForm(_theStatus));
         }
 
@@ -85,6 +85,8 @@ class RecoveringLRA extends LongRunningAction {
 
                     checkParticipant(preparedList);
 
+                    LRALogger.logger.infof("RecoveringLRA: %s %d items on the prepared list",
+                            get_uid().fileStringForm(), preparedList.size());
                     // NB we don't Abort a BasicAction since that can bypass creation of a log
                     super.phase2Commit(true);
 
@@ -95,6 +97,7 @@ class RecoveringLRA extends LongRunningAction {
                         updateState(toLRAStatus(_theStatus));
                     }
 
+                    LRALogger.logger.infof("RecoveringLRA: %s new status %s", get_uid().fileStringForm(), getLRAStatus());
                     switch (getLRAStatus()) {
                         case Closed:
                         case Cancelled:

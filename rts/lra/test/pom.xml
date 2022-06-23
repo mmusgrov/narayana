@@ -201,7 +201,7 @@
                     <copy file="${env.JBOSS_HOME}/standalone/configuration/standalone.xml" tofile="${env.JBOSS_HOME}/standalone/configuration/${lra.coordinator.xml.filename}"></copy>
                     <copy file="${env.JBOSS_HOME}/standalone/configuration/standalone.xml" tofile="${env.JBOSS_HOME}/standalone/configuration/${lra.participant.xml.filename}"></copy>
 
-                    <replace file="${env.JBOSS_HOME}/standalone/configuration/${lra.participant.xml.filename}" token="tx-object-store" value="tx-participant-object-store" />
+                    <replace file="${env.JBOSS_HOME}/standalone/configuration/${lra.participant.xml.filename}" token="tx-object-store" value="tx-participant-object-store"></replace>
                   </target>
                 </configuration>
               </execution>
@@ -275,14 +275,14 @@
                 <!-- qualifier used to identify the Wildfly container where lra-coordinator will be deployed-->
                 <arquillian.lra.coordinator.container.qualifier>${lra.coordinator.container.qualifier}</arquillian.lra.coordinator.container.qualifier>
                 <!-- qualifier used to identify the Wildfly container where lra-participant will be deployed-->
-		<!-- TODO just experimenting with running the participants with the coordinator 
+                <!-- TODO just experimenting with running the participants with the coordinator 
                 <arquillian.lra.participant.container.qualifier>${lra.participant.container.qualifier}</arquillian.lra.participant.container.qualifier>
 		-->
                 <arquillian.lra.participant.container.qualifier>${lra.coordinator.container.qualifier}</arquillian.lra.participant.container.qualifier>
                 <!-- qualifier used to identify the lra-coordinator deployment-->
                 <arquillian.lra.coordinator.deployment.qualifier>${lra.coordinator.deployment.qualifier}</arquillian.lra.coordinator.deployment.qualifier>
                 <!-- qualifier used to identify the lra-participant deployment-->
-		<!-- TODO ditto here as well
+                <!-- TODO ditto here as well
                 <arquillian.lra.participant.deployment.qualifier>${lra.participant.deployment.qualifier}</arquillian.lra.participant.deployment.qualifier>
 		-->
                 <arquillian.lra.participant.deployment.qualifier>${lra.coordinator.deployment.qualifier}</arquillian.lra.participant.deployment.qualifier>

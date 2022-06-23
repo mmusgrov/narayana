@@ -152,6 +152,7 @@ public class LRAService {
      * @return list of the {@link LRAData} which define the recovering LRAs
      */
     public List<LRAData> getAllRecovering(boolean scan) {
+        LRALogger.logger.infof("LRAService.getAllRecovering scan=%b");
         if (scan) {
             LRALogger.logger.infof("LRAService:finished scanning store");
             RecoveryManager.manager().scan();
