@@ -282,7 +282,7 @@ public class LRAParticipantRecord extends AbstractRecord implements Comparable<A
         URI endPath;
         Client client = null;
 
-        trace_progress("finishing");
+        trace_progress("tryDoEnd finishing");
 
         if (isFinished()) {
             return atEnd(status == ParticipantStatus.FailedToComplete || status == ParticipantStatus.FailedToCompensate
