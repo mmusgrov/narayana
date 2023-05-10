@@ -16,6 +16,21 @@
     <!-- Arjuna Core -->
     <dependencies>
       <dependency>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-bom</artifactId>
+        <version>${version.quarkus}</version>
+        <type>pom</type>
+        <scope>import</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.jboss.threads</groupId>
+            <artifactId>jboss-threads</artifactId>
+          </exclusion>
+        </exclusions>
+
+      </dependency>
+
+      <dependency>
         <groupId>org.jboss.narayana</groupId>
         <artifactId>common</artifactId>
         <version>${project.version}</version>
