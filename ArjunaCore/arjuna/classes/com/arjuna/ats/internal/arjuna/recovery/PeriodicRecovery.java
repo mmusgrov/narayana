@@ -13,9 +13,17 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Vector;
+import java.util.List;
 
+import com.arjuna.ats.arjuna.common.Uid;
 import com.arjuna.ats.arjuna.common.recoveryPropertyManager;
+import com.arjuna.ats.arjuna.coordinator.TransactionReaper;
+import com.arjuna.ats.arjuna.coordinator.TxControl;
+import com.arjuna.ats.arjuna.exceptions.FatalError;
+import com.arjuna.ats.arjuna.exceptions.ObjectStoreException;
 import com.arjuna.ats.arjuna.logging.tsLogger;
+import com.arjuna.ats.arjuna.objectstore.ObjectStoreIterator;
+import com.arjuna.ats.arjuna.objectstore.StoreManager;
 import com.arjuna.ats.arjuna.recovery.RecoveryManager;
 import com.arjuna.ats.arjuna.recovery.RecoveryModule;
 import com.arjuna.ats.arjuna.utils.Utility;
@@ -150,6 +158,33 @@ public class PeriodicRecovery extends Thread
                if (tsLogger.logger.isDebugEnabled()) {
                    tsLogger.logger.debug("PeriodicRecovery: Mode <== TERMINATED");
                }
+               // see if shutdown should delay until certain types have recovered
+               if (recoveryPropertyManager.getRecoveryEnvironmentBean().isWaitForFinalRecovery()) {
+                   List<String> types = recoveryPropertyManager.getRecoveryEnvironmentBean().getTypeNamesToBlockShutdown();
+
+                   // disable the transaction system but keep recovery running
+                   TxControl.disable();
+                   // wait for in flight transactions to complete
+                   TransactionReaper.terminate(true);
+
+                   while (true) {
+                       try {
+                           if (!storeContainsAnyOf(types) && !hasOrphans() && !hasSubordinates()) {
+                               // the store does not contain any records we're interested in,
+                               // so move directly to Mode.TERMINATED
+                               break;
+                           }
+                           _stateLock.wait(); // for next cycle to finish
+                       } catch (ObjectStoreException | IOException e) {
+                           tsLogger.logger.fatalf("Store error during shutdown %s", e);
+                           // graceful shutdown with an empty store was requested, but we were unable to read the store
+                           // so cause the VM to terminate abruptly so that standard crash recovery can take over
+                           throw new FatalError("Store error during shutdown", e);
+                       } catch (InterruptedException e) {
+                           // just ignore and retest condition
+                       }
+                   }
+               }
                setMode(Mode.TERMINATED);
                _stateLock.notifyAll();
            }
@@ -187,6 +222,30 @@ public class PeriodicRecovery extends Thread
            }
        }
    }
+
+   // check whether there are any records in the store matching any of the given types
+    private boolean storeContainsAnyOf(List<String> types) throws ObjectStoreException, IOException {
+        for (String typeName : types) {
+            ObjectStoreIterator iterator = new ObjectStoreIterator(StoreManager.getRecoveryStore(), typeName);
+            Uid u = iterator.iterate();
+
+            if (!Uid.nullUid().equals(u)) {
+                return true; // contains a record of type typeName
+            }
+        }
+
+        return false;
+    }
+
+    private boolean hasOrphans() {
+        // TODO check the XARecoveryModule for orphans
+        return false;
+    }
+
+    private boolean hasSubordinates() {
+        // TODO can we avoid supporting subordinates
+        return false;
+    }
 
     /**
      * make all scanning operations suspend.
