@@ -1123,8 +1123,7 @@ public class LongRunningAction extends BasicAction {
         return Response.Status.OK.getStatusCode();
     }
 
-    // abortLRA is package private because it gets used by one of the byteman rules
-    void abortLRA() {
+    private void abortLRA() {
         ReentrantLock lock = tryLockTransaction();
 
         if (lock != null) {

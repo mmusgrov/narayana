@@ -1,5 +1,7 @@
 package io.narayana.lra.coordinator.domain.model;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BytemanHelper {
@@ -19,7 +21,10 @@ public class BytemanHelper {
             businessCalled.notify();
         }
     }
-    public void abortLRA(LongRunningAction lra) {
-        lra.abortLRA();
+    public void abortLRA(LongRunningAction lra) throws NoSuchMethodException, InvocationTargetException,
+            IllegalAccessException {
+        Method method = lra.getClass().getDeclaredMethod("abortLRA");
+        method.setAccessible(true);
+        method.invoke(lra);
     }
 }
