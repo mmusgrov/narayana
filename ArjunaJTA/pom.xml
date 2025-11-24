@@ -19,6 +19,7 @@
   <description>Narayana: ArjunaJTA</description>
   <modules>
     <module>jta</module>
+    <module>reactive</module>
     <module>cdi</module>
     <module>jdbc</module>
     <module>spi</module>
