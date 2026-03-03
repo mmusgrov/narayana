@@ -11,7 +11,6 @@ import com.arjuna.ats.arjuna.common.arjPropertyManager;
 import com.arjuna.ats.arjuna.coordinator.ActionStatus;
 import com.arjuna.ats.arjuna.exceptions.ObjectStoreException;
 import com.arjuna.ats.arjuna.objectstore.RecoveryStore;
-import com.arjuna.ats.arjuna.state.InputObjectState;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.infinispan.InfinispanStoreEnvironmentBean;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.infinispan.InfinispanSlotKeyGenerator;
 import org.infinispan.Cache;
@@ -19,7 +18,6 @@ import org.infinispan.CacheSet;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.Grouper;
@@ -69,9 +67,8 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
 
         action.begin();
         action.add(participant);
-        int res = action.commit(false);
 
-        Assertions.assertEquals(ActionStatus.COMMITTED, res);
+        Assertions.assertEquals(ActionStatus.COMMITTED, action.commit(false));
 
         Assertions.assertEquals(0, store1.manager().getCache(CLUSTER_NAME).size());
 
@@ -79,6 +76,20 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
         recoveryStore.stop();
     }
 
+    /*
+     * Test Infinispan Distributed Mode which provides better scalability than does Replication Mode:
+     * - with replicated caches all nodes in a cluster hold all keys,
+     * - with distributed caches a number of copies are maintained to provide redundancy and fault tolerance.
+     * Distributed caches provide improved scalability and are able to transparently locate keys across the cluster
+     * providing for fast local read access of state that is stored remotely. In this test we verify how keys
+     * are distributed. Like replication mode it still provides strong consistency.
+     *
+     * Note that Infinispan has good support for partition handling in both distributed and replicated cache modes
+     * (TODO include some tests).
+     * This allows for more fine-grained control of a cache’s behaviour when a split brain occurs.
+     * Note that there is a dedicated ConflictManager component so that conflicts on cache entries can be
+     * automatically resolved on-demand by users and/or automatically during partition merges.
+     */
     @Test
     public void testDistributedMode() throws IOException, ObjectStoreException {
         class RecoveryGrouper implements Grouper<WrappedByteArray> {
@@ -104,20 +115,6 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
 
         RecoveryGrouper recoveryGrouper = new RecoveryGrouper();
 
-        /*
-         * Use Infinispan Distributed Mode which provides better scalability than does Replication Mode:
-         * - with replicated caches all nodes in a cluster hold all keys,
-         * - with distributed caches a number of copies are maintained to provide redundancy and fault tolerance.
-         * Distributed caches provide improved scalability and are able to transparently locate keys across the cluster
-         * providing for fast local read access of state that is stored remotely. In this test we verify how keys
-         * are distributed. Like replication mode it still provides strong consistency.
-         *
-         * Note that Infinispan has good support for partition handling in both distributed and replicated cache modes
-         * (TODO include some tests).
-         * This allows for more fine-grained control of a cache’s behaviour when a split brain occurs.
-         * Note that there is a dedicated ConflictManager component so that conflicts on cache entries can be
-         * automatically resolved on-demand by users and/or automatically during partition merges.
-         */
         List<Store> stores = new ArrayList<>();
         int numStores = 10;
         int numOwners = 3;
@@ -183,29 +180,6 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
         }
 
         /*
-         * verify that the entries were distributed across the cluster (we used CacheMode.DIST_SYNC)
-         */
-
-        DistributionManager dm = stores.get(0).cache().getAdvancedCache().getDistributionManager();
-        Object aKey = stores.get(0).cache().keySet().toArray()[0];
-        DistributionInfo info = dm.getCacheTopology().getDistribution(aKey);
-        // Each store was configured with distribution mode (CacheMode.DIST_SYNC) which means data is partitioned
-        // across the cluster, with each key stored on a specific number of nodes (we set numOwners to 3 above).
-        // So with numOwners = 3 there should be 3 writers (a primary and two backups):
-        Assertions.assertEquals(3, info.writeOwners().size());
-        Assertions.assertEquals(2, info.writeBackups().size());
-
-        // locate the primary store
-        String primary = info.primary().getMachineId(); // we set the machineId equal to the nodeId
-        Store primaryStore = stores.stream()
-                .filter(s -> s.nodeName().equals(primary))
-                .findFirst()
-                .orElse(null);
-
-        // and verify it exists
-        Assertions.assertNotNull(primaryStore);
-
-        /*
          * check the key grouping logic
          */
 
@@ -229,8 +203,32 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
         });
 
         /*
+         * verify that the entries were distributed across the cluster (we used CacheMode.DIST_SYNC)
+         */
+
+        DistributionManager dm = stores.get(0).cache().getAdvancedCache().getDistributionManager();
+        Object aKey = stores.get(0).cache().keySet().toArray()[0];
+        DistributionInfo info = dm.getCacheTopology().getDistribution(aKey);
+        // Each store was configured with distribution mode (CacheMode.DIST_SYNC) which means data is partitioned
+        // across the cluster, with each key stored on a specific number of nodes (we set numOwners to 3 above).
+        // So with numOwners = 3 there should be 3 writers (a primary and two backups):
+        Assertions.assertEquals(3, info.writeOwners().size());
+        Assertions.assertEquals(2, info.writeBackups().size());
+
+        // locate the primary store
+        String primary = info.primary().getMachineId(); // we set the machineId equal to the nodeId
+        Store primaryStore = stores.stream()
+                .filter(s -> s.nodeName().equals(primary))
+                .findFirst()
+                .orElse(null);
+
+        // and verify it exists
+        Assertions.assertNotNull(primaryStore);
+
+        /*
          * clean up the store (any recovery manager in the cluster can be used clean up)
          */
+
         recoveryStore = startRecoveryStore(stores.get(new Random().nextInt(stores.size())).config());
         for (AtomicAction aa : actions) {
             recoveryStore.remove_committed(aa.getSavingUid(), aa.type());
@@ -245,9 +243,10 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
             }
         }
 
-        /**
+        /*
          * verify that a new primary is selected if the current one is down
          */
+
         // stop the primary
         primaryStore.stop();
 
@@ -264,99 +263,6 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
         }
 
         recoveryStore.stop();
-    }
-
-    @Test
-    public void testGrouperMultiple() throws IOException, ObjectStoreException {
-        class RecoveryGrouper implements Grouper<WrappedByteArray> {
-            static final Pattern CB_DELIMITER_REGEX = Pattern.compile("\\{(\\w+)\\}");
-
-            @Override
-            public Object computeGroup(WrappedByteArray key, Object group) {
-                String k = new String(key.getBytes());
-
-                Matcher matcher = CB_DELIMITER_REGEX.matcher(k);
-                if (matcher.find()) {
-                    return matcher.group(1);
-                }
-
-                return "";
-            }
-            @Override
-            public Class<WrappedByteArray> getKeyType() {
-                return WrappedByteArray.class; //byte[].class;
-            }
-        }
-        String minorGroup = "minorGroup";
-        String majorGroup = "majorGroup";
-        RecoveryGrouper recoveryGrouper = new RecoveryGrouper();
-
-        /*
-         * Use Infinispan Distributed Mode which provides better scalability than does Replication Mode:
-         * - with replicated caches all nodes in a cluster hold all keys,
-         * - with distributed caches a number of copies are maintained to provide redundancy and fault tolerance.
-         * Distributed caches provide improved scalability and are able to transparently locate keys across the cluster
-         * providing for fast local read access of state that is stored remotely. In this test we verify how keys
-         * are distributed. Like replication mode it still provides strong consistency.
-         *
-         * Note that Infinispan has good support for partition handling in both distributed and replicated cache modes
-         * (TODO include some tests).
-         * This allows for more fine-grained control of a cache’s behaviour when a split brain occurs.
-         * Note that there is a dedicated ConflictManager component so that conflicts on cache entries can be
-         * automatically resolved on-demand by users and/or automatically during partition merges.
-         */
-        Store store1 = new Store(createCacheManager("node1", CacheMode.DIST_SYNC, 3, recoveryGrouper, false, false), minorGroup, "node1");
-        Store store2 = new Store(createCacheManager("node2", CacheMode.DIST_SYNC, 3, recoveryGrouper, false, false), majorGroup, "node2");
-        Store store3 = new Store(createCacheManager("node3", CacheMode.DIST_SYNC, 3, recoveryGrouper, false, false), majorGroup, "node3");
-
-        store1.start();
-        store2.start();
-        store3.start();
-
-        RecoveryStore recoveryStore = startRecoveryStore(store1.config());
-
-        Uid uid = new Uid();
-        AtomicAction action = new AtomicAction(uid);
-        Participant participant = new Participant();
-
-        action.begin();
-        action.add(participant);
-
-        // don't delete the log so we can check the cache entries
-        int res = action.commit(true);
-
-        Assertions.assertEquals(ActionStatus.H_HAZARD, res);
-        Assertions.assertEquals(1, store1.manager().getCache(CLUSTER_NAME).size());
-
-        // verify that the group has just the one key
-        Map<Object, Object> group1Keys = store1.manager().getCache(CLUSTER_NAME).getAdvancedCache().getGroup(minorGroup);
-        // to recover the keys use new WrappedByteArray((byte[]) g).getBytes()
-
-        Assertions.assertEquals(1, group1Keys.size());
-        Assertions.assertEquals(1, store1.manager().getCache(CLUSTER_NAME).size());
-        // and that the keys in the group match the keys in the cache
-        Assertions.assertTrue(group1Keys.containsKey(store1.manager().getCache(CLUSTER_NAME).keySet().toArray()[0]));
-
-        // clean up the store
-        recoveryStore.remove_committed(action.getSavingUid(), action.type());
-
-        Assertions.assertEquals(0, store1.manager().getCache(CLUSTER_NAME).size());
-
-        store1.stop();
-        store2.stop();
-        store3.stop();
-        recoveryStore.stop();
-    }
-
-    private void putWithMetadata(Cache<byte[], byte[]> cache, byte[] key, byte[] value) {
-        Metadata metadata = new EmbeddedMetadata.Builder().lifespan(1, TimeUnit.DAYS).maxIdle(1, TimeUnit.HOURS).build();
-
-        cache.getAdvancedCache().put(key, value, metadata);
-        CacheEntry<byte[], byte[]> entry = cache.getAdvancedCache().getCacheEntry(key);
-
-        Assertions.assertArrayEquals(value, entry.getValue());
-        Assertions.assertEquals(TimeUnit.DAYS.toMillis(1), entry.getLifespan());
-        Assertions.assertEquals(TimeUnit.HOURS.toMillis(1), entry.getMaxIdle());
     }
 
     /*
@@ -425,6 +331,20 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
 
         store1.stop();
         store2.stop();
+    }
+
+    /*
+     * test that it's possible to set the lifespan of keys (we don't test actual expiry)
+     */
+    private void putWithMetadata(Cache<byte[], byte[]> cache, byte[] key, byte[] value) {
+        Metadata metadata = new EmbeddedMetadata.Builder().lifespan(1, TimeUnit.DAYS).maxIdle(1, TimeUnit.HOURS).build();
+
+        cache.getAdvancedCache().put(key, value, metadata);
+        CacheEntry<byte[], byte[]> entry = cache.getAdvancedCache().getCacheEntry(key);
+
+        Assertions.assertArrayEquals(value, entry.getValue());
+        Assertions.assertEquals(TimeUnit.DAYS.toMillis(1), entry.getLifespan());
+        Assertions.assertEquals(TimeUnit.HOURS.toMillis(1), entry.getMaxIdle());
     }
 
     public static class UserDefinedSlotKeyGenerator implements InfinispanSlotKeyGenerator {
