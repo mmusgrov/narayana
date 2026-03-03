@@ -18,8 +18,10 @@ import org.infinispan.CacheSet;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.DistributionInfo;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LocalizedCacheTopology;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -92,6 +94,7 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
      */
     @Test
     public void testDistributedMode() throws IOException, ObjectStoreException {
+        // define strategy for grouping keys
         class RecoveryGrouper implements Grouper<WrappedByteArray> {
             static final Pattern CB_DELIMITER_REGEX = Pattern.compile("\\{(\\w+)\\}");
 
@@ -207,8 +210,12 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
          */
 
         DistributionManager dm = stores.get(0).cache().getAdvancedCache().getDistributionManager();
+        // sanity check that the local address of the DistributionManager is node 0
+        Assertions.assertEquals(stores.get(0).nodeName(), dm.getCacheTopology().getLocalAddress().getMachineId());
+        // look up the DistributionInfo for a particular key to verify that the keys are distributed correctly
         Object aKey = stores.get(0).cache().keySet().toArray()[0];
         DistributionInfo info = dm.getCacheTopology().getDistribution(aKey);
+
         // Each store was configured with distribution mode (CacheMode.DIST_SYNC) which means data is partitioned
         // across the cluster, with each key stored on a specific number of nodes (we set numOwners to 3 above).
         // So with numOwners = 3 there should be 3 writers (a primary and two backups):
