@@ -11,12 +11,17 @@ import com.arjuna.ats.arjuna.common.arjPropertyManager;
 import com.arjuna.ats.arjuna.coordinator.ActionStatus;
 import com.arjuna.ats.arjuna.exceptions.ObjectStoreException;
 import com.arjuna.ats.arjuna.objectstore.RecoveryStore;
+import com.arjuna.ats.arjuna.state.InputObjectState;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.infinispan.InfinispanStoreEnvironmentBean;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.infinispan.InfinispanSlotKeyGenerator;
 import org.infinispan.Cache;
+import org.infinispan.CacheSet;
 import org.infinispan.commons.marshall.WrappedByteArray;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.distribution.DataLocality;
+import org.infinispan.distribution.DistributionInfo;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -26,10 +31,15 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class InfinispanGrouperTest extends InfinispanTestBase {
 
@@ -69,13 +79,14 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
         recoveryStore.stop();
     }
 
-//TODO    @Test
+    @Test
     public void testDistributedMode() throws IOException, ObjectStoreException {
         class RecoveryGrouper implements Grouper<WrappedByteArray> {
             static final Pattern CB_DELIMITER_REGEX = Pattern.compile("\\{(\\w+)\\}");
 
             @Override
             public Object computeGroup(WrappedByteArray key, Object group) {
+                // group holds the group as currently computed, or null if no group has been determined yet
                 String k = new String(key.getBytes());
 
                 Matcher matcher = CB_DELIMITER_REGEX.matcher(k);
@@ -90,8 +101,7 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
                 return WrappedByteArray.class; //byte[].class;
             }
         }
-        String minorGroup = "minorGroup";
-        String majorGroup = "majorGroup";
+
         RecoveryGrouper recoveryGrouper = new RecoveryGrouper();
 
         /*
@@ -108,50 +118,151 @@ public class InfinispanGrouperTest extends InfinispanTestBase {
          * Note that there is a dedicated ConflictManager component so that conflicts on cache entries can be
          * automatically resolved on-demand by users and/or automatically during partition merges.
          */
-        Store store1 = new Store(createCacheManager("node1", CacheMode.DIST_SYNC, 1, recoveryGrouper, false, false), minorGroup, "node1");
-        Store store2 = new Store(createCacheManager("node2", CacheMode.DIST_SYNC, 1, recoveryGrouper, false, false), majorGroup, "node2");
-        Store store3 = new Store(createCacheManager("node3", CacheMode.DIST_SYNC, 1, recoveryGrouper, false, false), majorGroup, "node3");
+        List<Store> stores = new ArrayList<>();
+        int numStores = 10;
+        int numOwners = 3;
+        for (int i = 0; i < numStores; i++) {
+            String nodeId = "node" + i;
+            String groupId = "group" + i % 2;
+            Store store = new Store(createCacheManager(nodeId, CacheMode.DIST_SYNC, numOwners, recoveryGrouper, false, false),
+                    groupId, nodeId);
+            store.config().setSlotKeyGeneratorClassName(ClusterMemberId.class.getName());
+            store.start();
+            stores.add(store);
+        }
 
-        store1.config().setSlotKeyGeneratorClassName(ClusterMemberId.class.getName());
-        store2.config().setSlotKeyGeneratorClassName(ClusterMemberId.class.getName());
-        store3.config().setSlotKeyGeneratorClassName(ClusterMemberId.class.getName());
+        List<AtomicAction> actions = new ArrayList<>();
+        RecoveryStore recoveryStore;
+        int NUMBER_OF_ACTIONS_PER_NODE = 2;
 
-        store1.start();
-        store2.start();
-        store3.start();
+        for (Store store : stores) {
+            // start NUMBER_OF_ACTIONS_PER_NODE actions from node store.nodeName()
+            recoveryStore = startRecoveryStore(store.config());
 
-        RecoveryStore recoveryStore = startRecoveryStore(store1.config());
+            for (int i = 0; i < NUMBER_OF_ACTIONS_PER_NODE; i++) {
+                Uid uid = new Uid();
+                AtomicAction aa = new AtomicAction(uid);
+                Participant participant = new Participant();
 
-        Uid uid = new Uid();
-        AtomicAction action = new AtomicAction(uid);
-        Participant participant = new Participant();
+                aa.begin();
+                aa.add(participant);
 
-        action.begin();
-        action.add(participant);
+                // don't delete the log yet because we want to verify that the corresponding cache entries exist
+                int res = aa.commit(true);
 
-        // don't delete the log so we can check the cache entries
-        int res = action.commit(true);
+                Assertions.assertEquals(ActionStatus.H_HAZARD, res);
+                actions.add(aa);
+                // make sure the log is in the store
+                try {
+                    recoveryStore.read_committed(aa.getSavingUid(), aa.type());
+                } catch (ObjectStoreException e) {
+                    fail(e); // record should be available in the recovery store
+                }
+            }
+        }
 
-        Assertions.assertEquals(ActionStatus.H_HAZARD, res);
-        Assertions.assertEquals(1, store1.manager().getCache(CLUSTER_NAME).size());
+        // all actions should be readable from any node
+        for (Store store : stores) {
+            recoveryStore = startRecoveryStore(store.config());
 
-        // verify that the group has just the one key
-        Map<Object, Object> group1Keys = store1.manager().getCache(CLUSTER_NAME).getAdvancedCache().getGroup(minorGroup);
-        // to recover the keys use new WrappedByteArray((byte[]) g).getBytes()
+            for (AtomicAction aa : actions) {
+                try {
+                    recoveryStore.read_committed(aa.getSavingUid(), aa.type());
+                } catch (ObjectStoreException e) {
+                    fail(e); // record should be available in the recovery store
+                }
+            }
+        }
 
-        Assertions.assertEquals(1, group1Keys.size());
-        Assertions.assertEquals(1, store1.manager().getCache(CLUSTER_NAME).size());
-        // and that the keys in the group match the keys in the cache
-        Assertions.assertTrue(group1Keys.containsKey(store1.manager().getCache(CLUSTER_NAME).keySet().toArray()[0]));
+        // and all caches should contain the same entries
+        int totalNumberOfActions = NUMBER_OF_ACTIONS_PER_NODE * stores.size();
+        CacheSet<Object> keySet0 = stores.get(0).manager().getCache(CLUSTER_NAME).keySet();
+        for (Store store : stores) {
+            Assertions.assertEquals(totalNumberOfActions, store.manager().getCache(CLUSTER_NAME).size());
+            Assertions.assertTrue(keySet0.containsAll(store.manager().getCache(CLUSTER_NAME).keySet()));
+        }
 
-        // clean up the store
-        recoveryStore.remove_committed(action.getSavingUid(), action.type());
+        /*
+         * verify that the entries were distributed across the cluster (we used CacheMode.DIST_SYNC)
+         */
 
-        Assertions.assertEquals(0, store1.manager().getCache(CLUSTER_NAME).size());
+        DistributionManager dm = stores.get(0).cache().getAdvancedCache().getDistributionManager();
+        Object aKey = stores.get(0).cache().keySet().toArray()[0];
+        DistributionInfo info = dm.getCacheTopology().getDistribution(aKey);
+        // Each store was configured with distribution mode (CacheMode.DIST_SYNC) which means data is partitioned
+        // across the cluster, with each key stored on a specific number of nodes (we set numOwners to 3 above).
+        // So with numOwners = 3 there should be 3 writers (a primary and two backups):
+        Assertions.assertEquals(3, info.writeOwners().size());
+        Assertions.assertEquals(2, info.writeBackups().size());
 
-        store1.stop();
-        store2.stop();
-        store3.stop();
+        // locate the primary store
+        String primary = info.primary().getMachineId(); // we set the machineId equal to the nodeId
+        Store primaryStore = stores.stream()
+                .filter(s -> s.nodeName().equals(primary))
+                .findFirst()
+                .orElse(null);
+
+        // and verify it exists
+        Assertions.assertNotNull(primaryStore);
+
+        /*
+         * check the key grouping logic
+         */
+
+        // we only defined two groups above when creating the stores (new Store(...))
+        String group0 = "group0";
+        String group1 = "group1";
+        Map<Object, Object> g0 = stores.get(0).manager().getCache(CLUSTER_NAME).getAdvancedCache().getGroup(group0);
+        Map<Object, Object> g1 = stores.get(1).manager().getCache(CLUSTER_NAME).getAdvancedCache().getGroup(group1);
+
+        // check that the grouping operation returned the expected keys
+        g0.forEach((k, v) -> {
+            // the key generator was store.config().setSlotKeyGeneratorClassName(ClusterMemberId.class.getName());
+            // - use it to decode the key:
+            ClusterMemberId id = ClusterMemberId.fromUniqueKey((byte[]) k);
+            // verify that the key generator used group0
+            Assertions.assertEquals(group0, id.groupId);
+            // the value v is the transaction logs' OutputObjectState which is opaque
+
+            // verify that group1 does not contain this key from the group 0 query
+            Assertions.assertFalse(g1.containsKey(k));
+        });
+
+        /*
+         * clean up the store (any recovery manager in the cluster can be used clean up)
+         */
+        recoveryStore = startRecoveryStore(stores.get(new Random().nextInt(stores.size())).config());
+        for (AtomicAction aa : actions) {
+            recoveryStore.remove_committed(aa.getSavingUid(), aa.type());
+        }
+        // use any store to verify the actions were removed
+        recoveryStore = startRecoveryStore(stores.get(new Random().nextInt(stores.size())).config());
+        for (AtomicAction aa : actions) {
+            try {
+                recoveryStore.read_committed(aa.getSavingUid(), aa.type());
+                fail("record should not be in the store");
+            } catch (ObjectStoreException ignore) {
+            }
+        }
+
+        /**
+         * verify that a new primary is selected if the current one is down
+         */
+        // stop the primary
+        primaryStore.stop();
+
+        String newPrimary = dm.getCacheTopology().getDistribution(aKey).primary().getMachineId();
+        // a new primary store should have been chosen since the old one was removed from the cluster when we stopped it:
+        Assertions.assertNotEquals(primary, newPrimary);
+
+        for (Store store : stores) {
+            // make sure we don't try accessing the cache we just stopped
+            if (store.manager().isRunning(store.cache().getName())) {
+                Assertions.assertEquals(0, store.manager().getCache(CLUSTER_NAME).size());
+                store.stop();
+            }
+        }
+
         recoveryStore.stop();
     }
 
