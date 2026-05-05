@@ -44,6 +44,20 @@
       <artifactId>infinispan-core</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.jgroups</groupId>
+      <artifactId>jgroups-raft</artifactId>
+      <version>1.1.4.Final</version>
+<!--      <version>2.0.0.Alpha1</version>-->
+    </dependency>
+    <!-- Optional utilized to collect metrics. -->
+    <dependency>
+      <groupId>org.hdrhistogram</groupId>
+      <artifactId>HdrHistogram</artifactId>
+      <version>2.2.2</version>
+      <optional>true</optional>
+    </dependency>
+
+    <dependency>
       <groupId>org.jboss.narayana</groupId>
       <artifactId>common</artifactId>
     </dependency>
