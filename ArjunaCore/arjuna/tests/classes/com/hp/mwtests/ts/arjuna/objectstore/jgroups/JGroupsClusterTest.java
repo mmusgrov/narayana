@@ -115,8 +115,10 @@ public class JGroupsClusterTest {
         try {
             Uid uid = new Uid();
             Assertions.assertTrue(recoveryStore.write_committed(uid, typeName, oos));
+            // Thread.sleep(10); // the ReplicatedHashMap is not synchronous, go back to ReplCache
             InputObjectState inputData = recoveryStore.read_committed(uid, typeName);
-            assertEquals(data, inputData.unpackString());
+            String tn = inputData.unpackString();
+            assertEquals(data, tn);
         } catch (ObjectStoreException e) {
             fail(e);
         }

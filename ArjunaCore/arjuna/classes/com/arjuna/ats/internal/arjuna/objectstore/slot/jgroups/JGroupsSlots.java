@@ -9,10 +9,13 @@ import com.arjuna.ats.arjuna.logging.tsLogger;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.BackingSlots;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.SlotStoreEnvironmentBean;
 import com.arjuna.common.internal.util.propertyservice.BeanPopulator;
+import org.jgroups.View;
 import org.jgroups.blocks.ReplCache;
 import org.jgroups.blocks.ReplicatedHashMap;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -102,6 +105,32 @@ public class JGroupsSlots implements BackingSlots {
             String group = config.getGroupName();
 
             cache2 = config.getCache2();
+            cache2.addNotifier(new ReplicatedHashMap.Notification() {
+                @Override
+                public void entrySet(Object o, Object o2) {
+                    System.out.printf("add: %s=%s%n", o, o2);
+                }
+
+                @Override
+                public void entryRemoved(Object o) {
+                    System.out.printf("removed: %s%n", o);
+                }
+
+                @Override
+                public void viewChange(View view, List list, List list1) {
+                    System.out.printf("viewChange%n");
+                }
+
+                @Override
+                public void contentsSet(Map map) {
+                    System.out.printf("contentsSet%n");
+                }
+
+                @Override
+                public void contentsCleared() {
+                    System.out.printf("contentsCleared%n");
+                }
+            });
 
 //            if (group != null && !group.isEmpty())
 //                load(cache.getAdvancedCache().getGroup(group).keySet());
