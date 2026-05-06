@@ -8,7 +8,9 @@ package com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups;
 import com.arjuna.ats.arjuna.logging.tsLogger;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.SlotStoreEnvironmentBean;
 import com.arjuna.common.internal.util.ClassloadingUtility;
+import org.jgroups.JChannel;
 import org.jgroups.blocks.ReplCache;
+import org.jgroups.blocks.ReplicatedHashMap;
 //import org.jgroups.context.Flag;
 //import org.jgroups.manager.DefaultCacheManager;
 
@@ -26,6 +28,7 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
 
     private String jGroupsConfigFileName = "jgroups-transport-config.xml";
     private ReplCache<byte[], byte[]> cache;
+    private ReplicatedHashMap cache2;
     private String cacheName;
     private boolean ignoreReturnValues = true;
     private String nodeAddress;
@@ -116,7 +119,7 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
      * @return the name of the replicated cache
      */
     public String getCacheName() {
-        return cache != null ? cache.getClusterName() : cacheName;
+        return cache2 != null ? cache2.getClusterName() : cacheName;
     }
 
     public void setCacheName(String cacheName) {
@@ -218,5 +221,16 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
         }
 
         return jGroupsSlotKeyGenerator;
+    }
+
+    public ReplicatedHashMap<byte[], byte[]> getCache2() throws Exception {
+        if (cache2 == null) {
+            JChannel channel = new JChannel(getJGroupsConfigFileName());
+            channel.connect("cluster");//TODO getCacheName());
+
+            cache2 = new ReplicatedHashMap<>(channel);
+        }
+
+        return cache2;
     }
 }
