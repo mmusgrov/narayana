@@ -1685,8 +1685,7 @@ public interface arjunaI18NLogger {
 	void warn_jgroups_slot_store();
 
 	@Message(id = 12423, value = "JGroupsSlotStore: jgroups config file invalid", format = MESSAGE_FORMAT)
-	@LogMessage(level = WARN)
-	void warn_jgroups_config(@Cause() Throwable cause);
+	String warn_jgroups_config();
 
     /*
         Allocate new messages directly above this notice.

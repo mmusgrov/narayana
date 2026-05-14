@@ -5,17 +5,13 @@
  */
 package com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups;
 
+import com.arjuna.ats.arjuna.common.CoreEnvironmentBeanException;
 import com.arjuna.ats.arjuna.logging.tsLogger;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.SlotStoreEnvironmentBean;
 import com.arjuna.common.internal.util.ClassloadingUtility;
-import org.jgroups.JChannel;
 import org.jgroups.blocks.ReplCache;
-import org.jgroups.blocks.ReplicatedHashMap;
-//import org.jgroups.context.Flag;
-//import org.jgroups.manager.DefaultCacheManager;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Configuration properties for an JGroups backed slot store implementation
@@ -28,8 +24,7 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
 
     private String jGroupsConfigFileName = "jgroups-transport-config.xml";
     private ReplCache<byte[], byte[]> cache;
-    private ReplicatedHashMap cache2;
-    private String cacheName;
+    private String cacheName = "defaultJGroupsCache";
     private boolean ignoreReturnValues = true;
     private String nodeAddress;
     private String groupName = null;
@@ -56,11 +51,18 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
         this.jGroupsConfigFileName = jGroupsConfigFileName;
     }
 
-    public ReplCache<byte[], byte[]> getCache() {
+    public ReplCache<byte[], byte[]> getCache() throws CoreEnvironmentBeanException {
         if (cache == null) {
+            if (jGroupsConfigFileName == null) {
+                throw new CoreEnvironmentBeanException(tsLogger.i18NLogger.warn_jgroups_config());
+            }
+
             cache = new ReplCache<>(jGroupsConfigFileName, getCacheName());
-            // TODO configure via a jGroups config file
-/*            if (jGroupsConfigFileName != null) {
+        }
+
+        return cache;
+    }
+        /*            if (jGroupsConfigFileName != null) {
                 try {
                     DefaultCacheManager cacheManager = new DefaultCacheManager(
                             JGroupsStoreEnvironmentBean.class.getResourceAsStream(jGroupsConfigFileName));
@@ -75,10 +77,6 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
                     throw new RuntimeException(e);
                 }
             }*/
-        }
-
-        return cache;
-    }
 
     public void setCache(ReplCache<byte[], byte[]> cache) {
         this.cache = cache;
@@ -119,7 +117,7 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
      * @return the name of the replicated cache
      */
     public String getCacheName() {
-        return cache2 != null ? cache2.getClusterName() : cacheName;
+        return cache != null ? cache.getClusterName() : cacheName;
     }
 
     public void setCacheName(String cacheName) {
@@ -222,7 +220,7 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
 
         return jGroupsSlotKeyGenerator;
     }
-
+/*
     public ReplicatedHashMap<byte[], byte[]> getCache2() throws Exception {
         if (cache2 == null) {
             JChannel channel = new JChannel(getJGroupsConfigFileName());
@@ -232,5 +230,5 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
         }
 
         return cache2;
-    }
+    }*/
 }

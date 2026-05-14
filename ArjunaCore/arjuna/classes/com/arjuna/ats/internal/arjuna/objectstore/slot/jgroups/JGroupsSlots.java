@@ -63,7 +63,6 @@ import java.util.Set;
 public class JGroupsSlots implements BackingSlots {
     private byte[][] slots = null;
     private ReplCache<byte[], byte[]> cache;
-    private ReplicatedHashMap<byte[], byte[]> cache2;
     private JGroupsSlotKeyGenerator jGroupsSlotKeyGenerator;
 
     /**
@@ -104,39 +103,13 @@ public class JGroupsSlots implements BackingSlots {
             // set up the slot keys
             String group = config.getGroupName();
 
-            cache2 = config.getCache2();
-            cache2.addNotifier(new ReplicatedHashMap.Notification() {
-                @Override
-                public void entrySet(Object o, Object o2) {
-                    System.out.printf("add: %s=%s%n", o, o2);
-                }
-
-                @Override
-                public void entryRemoved(Object o) {
-                    System.out.printf("removed: %s%n", o);
-                }
-
-                @Override
-                public void viewChange(View view, List list, List list1) {
-                    System.out.printf("viewChange%n");
-                }
-
-                @Override
-                public void contentsSet(Map map) {
-                    System.out.printf("contentsSet%n");
-                }
-
-                @Override
-                public void contentsCleared() {
-                    System.out.printf("contentsCleared%n");
-                }
-            });
+            cache = config.getCache();
 
 //            if (group != null && !group.isEmpty())
 //                load(cache.getAdvancedCache().getGroup(group).keySet());
 //            else
 //                load(cache.getL2Cache().getInternalMap().keySet()); // TODO check that these are the correct keys
-            load(cache2.keySet());
+            load(cache.getL2Cache().getInternalMap().keySet());
         } catch (Exception e) {
             throw new IOException(e);
         }
@@ -157,7 +130,7 @@ public class JGroupsSlots implements BackingSlots {
     @Override
     public void write(int slot, byte[] data, boolean sync) throws IOException {
         try {
-            cache2.put(slots[slot], data);
+            cache.put(slots[slot], data);
             // With replicated or distributed caches, writes to the cache update other cluster nodes and when
             // another node reads the entry it uses the key to populate an entry in its own slot table.
             // cache.get(slots[slot]) will cause SlotStore to add the entry to its SlotStoreIndex
@@ -178,7 +151,7 @@ public class JGroupsSlots implements BackingSlots {
     @Override
     public byte[] read(int slot) throws IOException {
         try {
-            return cache2.get(slots[slot]);
+            return cache.get(slots[slot]);
         } catch (Exception e) {
             throw new IOException(e);
         }
@@ -194,7 +167,7 @@ public class JGroupsSlots implements BackingSlots {
     public void clear(int slot, boolean sync) throws IOException {
         try {
             // remove an entry from the entire cache system (it's important to use this method instead of evict)
-            cache2.remove(slots[slot]);
+            cache.remove(slots[slot]);
         } catch (Exception e) {
             throw new IOException(e);
         }
