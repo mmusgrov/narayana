@@ -11,6 +11,7 @@ import com.arjuna.ats.arjuna.common.arjPropertyManager;
 import com.arjuna.ats.arjuna.coordinator.ActionStatus;
 import com.arjuna.ats.arjuna.exceptions.ObjectStoreException;
 import com.arjuna.ats.arjuna.objectstore.RecoveryStore;
+import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.ByteArrayKey;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsStoreEnvironmentBean;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsSlotKeyGenerator;
 import org.junit.jupiter.api.AfterEach;
@@ -19,7 +20,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -377,9 +377,9 @@ public class JGroupsGrouperTest extends JGroupsTestBase {
         boolean initCalled;
 
         @Override
-        public byte[] generateUniqueKey(int index) {
+        public ByteArrayKey generateUniqueKey(int index) {
             generateCalled = true;
-            return new Uid().getBytes();
+            return new ByteArrayKey(new Uid().getBytes());
         }
 
         @Override

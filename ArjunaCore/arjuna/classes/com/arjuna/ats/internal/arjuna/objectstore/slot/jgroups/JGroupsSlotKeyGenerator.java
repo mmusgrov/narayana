@@ -5,7 +5,7 @@ package com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups;
  */
 public interface JGroupsSlotKeyGenerator {
     // generate a unique slot key for the given index (which is different from SlotStoreKey)
-    byte[] generateUniqueKey(int index);
+    ByteArrayKey generateUniqueKey(int index);
     // initialise the key generator with the JGroupsStoreEnvironment config
     void init(JGroupsStoreEnvironmentBean config);
 }

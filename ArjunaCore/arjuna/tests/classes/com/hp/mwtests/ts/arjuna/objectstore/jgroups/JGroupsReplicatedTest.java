@@ -5,15 +5,17 @@
  */
 package com.hp.mwtests.ts.arjuna.objectstore.jgroups;
 
+import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.ByteArrayKey;
 import org.jgroups.blocks.ReplCache;
+import org.junit.Before;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
 public class JGroupsReplicatedTest extends JGroupsTestBase {
+
+    @Before
+    public void setup() {
+    }
 
     /*
      * Test JGroups replicated caches. Unlike Infinispan, JGroups ReplCache is primarily an in-memory cache
@@ -41,13 +43,13 @@ public class JGroupsReplicatedTest extends JGroupsTestBase {
 
         // Start the first store
         store1.start();
-        ReplCache<byte[], byte[]> cache1 = store1.config().getCache();
+        ReplCache<ByteArrayKey, byte[]> cache1 = store1.config().getCache();
         Thread.sleep(1000); // Give time for the cluster to form
 
         // create two key value pairs
-        record KVPair(byte[] key, byte[] value) {}
-        KVPair kv1 = new KVPair("key1".getBytes(), "value1".getBytes());
-        KVPair kv2 = new KVPair("key2".getBytes(), "value2".getBytes());
+        record KVPair(ByteArrayKey key, byte[] value) {}
+        KVPair kv1 = new KVPair(new ByteArrayKey("key1".getBytes()), "value1".getBytes());
+        KVPair kv2 = new KVPair(new ByteArrayKey("key2".getBytes()), "value2".getBytes());
 
         // populate the first JGroups cache1 with them
         cache1.put(kv1.key, kv1.value);
@@ -55,7 +57,7 @@ public class JGroupsReplicatedTest extends JGroupsTestBase {
 
         // Start the second store - it should join the cluster and receive replicated data
         store2.start();
-        ReplCache<byte[], byte[]> cache2 = store2.config().getCache();
+        ReplCache<ByteArrayKey, byte[]> cache2 = store2.config().getCache();
         Thread.sleep(2000); // Give time for replication to complete
 
         // Verify it replicates to cache2
@@ -103,9 +105,9 @@ public class JGroupsReplicatedTest extends JGroupsTestBase {
         Thread.sleep(1000);
 
         // Add data before second node joins
-        record KVPair(byte[] key, byte[] value) {}
-        KVPair kv1 = new KVPair("early-key1".getBytes(), "early-value1".getBytes());
-        KVPair kv2 = new KVPair("early-key2".getBytes(), "early-value2".getBytes());
+        record KVPair(ByteArrayKey key, byte[] value) {}
+        KVPair kv1 = new KVPair(new ByteArrayKey("early-key1".getBytes()), "early-value1".getBytes());
+        KVPair kv2 = new KVPair(new ByteArrayKey("early-key2".getBytes()), "early-value2".getBytes());
 
         store1.config().getCache().put(kv1.key, kv1.value);
         store1.config().getCache().put(kv2.key, kv2.value);
@@ -123,7 +125,7 @@ public class JGroupsReplicatedTest extends JGroupsTestBase {
         Assertions.assertArrayEquals(kv2.value, store2.config().getCache().get(kv2.key));
 
         // Add more data after both nodes are up
-        KVPair kv3 = new KVPair("late-key3".getBytes(), "late-value3".getBytes());
+        KVPair kv3 = new KVPair(new ByteArrayKey("late-key3".getBytes()), "late-value3".getBytes());
         store2.config().getCache().put(kv3.key, kv3.value);
         Thread.sleep(1000);
 
@@ -165,9 +167,9 @@ public class JGroupsReplicatedTest extends JGroupsTestBase {
         Thread.sleep(2000); // Give time for cluster to form
 
         // Add data
-        record KVPair(byte[] key, byte[] value) {}
-        KVPair kv1 = new KVPair("key1".getBytes(), "value1".getBytes());
-        KVPair kv2 = new KVPair("key2".getBytes(), "value2".getBytes());
+        record KVPair(ByteArrayKey key, byte[] value) {}
+        KVPair kv1 = new KVPair(new ByteArrayKey("key1".getBytes()), "value1".getBytes());
+        KVPair kv2 = new KVPair(new ByteArrayKey("key2".getBytes()), "value2".getBytes());
 
         store1.config().getCache().put(kv1.key, kv1.value);
         store2.config().getCache().put(kv2.key, kv2.value);
@@ -192,7 +194,7 @@ public class JGroupsReplicatedTest extends JGroupsTestBase {
         Assertions.assertArrayEquals(kv2.value, store3.config().getCache().get(kv2.key));
 
         // Add new data after node2 is down
-        KVPair kv3 = new KVPair("key3".getBytes(), "value3".getBytes());
+        KVPair kv3 = new KVPair(new ByteArrayKey("key3".getBytes()), "value3".getBytes());
         store3.config().getCache().put(kv3.key, kv3.value);
         Thread.sleep(1000);
 

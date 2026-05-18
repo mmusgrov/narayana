@@ -46,7 +46,7 @@ public interface JGroupsStoreEnvironmentBeanMBean extends SlotStoreEnvironmentBe
      */
     void setStoreDir(String storeDir);
 
-    void setCache(ReplCache<byte[], byte[]> cache);
+    void setCache(ReplCache<ByteArrayKey, byte[]> cache);
 
     /**
      * If the return value of write operations will be ignored.

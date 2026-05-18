@@ -23,8 +23,9 @@ import java.io.File;
 public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implements JGroupsStoreEnvironmentBeanMBean {
 
     private String jGroupsConfigFileName = "jgroups-transport-config.xml";
-    private ReplCache<byte[], byte[]> cache;
+    private ReplCache<ByteArrayKey, byte[]> cache;
     private String cacheName = "defaultJGroupsCache";
+    private short replicationCount = -1;
     private boolean ignoreReturnValues = true;
     private String nodeAddress;
     private String groupName = null;
@@ -51,13 +52,16 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
         this.jGroupsConfigFileName = jGroupsConfigFileName;
     }
 
-    public ReplCache<byte[], byte[]> getCache() throws CoreEnvironmentBeanException {
+    public ReplCache<ByteArrayKey, byte[]> getCache() throws CoreEnvironmentBeanException {
         if (cache == null) {
             if (jGroupsConfigFileName == null) {
                 throw new CoreEnvironmentBeanException(tsLogger.i18NLogger.warn_jgroups_config());
             }
 
             cache = new ReplCache<>(jGroupsConfigFileName, getCacheName());
+            cache.setCallTimeout(1500L);
+            cache.setCachingTime(30000L);
+            cache.setMigrateData(true);
         }
 
         return cache;
@@ -78,8 +82,23 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
                 }
             }*/
 
-    public void setCache(ReplCache<byte[], byte[]> cache) {
+    public void setCache(ReplCache<ByteArrayKey, byte[]> cache) {
         this.cache = cache;
+    }
+
+    /**
+     * Define how many times an element should be available in a cluster.
+     * The default is -1 meaning the element is stored on all cluster nodes (full replication).
+     * With 1 the element is stored on a single node only, determined through consistent hashing (distribution).
+     * Setting it to a number K greater than 1 will store the element K times in the cluster.
+     * TODO implement the value internally by monitoring the cluster
+     */
+    public short getReplicationCount() {
+        return replicationCount;
+    }
+
+    public void setReplicationCount(short replicationCount) {
+        this.replicationCount = replicationCount;
     }
 
     /**

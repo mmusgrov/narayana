@@ -6,8 +6,9 @@
 package com.hp.mwtests.ts.arjuna.objectstore.jgroups;
 
 import com.arjuna.ats.arjuna.common.Uid;
-import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsStoreEnvironmentBean;
+import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.ByteArrayKey;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsSlotKeyGenerator;
+import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsStoreEnvironmentBean;
 
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
@@ -42,9 +43,9 @@ public class JGroupsClusterMemberId implements JGroupsSlotKeyGenerator {
         return keyPattern;
     }
 
-    public byte[] generateUniqueKey(int index) {
-        return String.format("{%s};%s;%s;%d", groupId, nodeId, uid.stringForm(), index)
-                .getBytes(StandardCharsets.UTF_8);
+    public ByteArrayKey generateUniqueKey(int index) {
+        return new ByteArrayKey(String.format("{%s};%s;%s;%d", groupId, nodeId, uid.stringForm(), index)
+                .getBytes(StandardCharsets.UTF_8));
     }
 
     static final Pattern CB_DELIMITER_REGEX = Pattern.compile("\\{(\\w+)}");

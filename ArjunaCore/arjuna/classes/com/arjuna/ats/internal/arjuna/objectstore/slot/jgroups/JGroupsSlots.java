@@ -9,13 +9,9 @@ import com.arjuna.ats.arjuna.logging.tsLogger;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.BackingSlots;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.SlotStoreEnvironmentBean;
 import com.arjuna.common.internal.util.propertyservice.BeanPopulator;
-import org.jgroups.View;
 import org.jgroups.blocks.ReplCache;
-import org.jgroups.blocks.ReplicatedHashMap;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -61,9 +57,10 @@ import java.util.Set;
  * read(byte[] read(int slot) method which does the actual jGroups cache lookup to get the data).
  */
 public class JGroupsSlots implements BackingSlots {
-    private byte[][] slots = null;
-    private ReplCache<byte[], byte[]> cache;
+    private ByteArrayKey[] slots = null;
+    private ReplCache<ByteArrayKey, byte[]> cache;
     private JGroupsSlotKeyGenerator jGroupsSlotKeyGenerator;
+    private short replicationCount = -1;
 
     /**
      * Overrides {@link BackingSlots#init(SlotStoreEnvironmentBean)} and has the same meaning
@@ -82,14 +79,14 @@ public class JGroupsSlots implements BackingSlots {
             config = BeanPopulator.getDefaultInstance(JGroupsStoreEnvironmentBean.class);
         }
 
-        slots = new byte[slotStoreConfig.getNumberOfSlots()][];
+        slots = new ByteArrayKey[slotStoreConfig.getNumberOfSlots()];
         jGroupsSlotKeyGenerator = config.getSlotKeyGenerator();
 
         if (jGroupsSlotKeyGenerator == null) {
             jGroupsSlotKeyGenerator = new JGroupsSlotKeyGenerator() {
                 @Override
-                public byte[] generateUniqueKey(int index) {
-                    return new Uid().getBytes();
+                public ByteArrayKey generateUniqueKey(int index) {
+                    return new ByteArrayKey(new Uid().getBytes());
                 }
 
                 @Override
@@ -104,6 +101,8 @@ public class JGroupsSlots implements BackingSlots {
             String group = config.getGroupName();
 
             cache = config.getCache();
+            replicationCount = config.getReplicationCount();
+            cache.start();
 
 //            if (group != null && !group.isEmpty())
 //                load(cache.getAdvancedCache().getGroup(group).keySet());
@@ -123,17 +122,24 @@ public class JGroupsSlots implements BackingSlots {
      *
      * @param slot the index, from 0 to config numberOfSlots-1
      * @param data the content.
-     * @param sync not used because the sync behaviour depends on the cache configuration
+     * @param sync not used (use {@link JGroupsStoreEnvironmentBean#setReplicationCount} to control how write operations
+     *             behave)
      *
      * @throws IOException if the cache operation threw an exception
      */
     @Override
     public void write(int slot, byte[] data, boolean sync) throws IOException {
         try {
-            cache.put(slots[slot], data);
-            // With replicated or distributed caches, writes to the cache update other cluster nodes and when
-            // another node reads the entry it uses the key to populate an entry in its own slot table.
-            // cache.get(slots[slot]) will cause SlotStore to add the entry to its SlotStoreIndex
+            /*
+             * cache the value until explicitly removed (timeout 0) by the transaction manager.
+             * The replicationCount controls how many nodes will see the write operation,
+             * -1 means don't cache at all in the L1 cache (L1 is the local cache L2 is the distributed one).
+             *
+             * A non-zero timeout value is the number of milliseconds to keep an idle (unaccessed) element in the cache
+             * - we never want to timeout entries instead relying on the TM to explicitly remove the item when it
+             * is no longer in doubt.
+             */
+            cache.put(slots[slot], data, replicationCount, 0);
         } catch (Exception e) {
             throw new IOException(e);
         }
@@ -173,10 +179,10 @@ public class JGroupsSlots implements BackingSlots {
         }
     }
 
-    private void load(Set<byte[]> keys) throws IOException {
+    private void load(Set<ByteArrayKey> keys) throws IOException {
         int i = 0;
 
-        for (byte[] key : keys) {
+        for (ByteArrayKey key : keys) {
             if (i < slots.length) {
                 slots[i] = key;
                 i += 1;
