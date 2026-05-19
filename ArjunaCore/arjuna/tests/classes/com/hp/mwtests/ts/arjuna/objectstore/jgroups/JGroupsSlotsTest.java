@@ -81,10 +81,6 @@ public class JGroupsSlotsTest {
         String backingSlotsClassName = slotStoreConfig.getBackingSlotsClassName();
         Assertions.assertEquals(JGroupsSlots.class.getName(), backingSlotsClassName);
 
-        JGroupsStoreEnvironmentBean config1 =
-                BeanPopulator.getDefaultInstance(JGroupsStoreEnvironmentBean.class);
-        JGroupsStoreEnvironmentBean config2 = new JGroupsStoreEnvironmentBean();
-        JGroupsStoreEnvironmentBean config3 = new JGroupsStoreEnvironmentBean();
         RecoveryStore recoveryStore = StoreManager.getRecoveryStore();
 
         String data = "junit1";

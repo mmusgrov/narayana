@@ -60,17 +60,20 @@ public class JGroupsTestBase {
 
             channel.setName(nodeName);
 
+//            config.setNumberOfSlots(256);
             config.setNodeAddress(nodeName);
             config.setGroupName(groupName);
             config.setStoreDir(path.toString());
-            config.setCacheName(CLUSTER_NAME);
+            config.setCacheName(groupName); // Use groupName so all stores join the same cluster
             config.setJGroupsConfigFileName(configFile);
             config.setBackingSlots(slots);
-            config.setSlotKeyGeneratorClassName(JGroupsClusterMemberId.class.getName()); // default key generator
+            // Use SharedSlotKeyGenerator so all nodes in the cluster share the same slot keys
+            config.setSlotKeyGeneratorClassName(SharedSlotKeyGenerator.class.getName());
         }
 
         /*
-         * Stop the cache and channel otherwise the network endpoints won't be closed correctly.
+         * Stop the cache (which will close its internal channel).
+         * Note: The Store's channel field is not used since ReplCache manages its own channel.
          */
         public void stop() {
             try {
@@ -79,16 +82,16 @@ public class JGroupsTestBase {
                 }
             } catch (CoreEnvironmentBeanException ignore) {
             }
-            if (channel != null && channel.isOpen()) {
-                channel.close();
-            }
         }
 
         public void start() throws Exception {
-            // Connect channel first
-            channel.connect(CLUSTER_NAME);
+            // NOTE: ReplCache creates and manages its own internal JChannel
+            // We don't need to connect the Store's channel separately
+            config.getCache().setCallTimeout(1500L);
+            config.getCache().setCachingTime(30000L);
+            config.getCache().setMigrateData(true);
 
-            // Create and start cache
+            // Start cache (this will create and connect its internal channel)
             config.getCache().start();
 
             // Initialize slots
