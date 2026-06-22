@@ -275,6 +275,7 @@ java -Dnode.id=2 -Dcluster.name=test-cluster \
    ```java
    cache.setCallTimeout(1500L);      // RPC timeout (ms)
    cache.setCachingTime(30000L);     // Entry TTL (ms), 0 = no timeout
+   cache.setCachingTime(0L);         // disable L2 caching entirely otherwise nodes might read stale records
    ```
 
 2. **Slot Count**
