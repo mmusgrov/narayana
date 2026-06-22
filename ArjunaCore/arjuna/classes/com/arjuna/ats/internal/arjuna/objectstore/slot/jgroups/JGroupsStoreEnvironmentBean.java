@@ -31,6 +31,7 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
     private String groupName = null;
     private String slotKeyGeneratorClassName;
     private JGroupsSlotKeyGenerator jGroupsSlotKeyGenerator;
+    private long cachingTime = 0L;  // L2 cache time in millis (0 = disabled for consistency)
 
     // Raft-specific configuration
     // WAL (Write-Ahead Log) persistence for JGroupsSlots (ReplCache)
@@ -75,7 +76,7 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
 
             cache = new ReplCache<>(jGroupsConfigFileName, getCacheName());
             cache.setCallTimeout(1500L);
-            cache.setCachingTime(30000L);
+            cache.setCachingTime(cachingTime);
             cache.setMigrateData(true);
         }
 
@@ -156,6 +157,23 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
 
     public void setCacheName(String cacheName) {
         this.cacheName = cacheName;
+    }
+
+    /**
+     * Get the L2 cache time in milliseconds.
+     * The L2 cache is a local cache that reduces network calls by caching get() results.
+     * Setting to 0 disables L2 caching for immediate consistency (recommended for WAL).
+     * Setting to a positive value (e.g., 30000 for 30 seconds) improves performance but
+     * may return stale data after remove() operations.
+     *
+     * @return caching time in milliseconds (0 = disabled, default)
+     */
+    public long getCachingTime() {
+        return cachingTime;
+    }
+
+    public void setCachingTime(long cachingTime) {
+        this.cachingTime = cachingTime;
     }
 
     /**

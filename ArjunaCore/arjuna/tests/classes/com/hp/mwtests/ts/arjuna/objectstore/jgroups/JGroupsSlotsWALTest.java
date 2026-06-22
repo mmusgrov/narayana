@@ -49,6 +49,9 @@ public class JGroupsSlotsWALTest {
         config.setWalEnabled(true);
         config.setWalSyncWrites(true);   // Fsync for durability
         config.setWalSyncDeletes(false);  // No fsync for deletes (faster)
+
+        // Set replication count to 1 (store on this node only) to avoid L1/L2 cache confusion
+        config.setReplicationCount((short)1);
     }
 
     @After

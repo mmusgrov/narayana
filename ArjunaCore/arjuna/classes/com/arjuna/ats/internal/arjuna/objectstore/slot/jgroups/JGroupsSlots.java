@@ -122,17 +122,23 @@ public class JGroupsSlots implements BackingSlots {
             replicationCount = config.getReplicationCount();
             cache.start();
 
-            // Load slots from cache or WAL
-            if (journal != null) {
-                // WAL enabled: load from journal first, then merge with cache
-                loadFromWAL();
+            // Initialize slots array BEFORE loadFromWAL
+            // First, try to load existing keys from cache
+            Set<ByteArrayKey> existingKeys = cache.getL2Cache().getInternalMap().keySet();
+            load(existingKeys);
+
+            // If slots weren't fully initialized (cache was empty), generate new keys
+            for (int i = 0; i < slots.length; i++) {
+                if (slots[i] == null) {
+                    slots[i] = jGroupsSlotKeyGenerator.generateUniqueKey(i);
+                }
             }
 
-//            if (group != null && !group.isEmpty())
-//                load(cache.getAdvancedCache().getGroup(group).keySet());
-//            else
-//                load(cache.getL2Cache().getInternalMap().keySet()); // TODO check that these are the correct keys
-            load(cache.getL2Cache().getInternalMap().keySet());
+            // Now load from WAL (slots[] is fully initialized)
+            if (journal != null) {
+                // WAL enabled: load from journal, but don't overwrite cache data
+                loadFromWAL();
+            }
         } catch (Exception e) {
             throw new IOException(e);
         }
@@ -141,6 +147,8 @@ public class JGroupsSlots implements BackingSlots {
     /**
      * Load slots from WAL into cache.
      * Called during initialization if WAL is enabled.
+     * Only loads data if not already present in cache (avoids overwriting
+     * newer replicated data with stale WAL data).
      */
     private void loadFromWAL() throws Exception {
         if (journal == null) {
@@ -148,18 +156,30 @@ public class JGroupsSlots implements BackingSlots {
         }
 
         int recoveredCount = 0;
+        int skippedCount = 0;
         for (Integer slotId : journal.getSlotIds()) {
             if (slotId >= 0 && slotId < slots.length) {
+                ByteArrayKey key = slots[slotId];
+
+                // Check if cache already has this data (from replication)
+                byte[] existingData = cache.get(key);
+                if (existingData != null) {
+                    // Cache already has data (likely from replication) - don't overwrite
+                    skippedCount++;
+                    continue;
+                }
+
+                // Cache is empty for this slot - restore from WAL
                 byte[] data = journal.read(slotId);
                 if (data != null) {
-                    // Restore to cache
-                    cache.put(slots[slotId], data, replicationCount, 0);
+                    cache.put(key, data, replicationCount, 0);
                     recoveredCount++;
                 }
             }
         }
 
-        tsLogger.logger.info("JGroupsSlots: Recovered " + recoveredCount + " slots from WAL to cache");
+        tsLogger.logger.info("JGroupsSlots: Recovered " + recoveredCount + " slots from WAL to cache" +
+            (skippedCount > 0 ? " (skipped " + skippedCount + " already in cache)" : ""));
     }
 
     /**
@@ -235,13 +255,17 @@ public class JGroupsSlots implements BackingSlots {
     @Override
     public void clear(int slot, boolean sync) throws IOException {
         try {
+            ByteArrayKey key = slots[slot];
+
             // Delete from WAL first (if enabled)
             if (journal != null) {
                 journal.delete(slot);
             }
 
-            // remove an entry from the entire cache system (it's important to use this method instead of evict)
-            cache.remove(slots[slot]);
+            // Remove from cache - both the replicated cache and local L2 cache
+            // Note: ReplCache.remove() removes from distributed cache but not always from L2
+            cache.remove(key);
+            cache.getL2Cache().remove(key);
         } catch (Exception e) {
             throw new IOException(e);
         }
