@@ -207,6 +207,7 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
     }
 
     /**
+     * TODO do we still need group names (they applied to the inifinispan store)
      * Cluster Configuration Considerations
      * <p>
      * 1. A single member must run the recovery manager and a new one started if it fails (aka an HA singleton)

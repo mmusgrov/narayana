@@ -101,6 +101,15 @@ public class JGroupsRaftSlots implements BackingSlots {
                 throw new IllegalStateException("RAFT protocol not found in JGroups stack");
             }
 
+            // Configure Raft log directory (where FileBasedLog stores data)
+            String storeDir = config.getStoreDir();
+            raft.logDir(storeDir);
+            tsLogger.logger.info("Configured Raft log directory: " + storeDir);
+
+            // Configure Raft log fsync behavior
+            raft.logUseFsync(config.isRaftLogFsync());
+            tsLogger.logger.info("Configured Raft log fsync: " + config.isRaftLogFsync());
+
             // Set members list
             raft.members(java.util.Arrays.asList(config.getRaftMembers().split(",")));
             tsLogger.logger.info("Configured RAFT members: " + config.getRaftMembers());
