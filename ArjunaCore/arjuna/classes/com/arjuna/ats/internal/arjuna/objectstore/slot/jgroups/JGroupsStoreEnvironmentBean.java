@@ -33,6 +33,12 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
     private JGroupsSlotKeyGenerator jGroupsSlotKeyGenerator;
 
     // Raft-specific configuration
+    // WAL (Write-Ahead Log) persistence for JGroupsSlots (ReplCache)
+    private boolean walEnabled = false;
+    private boolean walSyncWrites = true;  // Fsync after writes (slower, safer)
+    private boolean walSyncDeletes = false; // Fsync after deletes (usually not needed)
+
+    // Raft-specific properties (for JGroupsRaftSlots)
     private boolean raftEnabled = false;
     private boolean raftLogFsync = true;
     private String raftMembers = null;
@@ -255,6 +261,53 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
      *
      * @return true if Raft is enabled
      */
+    // ===== WAL (Write-Ahead Log) Properties =====
+
+    /**
+     * Enable Write-Ahead Log for JGroupsSlots persistence.
+     * When enabled, all slot writes are logged to disk for crash recovery.
+     *
+     * @return true if WAL is enabled
+     */
+    public boolean isWalEnabled() {
+        return walEnabled;
+    }
+
+    public void setWalEnabled(boolean walEnabled) {
+        this.walEnabled = walEnabled;
+    }
+
+    /**
+     * Enable fsync after each write to WAL.
+     * When enabled, writes are durable (survive crash) but slower (~10-20ms).
+     * When disabled, writes are faster (~1-2ms) but may be lost on crash.
+     *
+     * @return true if fsync is enabled for writes
+     */
+    public boolean isWalSyncWrites() {
+        return walSyncWrites;
+    }
+
+    public void setWalSyncWrites(boolean walSyncWrites) {
+        this.walSyncWrites = walSyncWrites;
+    }
+
+    /**
+     * Enable fsync after each delete from WAL.
+     * Usually not needed since deletes are less critical than writes.
+     *
+     * @return true if fsync is enabled for deletes
+     */
+    public boolean isWalSyncDeletes() {
+        return walSyncDeletes;
+    }
+
+    public void setWalSyncDeletes(boolean walSyncDeletes) {
+        this.walSyncDeletes = walSyncDeletes;
+    }
+
+    // ===== Raft Properties =====
+
     public boolean isRaftEnabled() {
         return raftEnabled;
     }

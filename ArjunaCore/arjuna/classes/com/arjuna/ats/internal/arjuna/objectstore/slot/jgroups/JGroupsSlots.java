@@ -61,6 +61,7 @@ public class JGroupsSlots implements BackingSlots {
     private ReplCache<ByteArrayKey, byte[]> cache;
     private JGroupsSlotKeyGenerator jGroupsSlotKeyGenerator;
     private short replicationCount = -1;
+    private SlotJournal journal = null;  // Optional WAL for persistence
 
     /**
      * Overrides {@link BackingSlots#init(SlotStoreEnvironmentBean)} and has the same meaning
@@ -97,12 +98,35 @@ public class JGroupsSlots implements BackingSlots {
         jGroupsSlotKeyGenerator.init(config);
 
         try {
+            // Initialize WAL if enabled
+            if (config.isWalEnabled()) {
+                String storeDir = config.getStoreDir();
+                if (storeDir == null || storeDir.isEmpty()) {
+                    throw new IllegalArgumentException("storeDir must be set when WAL is enabled");
+                }
+
+                tsLogger.logger.info("JGroupsSlots: Enabling WAL with storeDir=" + storeDir +
+                    ", syncWrites=" + config.isWalSyncWrites() +
+                    ", syncDeletes=" + config.isWalSyncDeletes());
+
+                journal = new SlotJournal(storeDir, config.isWalSyncWrites(), config.isWalSyncDeletes());
+                journal.start();
+
+                tsLogger.logger.info("JGroupsSlots: WAL loaded " + journal.size() + " slots from disk");
+            }
+
             // set up the slot keys
             String group = config.getGroupName();
 
             cache = config.getCache();
             replicationCount = config.getReplicationCount();
             cache.start();
+
+            // Load slots from cache or WAL
+            if (journal != null) {
+                // WAL enabled: load from journal first, then merge with cache
+                loadFromWAL();
+            }
 
 //            if (group != null && !group.isEmpty())
 //                load(cache.getAdvancedCache().getGroup(group).keySet());
@@ -112,6 +136,30 @@ public class JGroupsSlots implements BackingSlots {
         } catch (Exception e) {
             throw new IOException(e);
         }
+    }
+
+    /**
+     * Load slots from WAL into cache.
+     * Called during initialization if WAL is enabled.
+     */
+    private void loadFromWAL() throws Exception {
+        if (journal == null) {
+            return;
+        }
+
+        int recoveredCount = 0;
+        for (Integer slotId : journal.getSlotIds()) {
+            if (slotId >= 0 && slotId < slots.length) {
+                byte[] data = journal.read(slotId);
+                if (data != null) {
+                    // Restore to cache
+                    cache.put(slots[slotId], data, replicationCount, 0);
+                    recoveredCount++;
+                }
+            }
+        }
+
+        tsLogger.logger.info("JGroupsSlots: Recovered " + recoveredCount + " slots from WAL to cache");
     }
 
     /**
@@ -130,6 +178,11 @@ public class JGroupsSlots implements BackingSlots {
     @Override
     public void write(int slot, byte[] data, boolean sync) throws IOException {
         try {
+            // Write to WAL first (if enabled) for durability
+            if (journal != null) {
+                journal.write(slot, data);
+            }
+
             /*
              * cache the value until explicitly removed (timeout 0) by the transaction manager.
              * The replicationCount controls how many nodes will see the write operation,
@@ -157,7 +210,14 @@ public class JGroupsSlots implements BackingSlots {
     @Override
     public byte[] read(int slot) throws IOException {
         try {
-            return cache.get(slots[slot]);
+            byte[] data = cache.get(slots[slot]);
+
+            // If not in cache but WAL enabled, try WAL (shouldn't happen normally)
+            if (data == null && journal != null) {
+                data = journal.read(slot);
+            }
+
+            return data;
         } catch (Exception e) {
             // TODO figure out why InfinispanSlots doesn't hit this problem -
             // I suspect there something amiss with the JGroups cluster config
@@ -175,10 +235,29 @@ public class JGroupsSlots implements BackingSlots {
     @Override
     public void clear(int slot, boolean sync) throws IOException {
         try {
+            // Delete from WAL first (if enabled)
+            if (journal != null) {
+                journal.delete(slot);
+            }
+
             // remove an entry from the entire cache system (it's important to use this method instead of evict)
             cache.remove(slots[slot]);
         } catch (Exception e) {
             throw new IOException(e);
+        }
+    }
+
+    /**
+     * Shutdown the store, closing the WAL if enabled.
+     */
+    public void shutdown() {
+        if (journal != null) {
+            try {
+                journal.stop();
+                tsLogger.logger.info("JGroupsSlots: WAL stopped");
+            } catch (Exception e) {
+                tsLogger.logger.warn("JGroupsSlots: Error stopping WAL: " + e.getMessage());
+            }
         }
     }
 
