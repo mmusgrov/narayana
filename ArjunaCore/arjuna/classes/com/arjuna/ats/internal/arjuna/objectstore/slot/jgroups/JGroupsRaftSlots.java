@@ -231,7 +231,7 @@ public class JGroupsRaftSlots implements BackingSlots {
             cache.put(slotId, data);
         } catch (Exception e) {
             tsLogger.logger.warn("Raft write failed for slot " + slotId, e);
-            throw new RuntimeException("Raft write failed", e);
+            throw new IOException("Raft write failed", e);
         }
     }
 

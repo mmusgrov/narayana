@@ -110,7 +110,7 @@ public class HornetqJournalStore
             }
             sequentialFileFactory = new NIOSequentialFileFactory(
                     storeDir,
-                    true,
+                    true,  // buffered - enables TimedBuffer for write batching
                     envBean.getBufferSize(),
                     (int)(1000000000d / envBean.getBufferFlushesPerSecond()), // bufferTimeout nanos .000000001 second
                     1, // maxIO has no effect in NIO mode

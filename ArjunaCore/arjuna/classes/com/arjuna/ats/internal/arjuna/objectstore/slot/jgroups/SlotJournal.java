@@ -64,9 +64,12 @@ public class SlotJournal {
      * @param storeDir Directory for journal files
      * @param syncWrites If true, fsync after each write (slower but safer)
      * @param syncDeletes If true, fsync after each delete
+     * @param bufferSize Buffer size in bytes for batching writes
+     * @param bufferFlushesPerSecond How many times per second to flush the buffer
      * @throws IOException if journal cannot be created
      */
-    public SlotJournal(String storeDir, boolean syncWrites, boolean syncDeletes) throws IOException {
+    public SlotJournal(String storeDir, boolean syncWrites, boolean syncDeletes,
+                       int bufferSize, int bufferFlushesPerSecond) throws IOException {
         this.syncWrites = syncWrites;
         this.syncDeletes = syncDeletes;
 
@@ -77,13 +80,16 @@ public class SlotJournal {
 
         // Use NIO by default (AIO requires native library)
         // For production, could enable AIO if available
+        // Buffer timeout calculation matches HornetqJournalStore
+        int bufferTimeoutNanos = (int)(1000000000d / bufferFlushesPerSecond);
+
         SequentialFileFactory fileFactory = new NIOSequentialFileFactory(
             storeDirFile,
-            true,          // buffered
-            4096,          // buffer size
-            1000000,       // buffer timeout (1ms in nanos)
-            1,             // maxIO (NIO ignores this)
-            false          // logRates
+            true,                  // buffered - enables TimedBuffer for write batching
+            bufferSize,            // buffer size (configurable, default 490KB)
+            bufferTimeoutNanos,    // buffer timeout in nanos (calculated from flushes/sec)
+            1,                     // maxIO (NIO ignores this)
+            false                  // logRates
         );
 
         // Create journal with reasonable defaults

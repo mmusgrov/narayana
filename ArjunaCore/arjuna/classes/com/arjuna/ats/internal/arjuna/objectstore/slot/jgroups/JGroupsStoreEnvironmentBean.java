@@ -38,6 +38,8 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
     private boolean walEnabled = false;
     private boolean walSyncWrites = true;  // Fsync after writes (slower, safer)
     private boolean walSyncDeletes = false; // Fsync after deletes (usually not needed)
+    private int walBufferSize = 490 * 1024; // Artemis journal buffer size (default 490KB, matches HornetQ default)
+    private int walBufferFlushesPerSecond = 300; // Artemis journal flush rate (default 300, matches HornetQ default)
 
     // Raft-specific properties (for JGroupsRaftSlots)
     private boolean raftEnabled = false;
@@ -323,6 +325,37 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
 
     public void setWalSyncDeletes(boolean walSyncDeletes) {
         this.walSyncDeletes = walSyncDeletes;
+    }
+
+    /**
+     * Get the WAL buffer size in bytes for Artemis journal batching.
+     * Larger buffers allow more writes to batch together before flushing.
+     * Default: 490KB (matches HornetqJournalEnvironmentBean default)
+     *
+     * @return buffer size in bytes
+     */
+    public int getWalBufferSize() {
+        return walBufferSize;
+    }
+
+    public void setWalBufferSize(int walBufferSize) {
+        this.walBufferSize = walBufferSize;
+    }
+
+    /**
+     * Get the WAL buffer flush rate (flushes per second).
+     * Higher values = more frequent flushes = lower latency but less batching.
+     * Lower values = less frequent flushes = higher latency but more batching.
+     * Default: 300 (matches HornetqJournalEnvironmentBean default)
+     *
+     * @return flushes per second
+     */
+    public int getWalBufferFlushesPerSecond() {
+        return walBufferFlushesPerSecond;
+    }
+
+    public void setWalBufferFlushesPerSecond(int walBufferFlushesPerSecond) {
+        this.walBufferFlushesPerSecond = walBufferFlushesPerSecond;
     }
 
     // ===== Raft Properties =====

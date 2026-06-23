@@ -1,5 +1,5 @@
 
-:sectnums!:
+:sectnums!: all
 
 [appendix]
 = Object store implementations
@@ -181,6 +181,7 @@ These should be garbage collected by the system,(or the recovery sub-system, eve
 
 Check the Configuration Options table for how to configure the LogStore.
 
+=== Clustered and Persistent object stores
 ==== InfinispanSlotStore
 
 [WARNING]
@@ -282,6 +283,265 @@ InfinispanStoreEnvironmentBean.slotKeyGeneratorClassName::
 The classname of the class that should be used to generate unique slot keys. The class should implement the interface
 `com.arjuna.ats.internal.arjuna.objectstore.slot.infinispan.InfinispanSlotKeyGenerator`.
 If unset then a strategy based on `com.arjuna.ats.arjuna.common.Uid` will be used.
+
+==== JGroupsSlotStore
+
+The JGroupsSlotStore provides a clustered transaction log store backed by JGroups ReplCache with an optional write-ahead log (WAL) for disaster recovery.
+This store combines high performance in-memory replication with configurable durability guarantees.
+
+The JGroupsSlotStore uses JGroups ReplCache to replicate transaction states across cluster members.
+Reads are served from the in-memory cache, providing low latency access.
+An optional write-ahead log (WAL) based on the Artemis Journal can be enabled to persist transaction states to disk for crash recovery.
+
+Like the InfinispanSlotStore, this implementation is built on the Narayana SlotStore framework and is configured as a backend to the SlotStoreAdaptor.
+
+.Configuration Properties
+
+ObjectStoreEnvironmentBean.objectStoreType::
+Defines the object store implementation and must be set to `com.arjuna.ats.internal.arjuna.objectstore.slot.SlotStoreAdaptor`.
+It is recommended to also set the state and communication stores to the same type via `ObjectStoreEnvironmentBean.stateStore.objectStoreType` and `ObjectStoreEnvironmentBean.communicationStore.objectStoreType` properties.
+
+SlotStoreEnvironmentBean.backingSlotsClassName::
+Defines the SlotStore backend and must be set to `com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsSlots` to enable the feature.
+
+SlotStoreEnvironmentBean.numberOfSlots::
+Sets the number of slots for the store.
+Should equal the maximum number of unresolved transactions expected at any given time, including those in-flight and awaiting recovery.
+[WARNING]
+====
+Reducing the number of slots in a non-empty store may result in data loss.
+====
+The default is 256.
+
+SlotStoreEnvironmentBean.bytesPerSlot::
+Sets the maximum size of entries in the store.
+A typical transaction record is less than 1KB.
+[WARNING]
+====
+Modifying the size of slots in a non-empty store may result in data loss.
+====
+Default: 4096
+
+JGroupsStoreEnvironmentBean.channelName::
+The name of the JGroups channel.
+Multiple stores can share the same channel if they use different cache names.
+Default: "jgroups-store-channel"
+
+JGroupsStoreEnvironmentBean.cacheName::
+The name of the ReplCache instance used to store transaction states.
+Each object store type (transaction log, state store, communication store) should use a unique cache name.
+Default: "clusteredObjectStore"
+
+JGroupsStoreEnvironmentBean.configFile::
+The JGroups XML configuration file.
+The file path is relative to the classpath and should begin with a slash.
+Default: "/jgroups.xml"
+
+JGroupsStoreEnvironmentBean.replicationCount::
+The number of cluster members to which each entry should be replicated.
+Use `-1` for full replication to all cluster members.
+Default: -1 (full replication)
+
+JGroupsStoreEnvironmentBean.cachingTime::
+The time in milliseconds to cache entries in a secondary L2 cache.
+Set to `0` to disable L2 caching.
+Default: 30000 (30 seconds)
+
+JGroupsStoreEnvironmentBean.walEnabled::
+Enables the write-ahead log (WAL) for disaster recovery.
+When enabled, all writes are persisted to disk using an Artemis Journal before being applied to the ReplCache.
+Default: false
+
+JGroupsStoreEnvironmentBean.walStoreDir::
+The filesystem location for the write-ahead log files.
+If not an absolute path, it is interpreted relative to the user's current working directory.
+Only applies when `walEnabled` is true.
+Default: "jgroups-wal"
+
+JGroupsStoreEnvironmentBean.walSyncWrites::
+When true, write operations are immediately flushed to disk (fdatasync).
+When false, writes are buffered and flushed periodically.
+Only applies when `walEnabled` is true.
+Default: true
+
+JGroupsStoreEnvironmentBean.walSyncDeletes::
+When true, delete operations are immediately flushed to disk.
+When false, deletes are buffered.
+Only applies when `walEnabled` is true.
+Default: false
+
+JGroupsStoreEnvironmentBean.walBufferSize::
+The size in bytes of the write buffer for the WAL.
+Larger buffers allow more batching but use more memory.
+Only applies when `walEnabled` is true.
+Default: 501760 (490KB)
+
+JGroupsStoreEnvironmentBean.walBufferFlushesPerSecond::
+The number of times per second the WAL buffer is flushed to disk.
+Higher values reduce latency but may reduce throughput.
+Only applies when `walEnabled` is true.
+Default: 300 (flush every 3.33ms)
+
+.Performance Characteristics
+
+With WAL disabled (`walEnabled=false`):
+- Highest throughput (~1.3M ops/s with 10 threads in benchmarks)
+- Transaction states only in memory and replicated across cluster
+- Crash recovery relies on other cluster members
+- Not suitable for disaster recovery scenarios
+
+With WAL enabled and fsync (`walEnabled=true`, `walSyncWrites=true`):
+- Reduced but still high throughput (~850K ops/s with 10 threads)
+- Full durability: survives process crashes and power failures
+- Reads still served from fast in-memory cache
+- Write-ahead log provides independent recovery capability
+
+.Cluster Configuration Considerations
+
+1. For disaster recovery, enable WAL on all cluster members or ensure at least one member has WAL enabled
+2. A single member must run the recovery manager (HA singleton pattern)
+3. Any member can create and commit transactions
+4. The `TransactionStatusManager` is used during recovery to determine if the transaction creator is still running
+5. In production, configure JGroups for your network topology (TCP vs UDP, discovery mechanism)
+
+==== JGroupsRaftSlotStore
+
+The JGroupsRaftSlotStore provides a clustered transaction log store with strong consistency guarantees using the Raft consensus protocol.
+This implementation is built on JGroups-Raft and ensures that all transaction log operations are consistently replicated across a majority of cluster members.
+
+Unlike JGroupsSlotStore which uses ReplCache for simple replication, this store uses Raft consensus to maintain a replicated state machine with strong consistency.
+Every write operation must be acknowledged by a majority of Raft members before being considered committed, providing stronger guarantees than simple replication.
+
+Like the other slot-based stores, this implementation is built on the Narayana SlotStore framework and is configured as a backend to the SlotStoreAdaptor.
+
+.Configuration Properties
+
+ObjectStoreEnvironmentBean.objectStoreType::
+Defines the object store implementation and must be set to `com.arjuna.ats.internal.arjuna.objectstore.slot.SlotStoreAdaptor`.
+It is recommended to also set the state and communication stores to the same type via `ObjectStoreEnvironmentBean.stateStore.objectStoreType` and `ObjectStoreEnvironmentBean.communicationStore.objectStoreType` properties.
+
+SlotStoreEnvironmentBean.backingSlotsClassName::
+Defines the SlotStore backend and must be set to `com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsSlots` to enable the feature.
+Note: The same class is used for both ReplCache and Raft modes.
+
+SlotStoreEnvironmentBean.numberOfSlots::
+Sets the number of slots for the store.
+Should equal the maximum number of unresolved transactions expected at any given time, including those in-flight and awaiting recovery.
+[WARNING]
+====
+Reducing the number of slots in a non-empty store may result in data loss.
+====
+The default is 256.
+
+SlotStoreEnvironmentBean.bytesPerSlot::
+Sets the maximum size of entries in the store.
+A typical transaction record is less than 1KB.
+[WARNING]
+====
+Modifying the size of slots in a non-empty store may result in data loss.
+====
+Default: 4096
+
+JGroupsStoreEnvironmentBean.channelName::
+The name of the JGroups channel.
+Multiple stores can share the same channel if they use different Raft IDs.
+Default: "jgroups-store-channel"
+
+JGroupsStoreEnvironmentBean.cacheName::
+The Raft ID that identifies this replicated state machine.
+Each object store type (transaction log, state store, communication store) should use a unique Raft ID.
+Default: "clusteredObjectStore"
+
+JGroupsStoreEnvironmentBean.configFile::
+The JGroups XML configuration file for Raft.
+The file path is relative to the classpath and should begin with a slash.
+Default: "/jgroups-raft.xml"
+
+JGroupsStoreEnvironmentBean.raftEnabled::
+Must be set to `true` to enable Raft consensus mode.
+When false, the store operates in ReplCache mode (standard JGroupsSlotStore).
+Default: false
+
+JGroupsStoreEnvironmentBean.raftMembers::
+Comma-separated list of Raft member identifiers.
+All members of the Raft cluster must be listed here.
+Example: "node1,node2,node3"
+For single-node testing, use a single member name.
+[WARNING]
+====
+All cluster members must have the same raftMembers configuration for the cluster to form correctly.
+====
+This property is required when `raftEnabled=true`.
+
+JGroupsStoreEnvironmentBean.raftLogStoreDir::
+The filesystem location for the Raft log files.
+If not an absolute path, it is interpreted relative to the user's current working directory.
+The Raft log stores the replicated state machine operations and is essential for crash recovery.
+Default: "raft-log"
+
+JGroupsStoreEnvironmentBean.raftLogFsync::
+When true, Raft log entries are immediately flushed to disk (fdatasync).
+When false, log entries are buffered and flushed periodically.
+[WARNING]
+====
+Setting to false may improve performance but could result in data loss on power failure.
+For production deployments requiring full durability, set to true.
+====
+Default: false
+
+JGroupsStoreEnvironmentBean.raftTimeout::
+The timeout in milliseconds for Raft operations.
+This affects leader election timeouts and heartbeat intervals.
+Adjust based on network latency and cluster size.
+Default: 3000 (3 seconds)
+
+.Performance Characteristics
+
+With Raft log buffered (`raftLogFsync=false`):
+- Very high throughput (~1.3M ops/s with 10 threads in benchmarks)
+- Raft ensures majority consensus before acknowledging writes
+- Log buffering reduces disk I/O overhead
+- May lose last few milliseconds of operations on power failure
+
+With Raft log fsync (`raftLogFsync=true`):
+- Still high throughput (~1.29M ops/s with 10 threads)
+- Full durability with majority consensus
+- Survives both process crashes and power failures on majority of nodes
+- Slightly reduced performance due to disk sync
+
+.Consensus and Recovery Guarantees
+
+1. **Raft Majority Consensus**: Every write operation is replicated to a majority of cluster members before being acknowledged
+2. **Leader Election**: If the Raft leader fails, remaining members automatically elect a new leader
+3. **Log Replication**: The Raft log is replicated across all members and provides the source of truth for recovery
+4. **Split-Brain Protection**: Raft's consensus mechanism prevents split-brain scenarios
+5. **Consistency**: All members see the same sequence of operations (linearizable consistency)
+
+.Cluster Configuration Considerations
+
+1. **Odd Number of Members**: Deploy with an odd number of members (3, 5, or 7) for optimal fault tolerance
+   - 3 members: tolerates 1 failure
+   - 5 members: tolerates 2 failures
+   - 7 members: tolerates 3 failures
+2. **Raft Configuration**: All members must have identical `raftMembers` lists
+3. **Network Requirements**: Members must be able to communicate directly for leader election and heartbeats
+4. **Recovery Manager**: Only one member should run the recovery manager to avoid duplicate recovery attempts
+5. **Performance vs Durability**: Balance `raftLogFsync` setting based on durability requirements and acceptable performance
+6. **Log Maintenance**: Raft log grows over time and may require periodic compaction (automatic in JGroups-Raft)
+
+.When to Choose Raft over ReplCache
+
+Use JGroupsRaftSlotStore when:
+- Strong consistency guarantees are required
+- Protection against split-brain scenarios is critical
+- Automatic leader election and failover is needed
+- You can tolerate slightly higher write latency for stronger guarantees
+
+Use JGroupsSlotStore (ReplCache) when:
+- Maximum performance is the priority
+- Eventual consistency is acceptable
+- Cluster membership is relatively stable
+- Application-level conflict resolution is available
 
 
 :sectnums:

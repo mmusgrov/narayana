@@ -107,9 +107,12 @@ public class JGroupsSlots implements BackingSlots {
 
                 tsLogger.logger.info("JGroupsSlots: Enabling WAL with storeDir=" + storeDir +
                     ", syncWrites=" + config.isWalSyncWrites() +
-                    ", syncDeletes=" + config.isWalSyncDeletes());
+                    ", syncDeletes=" + config.isWalSyncDeletes() +
+                    ", bufferSize=" + config.getWalBufferSize() +
+                    ", bufferFlushesPerSecond=" + config.getWalBufferFlushesPerSecond());
 
-                journal = new SlotJournal(storeDir, config.isWalSyncWrites(), config.isWalSyncDeletes());
+                journal = new SlotJournal(storeDir, config.isWalSyncWrites(), config.isWalSyncDeletes(),
+                    config.getWalBufferSize(), config.getWalBufferFlushesPerSecond());
                 journal.start();
 
                 tsLogger.logger.info("JGroupsSlots: WAL loaded " + journal.size() + " slots from disk");
@@ -239,10 +242,7 @@ public class JGroupsSlots implements BackingSlots {
 
             return data;
         } catch (Exception e) {
-            // TODO figure out why InfinispanSlots doesn't hit this problem -
-            // I suspect there something amiss with the JGroups cluster config
-            return null;
-//            throw new IOException(e);
+            throw new IOException(e);
         }
     }
 
