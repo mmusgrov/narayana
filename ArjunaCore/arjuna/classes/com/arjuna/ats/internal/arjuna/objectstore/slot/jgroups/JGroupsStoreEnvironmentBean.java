@@ -1,12 +1,13 @@
 /*
  * Copyright The Narayana Authors
  *
- * SPDX-License-Identifier: LGPL-2.1-only
+ * SPDX-License-Identifier: Apache-2.0
  */
 package com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups;
 
 import com.arjuna.ats.arjuna.common.CoreEnvironmentBeanException;
 import com.arjuna.ats.arjuna.logging.tsLogger;
+import com.arjuna.ats.internal.arjuna.objectstore.slot.BackingSlots;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.SlotStoreEnvironmentBean;
 import com.arjuna.common.internal.util.ClassloadingUtility;
 import org.jgroups.blocks.ReplCache;
@@ -190,9 +191,9 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
             if (!storeDir.startsWith(String.valueOf(File.separatorChar))) {
                 storeDir = System.getProperty("user.dir") + "/" + storeDir;
                 super.setStoreDir(storeDir);
+            } else {
+                super.setStoreDir(storeDir);
             }
-
-            super.setStoreDir(storeDir);
         }
     }
 
@@ -224,8 +225,8 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
     }
 
     @Override
-    public void setBackingSlots(JGroupsSlots jGroupsSlots) {
-        super.setBackingSlots(jGroupsSlots);
+    public void setBackingSlots(BackingSlots backingSlots) {
+        super.setBackingSlots(backingSlots);
     }
 
     /**

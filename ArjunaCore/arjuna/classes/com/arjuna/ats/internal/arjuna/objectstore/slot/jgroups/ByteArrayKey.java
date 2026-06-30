@@ -1,3 +1,8 @@
+/*
+ * Copyright The Narayana Authors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups;
 
 import java.io.Serial;
@@ -26,23 +31,8 @@ public class  ByteArrayKey implements Serializable {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (obj == null) return false;
-        // Handle cross-classloader comparison
-        if (!obj.getClass().getName().equals(this.getClass().getName())) {
-            return false;
-        }
-        // Use reflection to get the key field if it's from a different class loader
-        try {
-            if (obj instanceof ByteArrayKey) {
-                return Arrays.equals(key, ((ByteArrayKey) obj).key);
-            } else {
-                // Cross-class loader case
-                byte[] otherKey = (byte[]) obj.getClass().getMethod("getKey").invoke(obj);
-                return Arrays.equals(key, otherKey);
-            }
-        } catch (Exception e) {
-            return false;
-        }
+        if (!(obj instanceof ByteArrayKey other)) return false;
+        return Arrays.equals(key, other.key);
     }
 
     @Override

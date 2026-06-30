@@ -41,8 +41,6 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * <p>Journal Format:
  * Each record contains: [slotId (4 bytes)] [data length (4 bytes)] [data (N bytes)]
- *
- * @author Claude Code
  * @since 5.13.2
  */
 public class SlotJournal {

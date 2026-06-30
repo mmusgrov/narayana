@@ -1,7 +1,7 @@
 /*
  * Copyright The Narayana Authors
  *
- * SPDX-License-Identifier: LGPL-2.1-only
+ * SPDX-License-Identifier: Apache-2.0
  */
 package com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups;
 
@@ -123,7 +123,7 @@ public interface JGroupsStoreEnvironmentBeanMBean extends SlotStoreEnvironmentBe
     /**
      * {@link SlotStoreEnvironmentBeanMBean#setBackingSlots(BackingSlots)} }
      */
-    void setBackingSlots(JGroupsSlots jGroupsSlots);
+    void setBackingSlots(BackingSlots backingSlots);
 
     /**
      * The classname of the {@link JGroupsSlotKeyGenerator}
