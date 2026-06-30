@@ -70,7 +70,7 @@ public class JGroupsSlotsWALClusterTest {
         void stop() {
             try {
                 if (slots != null) {
-                    slots.shutdown();
+                    slots.stop();
                 }
                 // Stop the cache to disconnect from JGroups cluster
                 // Without this, the cache remains connected and causes cache reuse issues

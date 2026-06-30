@@ -82,7 +82,7 @@ public class JGroupsRaftSlotsClusterTest {
 
         void stop() {
             try {
-                slots.shutdown();
+                slots.stop();
             } catch (Exception e) {
                 System.err.println("Error stopping " + name + ": " + e.getMessage());
             }

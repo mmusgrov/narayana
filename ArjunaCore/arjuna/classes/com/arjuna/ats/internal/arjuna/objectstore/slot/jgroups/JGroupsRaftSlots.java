@@ -221,10 +221,10 @@ public class JGroupsRaftSlots implements BackingSlots {
      * @param slotId the slot ID
      * @param data the data to write
      * @param sync ignored - Raft always ensures consistency
-     * @throws RuntimeException if write fails
+     * @throws IOException if write fails
      */
     @Override
-    public void write(int slotId, byte[] data, boolean sync) {
+    public void write(int slotId, byte[] data, boolean sync) throws IOException {
         checkInitialized();
         try {
             // Raft put() blocks until majority commit
@@ -240,24 +240,21 @@ public class JGroupsRaftSlots implements BackingSlots {
      *
      * @param slotId the slot ID
      * @param sync ignored - Raft always ensures consistency
-     * @throws RuntimeException if clear fails
+     * @throws IOException if clear fails
      */
     @Override
-    public void clear(int slotId, boolean sync) {
+    public void clear(int slotId, boolean sync) throws IOException {
         checkInitialized();
         try {
             cache.remove(slotId);
         } catch (Exception e) {
             tsLogger.logger.warn("Raft clear failed for slot " + slotId, e);
-            throw new RuntimeException("Raft clear failed", e);
+            throw new IOException("Raft clear failed", e);
         }
     }
 
-    /**
-     * Shutdown the Raft slot store and close the channel.
-     */
-// TODO    @Override
-    public void shutdown() {
+    @Override
+    public void stop() {
         if (channel != null) {
             tsLogger.logger.info("Shutting down JGroupsRaftSlots for node: " + config.getNodeAddress());
             try {

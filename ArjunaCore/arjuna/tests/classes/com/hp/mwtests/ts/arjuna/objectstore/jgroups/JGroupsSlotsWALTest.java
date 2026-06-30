@@ -57,7 +57,7 @@ public class JGroupsSlotsWALTest {
     @After
     public void tearDown() {
         if (slots != null) {
-            slots.shutdown();
+            slots.stop();
         }
         cleanupStoreDir();
     }
@@ -127,7 +127,7 @@ public class JGroupsSlotsWALTest {
         assertArrayEquals("Data written", data, slots.read(slotId));
 
         // Simulate crash (stop slots)
-        slots.shutdown();
+        slots.stop();
         config.setCache(null);  // Force new cache (simulate complete restart)
         System.out.println("Simulated crash (stopped slots)");
 
@@ -162,7 +162,7 @@ public class JGroupsSlotsWALTest {
         System.out.println("Wrote 10 slots");
 
         // Stop
-        slots.shutdown();
+        slots.stop();
         config.setCache(null);  // Force new cache
 
         // Session 2: Restart and verify all 10 slots
@@ -200,7 +200,7 @@ public class JGroupsSlotsWALTest {
         assertNull("Data cleared", slots.read(slotId));
 
         // Stop and clear cache reference (simulate complete shutdown)
-        slots.shutdown();
+        slots.stop();
         config.setCache(null);  // Force new cache on next init
 
         // Session 2: Verify clear is persisted
@@ -234,7 +234,7 @@ public class JGroupsSlotsWALTest {
         slots.write(slotId, "version3".getBytes(), true);
 
         // Stop
-        slots.shutdown();
+        slots.stop();
         config.setCache(null);  // Force new cache
 
         // Session 2: Verify latest version recovered
@@ -269,7 +269,7 @@ public class JGroupsSlotsWALTest {
         assertArrayEquals("Data written", data, slots.read(slotId));
 
         // Stop
-        slots.shutdown();
+        slots.stop();
         config.setCache(null);  // Force new cache
 
         // Session 2: Data should NOT be recovered (no WAL)

@@ -71,7 +71,7 @@ public class JGroupsRaftSlotsTest {
         System.out.println("\n=== Tearing down JGroupsRaftSlots test ===");
 
         if (slots != null) {
-            slots.shutdown();
+            slots.stop();
         }
 
         // Clean up test directory
@@ -210,7 +210,7 @@ public class JGroupsRaftSlotsTest {
 
         // Phase 2: Simulate crash - shutdown node
         System.out.println("Simulating node crash (shutdown)");
-        slots.shutdown();
+        slots.stop();
         slots = null;
 
         // Phase 3: Restart node - should recover from Raft log
@@ -241,7 +241,7 @@ public class JGroupsRaftSlotsTest {
         System.out.println("Testing Raft log fsync configuration");
 
         // Teardown existing slots
-        slots.shutdown();
+        slots.stop();
 
         // Create config with fsync ENABLED
         JGroupsStoreEnvironmentBean configWithFsync = new JGroupsStoreEnvironmentBean();
@@ -269,7 +269,7 @@ public class JGroupsRaftSlotsTest {
         System.out.println("Note: Actual fsync verification requires observing write latency");
         System.out.println("      With fsync: ~10-20ms, Without fsync: ~1-2ms");
 
-        slotsWithFsync.shutdown();
+        slotsWithFsync.stop();
     }
 
     // Helper methods

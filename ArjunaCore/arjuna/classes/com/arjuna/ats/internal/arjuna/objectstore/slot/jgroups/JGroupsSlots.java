@@ -271,10 +271,8 @@ public class JGroupsSlots implements BackingSlots {
         }
     }
 
-    /**
-     * Shutdown the store, closing the WAL if enabled.
-     */
-    public void shutdown() {
+    @Override
+    public void stop() {
         if (journal != null) {
             try {
                 journal.stop();
@@ -282,6 +280,9 @@ public class JGroupsSlots implements BackingSlots {
             } catch (Exception e) {
                 tsLogger.logger.warn("JGroupsSlots: Error stopping WAL: " + e.getMessage());
             }
+        }
+        if (cache != null) {
+            cache.stop();
         }
     }
 
