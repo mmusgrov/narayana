@@ -8,9 +8,9 @@ package com.hp.mwtests.ts.arjuna.objectstore.jgroups;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsRaftSlots;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsStoreEnvironmentBean;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Basic tests for JGroupsRaftSlots implementation.
@@ -32,7 +32,7 @@ public class JGroupsRaftSlotsTest {
     private JGroupsRaftSlots slots;
     private JGroupsStoreEnvironmentBean config;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         System.out.println("\n=== Setting up JGroupsRaftSlots test ===");
 
@@ -66,7 +66,7 @@ public class JGroupsRaftSlotsTest {
         System.out.println("JGroupsRaftSlots initialized");
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         System.out.println("\n=== Tearing down JGroupsRaftSlots test ===");
 
@@ -91,8 +91,8 @@ public class JGroupsRaftSlotsTest {
         // Read back
         byte[] result = slots.read(slotId);
 
-        assertNotNull("Should have data at slot " + slotId, result);
-        assertArrayEquals("Data should match", data, result);
+        assertNotNull(result, "Should have data at slot " + slotId);
+        assertArrayEquals(data, result, "Data should match");
 
         System.out.println("✓ Basic read/write verified");
     }
@@ -106,14 +106,14 @@ public class JGroupsRaftSlotsTest {
 
         // Write and verify
         slots.write(slotId, data, true);
-        assertNotNull("Should have data before clear", slots.read(slotId));
+        assertNotNull(slots.read(slotId), "Should have data before clear");
 
         // Clear
         slots.clear(slotId, true);
 
         // Verify cleared
         byte[] result = slots.read(slotId);
-        assertNull("Should have null data after clear", result);
+        assertNull(result, "Should have null data after clear");
 
         System.out.println("✓ Clear operation verified");
     }
@@ -132,8 +132,8 @@ public class JGroupsRaftSlotsTest {
         for (int i = 0; i < 5; i++) {
             byte[] expected = ("slot-" + i + "-data").getBytes();
             byte[] actual = slots.read(i);
-            assertNotNull("Should have data at slot " + i, actual);
-            assertArrayEquals("Slot " + i + " data should match", expected, actual);
+            assertNotNull(actual, "Should have data at slot " + i);
+            assertArrayEquals(expected, actual, "Slot " + i + " data should match");
         }
 
         System.out.println("✓ Multiple slots verified");
@@ -148,12 +148,12 @@ public class JGroupsRaftSlotsTest {
         // Write version 1
         byte[] data1 = "version-1".getBytes();
         slots.write(slotId, data1, true);
-        assertArrayEquals("Should have version 1", data1, slots.read(slotId));
+        assertArrayEquals(data1, slots.read(slotId), "Should have version 1");
 
         // Update to version 2
         byte[] data2 = "version-2-updated".getBytes();
         slots.write(slotId, data2, true);
-        assertArrayEquals("Should have version 2", data2, slots.read(slotId));
+        assertArrayEquals(data2, slots.read(slotId), "Should have version 2");
 
         System.out.println("✓ Update operation verified");
     }
@@ -163,8 +163,8 @@ public class JGroupsRaftSlotsTest {
         System.out.println("Testing leader election");
 
         // Single node should elect itself as leader
-        assertTrue("Should have a leader", slots.hasLeader());
-// TODO        assertEquals("Should be LEADER", "LEADER", slots.getRole());
+        assertTrue(slots.hasLeader(), "Should have a leader");
+// TODO        assertEquals("LEADER", slots.getRole(), "Should be LEADER");
 
         System.out.println("✓ Leader election verified");
     }
@@ -180,8 +180,8 @@ public class JGroupsRaftSlotsTest {
 
         // Verify we can read role and leader status
 // TODO        String role = slots.getRole();
-// TODO        assertNotNull("Role should not be null", role);
-        assertTrue("Should have a leader", slots.hasLeader());
+// TODO        assertNotNull(role, "Role should not be null");
+        assertTrue(slots.hasLeader(), "Should have a leader");
 
 // TODO        System.out.println("Role: " + role);
         System.out.println("Has leader: " + slots.hasLeader());
@@ -205,7 +205,7 @@ public class JGroupsRaftSlotsTest {
 
         // Verify data is there
         byte[] result = slots.read(slotId);
-        assertArrayEquals("Data should be written", data, result);
+        assertArrayEquals(data, result, "Data should be written");
         System.out.println("✓ Data written and verified");
 
         // Phase 2: Simulate crash - shutdown node
@@ -225,8 +225,8 @@ public class JGroupsRaftSlotsTest {
 
         // Phase 4: Verify data recovered from Raft log
         byte[] recovered = slots.read(slotId);
-        assertNotNull("Data should be recovered from Raft log", recovered);
-        assertArrayEquals("Recovered data should match", data, recovered);
+        assertNotNull(recovered, "Data should be recovered from Raft log");
+        assertArrayEquals(data, recovered, "Recovered data should match");
 
         System.out.println("✓ Crash recovery successful - data recovered from Raft log");
         System.out.println("✓ Raft persistent WAL verified");

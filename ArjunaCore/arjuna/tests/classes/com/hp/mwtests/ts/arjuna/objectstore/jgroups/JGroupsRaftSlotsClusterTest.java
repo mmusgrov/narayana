@@ -10,9 +10,9 @@ import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsStoreEnvir
 import org.jgroups.JChannel;
 import org.jgroups.Receiver;
 import org.jgroups.View;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Multi-node cluster tests for JGroupsRaftSlots implementation.
@@ -137,7 +137,7 @@ public class JGroupsRaftSlotsClusterTest {
         }
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         System.out.println("\n=== Setting up JGroupsRaftSlots cluster test ===");
 
@@ -145,7 +145,7 @@ public class JGroupsRaftSlotsClusterTest {
         cleanupStoreDir();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         System.out.println("\n=== Tearing down JGroupsRaftSlots cluster test ===");
 
@@ -212,13 +212,13 @@ public class JGroupsRaftSlotsClusterTest {
         }
 
         // Wait for cluster to form
-        assertTrue("Cluster should form with " + numNodes + " nodes",
-                listener.await(15, TimeUnit.SECONDS));
+        assertTrue(listener.await(15, TimeUnit.SECONDS),
+                "Cluster should form with " + numNodes + " nodes");
 
         // Verify all nodes see the correct cluster size
         Thread.sleep(1000); // Allow view to propagate
         for (SlotNode node : nodes) {
-            assertEquals(node.name + " should see all nodes", numNodes, node.getClusterSize());
+            assertEquals(numNodes, node.getClusterSize(), node.name + " should see all nodes");
         }
 
         System.out.println("Cluster formed with " + numNodes + " nodes");
@@ -266,11 +266,11 @@ public class JGroupsRaftSlotsClusterTest {
 
         // Verify cluster size
         for (SlotNode node : nodes) {
-            assertEquals(node.name + " should see 3-node cluster", 3, node.getClusterSize());
+            assertEquals(3, node.getClusterSize(), node.name + " should see 3-node cluster");
         }
 
         // Verify leader elected
-        assertTrue("Cluster should have a leader", nodes.stream().anyMatch(SlotNode::hasLeader));
+        assertTrue(nodes.stream().anyMatch(SlotNode::hasLeader), "Cluster should have a leader");
 
         System.out.println("✓ 3-node Raft cluster formation verified");
     }
@@ -293,12 +293,12 @@ public class JGroupsRaftSlotsClusterTest {
 
         // Read from other nodes - should see committed data
         byte[] result2 = nodes.get(1).slots.read(slotId);
-        assertNotNull("Node B should have data at slot " + slotId, result2);
-        assertArrayEquals("Node B data should match", data, result2);
+        assertNotNull(result2, "Node B should have data at slot " + slotId);
+        assertArrayEquals(data, result2, "Node B data should match");
 
         byte[] result3 = nodes.get(2).slots.read(slotId);
-        assertNotNull("Node C should have data at slot " + slotId, result3);
-        assertArrayEquals("Node C data should match", data, result3);
+        assertNotNull(result3, "Node C should have data at slot " + slotId);
+        assertArrayEquals(data, result3, "Node C data should match");
 
         System.out.println("✓ Slot data replication verified across 3 Raft nodes");
     }
@@ -325,12 +325,12 @@ public class JGroupsRaftSlotsClusterTest {
             byte[] expected = ("raft-slot-" + slot + "-data").getBytes();
 
             byte[] actual2 = nodes.get(1).slots.read(slot);
-            assertNotNull("Node B should have data at slot " + slot, actual2);
-            assertArrayEquals("Node B slot " + slot + " data should match", expected, actual2);
+            assertNotNull(actual2, "Node B should have data at slot " + slot);
+            assertArrayEquals(expected, actual2, "Node B slot " + slot + " data should match");
 
             byte[] actual3 = nodes.get(2).slots.read(slot);
-            assertNotNull("Node C should have data at slot " + slot, actual3);
-            assertArrayEquals("Node C slot " + slot + " data should match", expected, actual3);
+            assertNotNull(actual3, "Node C should have data at slot " + slot);
+            assertArrayEquals(expected, actual3, "Node C slot " + slot + " data should match");
         }
 
         System.out.println("✓ Multiple slot replication verified");
@@ -349,8 +349,8 @@ public class JGroupsRaftSlotsClusterTest {
         // Write and verify replication
         nodes.get(0).slots.write(slotId, data, true);
         Thread.sleep(1500);
-        assertNotNull("Node B should have data before clear", nodes.get(1).slots.read(slotId));
-        assertNotNull("Node C should have data before clear", nodes.get(2).slots.read(slotId));
+        assertNotNull(nodes.get(1).slots.read(slotId), "Node B should have data before clear");
+        assertNotNull(nodes.get(2).slots.read(slotId), "Node C should have data before clear");
 
         // Clear from first node
         nodes.get(0).slots.clear(slotId, true);
@@ -358,10 +358,10 @@ public class JGroupsRaftSlotsClusterTest {
 
         // Verify cleared on all nodes
         byte[] result2 = nodes.get(1).slots.read(slotId);
-        assertNull("Node B should have null data after clear", result2);
+        assertNull(result2, "Node B should have null data after clear");
 
         byte[] result3 = nodes.get(2).slots.read(slotId);
-        assertNull("Node C should have null data after clear", result3);
+        assertNull(result3, "Node C should have null data after clear");
 
         System.out.println("✓ Slot clear replication verified");
     }
@@ -390,10 +390,10 @@ public class JGroupsRaftSlotsClusterTest {
                 byte[] expected = ("raft-node" + nodes.get(writerIdx).name + "-data").getBytes();
                 byte[] actual = nodes.get(readerIdx).slots.read(slotId);
 
-                assertNotNull(nodes.get(readerIdx).name + " should see slot " + slotId +
-                        " from " + nodes.get(writerIdx).name, actual);
-                assertArrayEquals(nodes.get(readerIdx).name + " slot " + slotId + " should match",
-                        expected, actual);
+                assertNotNull(actual, nodes.get(readerIdx).name + " should see slot " + slotId +
+                        " from " + nodes.get(writerIdx).name);
+                assertArrayEquals(expected, actual,
+                        nodes.get(readerIdx).name + " slot " + slotId + " should match");
             }
         }
 
@@ -415,7 +415,7 @@ public class JGroupsRaftSlotsClusterTest {
         Thread.sleep(1000);
 
         byte[] read1 = nodes.get(1).slots.read(slotId);
-        assertArrayEquals("Node B should have version 1", data1, read1);
+        assertArrayEquals(data1, read1, "Node B should have version 1");
 
         // Update the slot
         byte[] data2 = "raft-version-2-updated".getBytes();
@@ -424,10 +424,10 @@ public class JGroupsRaftSlotsClusterTest {
 
         // Verify update replicated
         byte[] read2 = nodes.get(1).slots.read(slotId);
-        assertArrayEquals("Node B should have version 2", data2, read2);
+        assertArrayEquals(data2, read2, "Node B should have version 2");
 
         byte[] read3 = nodes.get(2).slots.read(slotId);
-        assertArrayEquals("Node C should have version 2", data2, read3);
+        assertArrayEquals(data2, read3, "Node C should have version 2");
 
         System.out.println("✓ Slot update replication verified");
     }
@@ -453,8 +453,8 @@ public class JGroupsRaftSlotsClusterTest {
             }
         }
 
-        assertEquals("Should have exactly 1 leader", 1, leaderCount);
-        assertNotNull("Leader should be identified", leaderName);
+        assertEquals(1, leaderCount, "Should have exactly 1 leader");
+        assertNotNull(leaderName, "Leader should be identified");
 
         System.out.println("✓ Leader election verified: " + leaderName + " is leader");
     }

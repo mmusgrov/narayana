@@ -12,8 +12,8 @@ import com.arjuna.ats.arjuna.state.InputObjectState;
 import com.arjuna.ats.arjuna.state.OutputObjectState;
 import org.jgroups.Receiver;
 import org.jgroups.View;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -22,8 +22,7 @@ import java.util.Comparator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests JGroups object store cluster formation and basic replication.
@@ -60,7 +59,7 @@ public class JGroupsClusterTest extends JGroupsTestBase {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws IOException {
         if (store != null) {
             store.stop();
@@ -97,10 +96,10 @@ public class JGroupsClusterTest extends JGroupsTestBase {
         store.config().getCache().addReceiver(listener);
 
         store.start();
-        assertTrue("Store should start and join cluster", listener.await(10, TimeUnit.SECONDS));
+        assertTrue(listener.await(10, TimeUnit.SECONDS), "Store should start and join cluster");
 
         int clusterSize = store.config().getCache().getClusterSize();
-        assertEquals("Should see 1 node in cluster", 1, clusterSize);
+        assertEquals(1, clusterSize, "Should see 1 node in cluster");
 
         // Get the recovery store and perform basic operations
         resetAtomicActionRecoveryModule();
@@ -111,20 +110,20 @@ public class JGroupsClusterTest extends JGroupsTestBase {
         data.packString("test-transaction-data");
 
         // Write
-        assertTrue("Write should succeed", recoveryStore.write_committed(uid, TYPE_NAME, data));
+        assertTrue(recoveryStore.write_committed(uid, TYPE_NAME, data), "Write should succeed");
 
         // Read back
         var result = recoveryStore.read_committed(uid, TYPE_NAME);
-        assertNotNull("Should be able to read back written data", result);
-        assertEquals("Data should match", "test-transaction-data", result.unpackString());
+        assertNotNull(result, "Should be able to read back written data");
+        assertEquals("test-transaction-data", result.unpackString(), "Data should match");
 
         // Remove
-        assertTrue("Remove should succeed", recoveryStore.remove_committed(uid, TYPE_NAME));
+        assertTrue(recoveryStore.remove_committed(uid, TYPE_NAME), "Remove should succeed");
 
         // Verify removed — some stores throw ObjectStoreException, others return null
         try {
             InputObjectState afterRemove = recoveryStore.read_committed(uid, TYPE_NAME);
-            assertNull("should not contain removed record", afterRemove);
+            assertNull(afterRemove, "should not contain removed record");
         } catch (ObjectStoreException ignore) {
         }
 

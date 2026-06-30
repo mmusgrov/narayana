@@ -7,9 +7,9 @@ package com.hp.mwtests.ts.arjuna.objectstore.jgroups;
 
 import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsSlots;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsStoreEnvironmentBean;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests cluster-wide failure recovery with WAL.
@@ -91,13 +91,13 @@ public class JGroupsSlotsWALClusterTest {
 
     }
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         System.out.println("\n=== Setting up WAL cluster test ===");
         cleanupStoreDir();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         System.out.println("\n=== Tearing down WAL cluster test ===");
 
@@ -161,8 +161,8 @@ public class JGroupsSlotsWALClusterTest {
         // Verify all nodes have the data (via cache replication)
         for (int i = 0; i < nodes.size(); i++) {
             byte[] result = nodes.get(i).slots.read(slotId);
-            assertArrayEquals("Node" + (char)('A' + i) + " should have data before failure",
-                data, result);
+            assertArrayEquals(data, result,
+                "Node" + (char)('A' + i) + " should have data before failure");
         }
         System.out.println("✓ All nodes have data (replicated via cache)");
 
@@ -183,8 +183,8 @@ public class JGroupsSlotsWALClusterTest {
         // (NodeB and NodeC won't have it because only NodeA wrote it,
         //  so only NodeA has it in WAL. This is expected - WAL is per-node.)
         byte[] resultA = nodes.get(0).slots.read(slotId);
-        assertNotNull("NodeA should recover data from its WAL", resultA);
-        assertArrayEquals("NodeA data should match", data, resultA);
+        assertNotNull(resultA, "NodeA should recover data from its WAL");
+        assertArrayEquals(data, resultA, "NodeA data should match");
         System.out.println("✓ NodeA recovered data from WAL");
 
         System.out.println("✓ Cluster-wide failure recovery successful");
@@ -235,7 +235,7 @@ public class JGroupsSlotsWALClusterTest {
 
         // Verify data is LOST
         byte[] result = nodes.get(0).slots.read(slotId);
-        assertNull("Without WAL, data should be lost after cluster-wide failure", result);
+        assertNull(result, "Without WAL, data should be lost after cluster-wide failure");
 
         System.out.println("✓ Confirmed: without WAL, cluster-wide failure loses data");
     }
@@ -261,8 +261,8 @@ public class JGroupsSlotsWALClusterTest {
         nodes.get(2).stop();
 
         // Nodes 1 and 2 should still have the data (from replication)
-        assertArrayEquals("Node1 still has data", data, nodes.get(0).slots.read(slotId));
-        assertArrayEquals("Node2 still has data", data, nodes.get(1).slots.read(slotId));
+        assertArrayEquals(data, nodes.get(0).slots.read(slotId), "Node1 still has data");
+        assertArrayEquals(data, nodes.get(1).slots.read(slotId), "Node2 still has data");
 
         // Restart node 3
         System.out.println("Restarting NodeC");
@@ -275,8 +275,8 @@ public class JGroupsSlotsWALClusterTest {
         // Node 3 should get data from OTHER nodes (via replication)
         // OR from its own WAL
         byte[] result = nodes.get(2).slots.read(slotId);
-        assertNotNull("NodeC should recover data (from replication or WAL)", result);
-        assertArrayEquals("NodeC data should match", data, result);
+        assertNotNull(result, "NodeC should recover data (from replication or WAL)");
+        assertArrayEquals(data, result, "NodeC data should match");
 
         System.out.println("✓ Partial failure recovery successful (replication + WAL)");
     }
@@ -303,8 +303,8 @@ public class JGroupsSlotsWALClusterTest {
         Thread.sleep(500);
 
         // Verify both have v1
-        assertArrayEquals("NodeA should have v1", dataV1, nodes.get(0).slots.read(slotId));
-        assertArrayEquals("NodeB should have v1", dataV1, nodes.get(1).slots.read(slotId));
+        assertArrayEquals(dataV1, nodes.get(0).slots.read(slotId), "NodeA should have v1");
+        assertArrayEquals(dataV1, nodes.get(1).slots.read(slotId), "NodeB should have v1");
 
         // Stop NodeA only (NodeA's WAL still has v1)
         nodes.get(0).stop();
@@ -316,7 +316,7 @@ public class JGroupsSlotsWALClusterTest {
         Thread.sleep(500);
 
         // NodeB has v2 in cache and WAL
-        assertArrayEquals("NodeB should have v2", dataV2, nodes.get(1).slots.read(slotId));
+        assertArrayEquals(dataV2, nodes.get(1).slots.read(slotId), "NodeB should have v2");
 
         // ===== Phase 3: Restart NodeA - should NOT overwrite with stale WAL =====
         System.out.println("\n--- Phase 3: Restart NodeA ---");
@@ -331,11 +331,11 @@ public class JGroupsSlotsWALClusterTest {
 
         // NodeA should have v2 from replication, NOT v1 from its stale WAL
         byte[] result = nodes.get(0).slots.read(slotId);
-        assertNotNull("NodeA should have data", result);
+        assertNotNull(result, "NodeA should have data");
 
         // This is the critical assertion: WAL should NOT overwrite newer replicated data
-        assertArrayEquals("NodeA should have v2 from replication, not v1 from stale WAL",
-            dataV2, result);
+        assertArrayEquals(dataV2, result,
+            "NodeA should have v2 from replication, not v1 from stale WAL");
 
         System.out.println("✓ WAL correctly did not overwrite newer cache data");
     }

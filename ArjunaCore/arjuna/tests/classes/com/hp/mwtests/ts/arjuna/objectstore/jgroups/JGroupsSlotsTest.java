@@ -16,8 +16,8 @@ import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsSlots;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsStoreEnvironmentBean;
 import com.arjuna.common.internal.util.propertyservice.BeanPopulator;
 import org.jgroups.blocks.ReplCache;
-import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 

@@ -7,9 +7,9 @@ package com.hp.mwtests.ts.arjuna.objectstore.jgroups;
 
 import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsSlots;
 import com.arjuna.ats.internal.arjuna.objectstore.slot.jgroups.JGroupsStoreEnvironmentBean;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests Write-Ahead Log functionality for JGroupsSlots.
@@ -31,7 +31,7 @@ public class JGroupsSlotsWALTest {
     private JGroupsStoreEnvironmentBean config;
     private JGroupsSlots slots;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         // Clean previous test data
         cleanupStoreDir();
@@ -54,7 +54,7 @@ public class JGroupsSlotsWALTest {
         config.setReplicationCount((short)1);
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (slots != null) {
             slots.stop();
@@ -100,8 +100,8 @@ public class JGroupsSlotsWALTest {
         // Read back (from cache)
         byte[] result = slots.read(slotId);
 
-        assertNotNull("Should have data at slot " + slotId, result);
-        assertArrayEquals("Data should match", data, result);
+        assertNotNull(result, "Should have data at slot " + slotId);
+        assertArrayEquals(data, result, "Data should match");
 
         System.out.println("✓ Basic WAL read/write verified");
     }
@@ -124,7 +124,7 @@ public class JGroupsSlotsWALTest {
         System.out.println("Wrote data to slot " + slotId);
 
         // Verify data is there
-        assertArrayEquals("Data written", data, slots.read(slotId));
+        assertArrayEquals(data, slots.read(slotId), "Data written");
 
         // Simulate crash (stop slots)
         slots.stop();
@@ -137,8 +137,8 @@ public class JGroupsSlotsWALTest {
         System.out.println("Restarted slots");
 
         byte[] recovered = slots.read(slotId);
-        assertNotNull("Data should be recovered from WAL", recovered);
-        assertArrayEquals("Recovered data should match", data, recovered);
+        assertNotNull(recovered, "Data should be recovered from WAL");
+        assertArrayEquals(data, recovered, "Recovered data should match");
 
         System.out.println("✓ Crash recovery verified: data survived restart");
     }
@@ -172,8 +172,8 @@ public class JGroupsSlotsWALTest {
         for (int i = 0; i < 10; i++) {
             byte[] expected = ("slot-" + i + "-data").getBytes();
             byte[] actual = slots.read(i);
-            assertNotNull("Slot " + i + " should be recovered", actual);
-            assertArrayEquals("Slot " + i + " data should match", expected, actual);
+            assertNotNull(actual, "Slot " + i + " should be recovered");
+            assertArrayEquals(expected, actual, "Slot " + i + " data should match");
         }
 
         System.out.println("✓ All 10 slots recovered successfully");
@@ -194,10 +194,10 @@ public class JGroupsSlotsWALTest {
         byte[] data = "data-to-clear".getBytes();
 
         slots.write(slotId, data, true);
-        assertNotNull("Data written", slots.read(slotId));
+        assertNotNull(slots.read(slotId), "Data written");
 
         slots.clear(slotId, true);
-        assertNull("Data cleared", slots.read(slotId));
+        assertNull(slots.read(slotId), "Data cleared");
 
         // Stop and clear cache reference (simulate complete shutdown)
         slots.stop();
@@ -212,7 +212,7 @@ public class JGroupsSlotsWALTest {
             System.err.println("ERROR: Slot " + slotId + " still has data after clear: " + new String(result));
             System.err.println("This means the delete was not persisted to WAL");
         }
-        assertNull("Cleared slot should stay cleared after restart", result);
+        assertNull(result, "Cleared slot should stay cleared after restart");
 
         System.out.println("✓ Clear operation persistence verified");
     }
@@ -242,8 +242,8 @@ public class JGroupsSlotsWALTest {
         slots.init(config);
 
         byte[] result = slots.read(slotId);
-        assertNotNull("Updated data should be recovered", result);
-        assertArrayEquals("Should have latest version", "version3".getBytes(), result);
+        assertNotNull(result, "Updated data should be recovered");
+        assertArrayEquals("version3".getBytes(), result, "Should have latest version");
 
         System.out.println("✓ Update persistence verified");
     }
@@ -266,7 +266,7 @@ public class JGroupsSlotsWALTest {
         byte[] data = "non-persistent-data".getBytes();
 
         slots.write(slotId, data, true);
-        assertArrayEquals("Data written", data, slots.read(slotId));
+        assertArrayEquals(data, slots.read(slotId), "Data written");
 
         // Stop
         slots.stop();
@@ -277,7 +277,7 @@ public class JGroupsSlotsWALTest {
         slots.init(config);
 
         byte[] result = slots.read(slotId);
-        assertNull("Data should NOT be recovered when WAL is disabled", result);
+        assertNull(result, "Data should NOT be recovered when WAL is disabled");
 
         System.out.println("✓ WAL disabled mode verified (no persistence as expected)");
     }
@@ -306,7 +306,7 @@ public class JGroupsSlotsWALTest {
         System.out.println("Write latency (no fsync): " + elapsed + "ms");
 
         // Data still in memory
-        assertArrayEquals("Data written", data, slots.read(slotId));
+        assertArrayEquals(data, slots.read(slotId), "Data written");
 
         // Note: Without fsync, data may be lost on crash before OS flushes buffers
         // This test just verifies the option works, not crash recovery
