@@ -46,17 +46,12 @@ import java.io.IOException;
  * <p><b>NOTE</b>: This is an Experimental feature and is not recommended for production systems.
  * May contain breaking changes in future releases.
  *
- * @author Claude Code
  * @since 5.13.2
  * @see JGroupsSlots
  * @see ReplicatedStateMachine
  * @see FileBasedLog
  */
 public class JGroupsRaftSlots implements BackingSlots {
-    private ByteArrayKey[] slots = null;
-    private JGroupsSlotKeyGenerator jGroupsSlotKeyGenerator;
-    private short replicationCount = -1;
-
     private JChannel channel;
     private ReplicatedStateMachine<Integer, byte[]> cache;
     private JGroupsStoreEnvironmentBean config;
@@ -128,14 +123,15 @@ public class JGroupsRaftSlots implements BackingSlots {
             tsLogger.logger.info("Connecting to Raft cluster: " + clusterName);
             channel.connect(clusterName);
 
-            tsLogger.logger.info("Raft initialized for node: " + nodeName);
-// TODO load
+            // Raft state machine is loaded from the persistent log during connect().
+            // SlotStore's constructor will call read(i) for each slot to rebuild its index,
+            // so no additional loading is needed here.
+            tsLogger.logger.info("Raft state machine has " + cache.size() + " entries after log replay");
             initialized = true;
 
             tsLogger.logger.info("JGroupsRaftSlots initialized successfully for node: " + nodeName);
 
         } catch (Exception e) {
-            // Clean up on failure
             if (channel != null) {
                 try {
                     channel.close();
@@ -147,55 +143,6 @@ public class JGroupsRaftSlots implements BackingSlots {
         }
     }
 
-/*
-    @Override
-    public void xxinit(SlotStoreEnvironmentBean slotStoreConfig) throws IOException {
-        JGroupsStoreEnvironmentBean config;
-
-        tsLogger.i18NLogger.warn_jgroups_slot_store();
-
-        if (slotStoreConfig instanceof JGroupsStoreEnvironmentBean) {
-            config = (JGroupsStoreEnvironmentBean) slotStoreConfig;
-        } else {
-            config = BeanPopulator.getDefaultInstance(JGroupsStoreEnvironmentBean.class);
-        }
-
-        slots = new ByteArrayKey[slotStoreConfig.getNumberOfSlots()];
-        jGroupsSlotKeyGenerator = config.getSlotKeyGenerator();
-
-        if (jGroupsSlotKeyGenerator == null) {
-            jGroupsSlotKeyGenerator = new JGroupsSlotKeyGenerator() {
-                @Override
-                public ByteArrayKey generateUniqueKey(int index) {
-                    return new ByteArrayKey(new Uid().getBytes());
-                }
-
-                @Override
-                public void init(JGroupsStoreEnvironmentBean ignore) {
-                }
-            };
-        }
-        jGroupsSlotKeyGenerator.init(config);
-
-        try {
-            // set up the slot keys
-            String group = config.getGroupName();
-
-            cache = config.getCache();
-            replicationCount = config.getReplicationCount();
-            cache.start();
-
-//            if (group != null && !group.isEmpty())
-//                load(cache.getAdvancedCache().getGroup(group).keySet());
-//            else
-//                load(cache.getL2Cache().getInternalMap().keySet()); // TODO check that these are the correct keys
-            load(cache.getL2Cache().getInternalMap().keySet());
-        } catch (Exception e) {
-            throw new IOException(e);
-        }
-    }
-*/
-
 
     /**
      * Read slot data. Reads are local (no consensus required).
@@ -204,13 +151,13 @@ public class JGroupsRaftSlots implements BackingSlots {
      * @return the slot data, or null if slot is empty
      */
     @Override
-    public byte[] read(int slotId) {
+    public byte[] read(int slotId) throws IOException {
         checkInitialized();
         try {
             return cache.get(slotId);
         } catch (Exception e) {
             tsLogger.logger.warn("Raft read failed for slot " + slotId, e);
-            throw new RuntimeException("Raft read failed", e);
+            throw new IOException("Raft read failed", e);
         }
     }
 
@@ -272,7 +219,6 @@ public class JGroupsRaftSlots implements BackingSlots {
      *
      * @return number of slots
      */
-// TODO    @Override
     public int getNumberOfSlots() {
         return config != null ? config.getNumberOfSlots() : 0;
     }
