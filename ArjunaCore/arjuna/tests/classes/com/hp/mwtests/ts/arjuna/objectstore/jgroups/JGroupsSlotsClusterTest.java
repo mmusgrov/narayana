@@ -18,11 +18,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.hp.mwtests.ts.arjuna.objectstore.jgroups.JGroupsTestBase.REPLICATION_TIMEOUT_MS;
+import static com.hp.mwtests.ts.arjuna.objectstore.jgroups.JGroupsTestBase.waitFor;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -186,10 +189,9 @@ public class JGroupsSlotsClusterTest {
                 "Cluster should form with " + numNodes + " nodes");
 
         // Verify all nodes see the correct cluster size
-        Thread.sleep(500); // Allow view to propagate
-        for (SlotNode node : nodes) {
-            assertEquals(numNodes, node.getClusterSize(), node.name + " should see all nodes");
-        }
+        final int expected = numNodes;
+        waitFor(REPLICATION_TIMEOUT_MS, "view propagation to all nodes",
+            () -> nodes.stream().allMatch(n -> n.getClusterSize() == expected));
 
         System.out.println("Cluster formed with " + numNodes + " nodes");
     }
@@ -221,18 +223,10 @@ public class JGroupsSlotsClusterTest {
         // Write to node1
         nodes.get(0).slots.write(slotId, data, true);
 
-        // Allow replication
-        Thread.sleep(1000);
-
-        // Read from node2
-        byte[] result2 = nodes.get(1).slots.read(slotId);
-        assertNotNull(result2, "Node2 should have data at slot " + slotId);
-        assertArrayEquals(data, result2, "Node2 data should match");
-
-        // Read from node3
-        byte[] result3 = nodes.get(2).slots.read(slotId);
-        assertNotNull(result3, "Node3 should have data at slot " + slotId);
-        assertArrayEquals(data, result3, "Node3 data should match");
+        waitFor(REPLICATION_TIMEOUT_MS, "data replication to Node2",
+            () -> Arrays.equals(data, nodes.get(1).slots.read(slotId)));
+        waitFor(REPLICATION_TIMEOUT_MS, "data replication to Node3",
+            () -> Arrays.equals(data, nodes.get(2).slots.read(slotId)));
 
         System.out.println("✓ Slot data replication verified across 3 nodes");
     }
@@ -250,8 +244,9 @@ public class JGroupsSlotsClusterTest {
             nodes.get(0).slots.write(slot, data, true);
         }
 
-        // Allow replication
-        Thread.sleep(1000);
+        // Wait for replication of last slot
+        waitFor(REPLICATION_TIMEOUT_MS, "replication of all slots to Node2",
+            () -> nodes.get(1).slots.read(4) != null);
 
         // Verify all slots on node2
         for (int slot = 0; slot < 5; slot++) {
@@ -276,16 +271,13 @@ public class JGroupsSlotsClusterTest {
 
         // Write and verify replication
         nodes.get(0).slots.write(slotId, data, true);
-        Thread.sleep(1000);
-        assertNotNull(nodes.get(1).slots.read(slotId), "Node2 should have data before clear");
+        waitFor(REPLICATION_TIMEOUT_MS, "data replication before clear",
+            () -> nodes.get(1).slots.read(slotId) != null);
 
         // Clear from node1
         nodes.get(0).slots.clear(slotId, true);
-        Thread.sleep(1000);
-
-        // Verify cleared on node2
-        byte[] result = nodes.get(1).slots.read(slotId);
-        assertNull(result, "Node2 should have null data after clear");
+        waitFor(REPLICATION_TIMEOUT_MS, "clear replication to Node2",
+            () -> nodes.get(1).slots.read(slotId) == null);
 
         System.out.println("✓ Slot clear replication verified");
     }
@@ -304,18 +296,22 @@ public class JGroupsSlotsClusterTest {
             nodes.get(i).slots.write(slotId, data, true);
         }
 
-        // Allow replication
-        Thread.sleep(1000);
+        // Wait for replication of all slots to all nodes
+        waitFor(REPLICATION_TIMEOUT_MS, "concurrent write replication", () -> {
+            for (int r = 0; r < nodes.size(); r++) {
+                for (int w = 0; w < nodes.size(); w++) {
+                    if (nodes.get(r).slots.read(w * 10) == null) return false;
+                }
+            }
+            return true;
+        });
 
-        // Verify each node can read all slots
+        // Verify data correctness
         for (int readerIdx = 0; readerIdx < nodes.size(); readerIdx++) {
             for (int writerIdx = 0; writerIdx < nodes.size(); writerIdx++) {
                 int slotId = writerIdx * 10;
                 byte[] expected = ("node" + (writerIdx+1) + "-data").getBytes();
                 byte[] actual = nodes.get(readerIdx).slots.read(slotId);
-
-                assertNotNull(actual, "Node" + (readerIdx+1) + " should see slot " + slotId +
-                        " from Node" + (writerIdx+1));
                 assertArrayEquals(expected, actual,
                         "Node" + (readerIdx+1) + " slot " + slotId + " should match");
             }
@@ -336,19 +332,14 @@ public class JGroupsSlotsClusterTest {
         // Initial write
         byte[] data1 = "version-1".getBytes();
         nodes.get(0).slots.write(slotId, data1, true);
-        Thread.sleep(500);
-
-        byte[] read1 = nodes.get(1).slots.read(slotId);
-        assertArrayEquals(data1, read1, "Node2 should have version 1");
+        waitFor(REPLICATION_TIMEOUT_MS, "v1 replication to Node2",
+            () -> Arrays.equals(data1, nodes.get(1).slots.read(slotId)));
 
         // Update the slot
         byte[] data2 = "version-2-updated".getBytes();
         nodes.get(0).slots.write(slotId, data2, true);
-        Thread.sleep(500);
-
-        // Verify update replicated
-        byte[] read2 = nodes.get(1).slots.read(slotId);
-        assertArrayEquals(data2, read2, "Node2 should have version 2");
+        waitFor(REPLICATION_TIMEOUT_MS, "v2 replication to Node2",
+            () -> Arrays.equals(data2, nodes.get(1).slots.read(slotId)));
 
         System.out.println("✓ Slot update replication verified");
     }
@@ -365,7 +356,8 @@ public class JGroupsSlotsClusterTest {
         int slotId = 7;
         byte[] data = "existing-data".getBytes();
         nodes.get(0).slots.write(slotId, data, true);
-        Thread.sleep(500);
+        waitFor(REPLICATION_TIMEOUT_MS, "data replication before node join",
+            () -> nodes.get(1).slots.read(slotId) != null);
 
         // Add a third node
         System.out.println("Adding Node3 to existing cluster...");
@@ -378,12 +370,8 @@ public class JGroupsSlotsClusterTest {
         nodes.add(node3);
 
         assertTrue(listener.await(10, TimeUnit.SECONDS), "Cluster should grow to 3 nodes");
-        Thread.sleep(1000); // Allow data migration
-
-        // Verify node3 can see the existing data
-        byte[] result = node3.slots.read(slotId);
-        assertNotNull(result, "Node3 should see existing data");
-        assertArrayEquals(data, result, "Node3 data should match");
+        waitFor(REPLICATION_TIMEOUT_MS, "data migration to Node3",
+            () -> Arrays.equals(data, node3.slots.read(slotId)));
 
         System.out.println("✓ New node joining cluster verified");
     }

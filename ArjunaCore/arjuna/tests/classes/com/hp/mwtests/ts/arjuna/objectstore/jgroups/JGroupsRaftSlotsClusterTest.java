@@ -19,11 +19,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.hp.mwtests.ts.arjuna.objectstore.jgroups.JGroupsTestBase.REPLICATION_TIMEOUT_MS;
+import static com.hp.mwtests.ts.arjuna.objectstore.jgroups.JGroupsTestBase.waitFor;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -206,8 +209,16 @@ public class JGroupsRaftSlotsClusterTest {
             nodes.get(i).start();
 
             if (i == 0) {
-                // Add listener to first node to track cluster growth
-                nodes.get(0).getChannel().setReceiver(listener);
+                // Wrap existing receiver (ReplicatedStateMachine) so we don't clobber it
+                JChannel ch = nodes.get(0).getChannel();
+                Receiver existing = ch.getReceiver();
+                ch.setReceiver(new Receiver() {
+                    @Override
+                    public void viewAccepted(View view) {
+                        if (existing != null) existing.viewAccepted(view);
+                        listener.viewAccepted(view);
+                    }
+                });
             }
         }
 
@@ -216,10 +227,9 @@ public class JGroupsRaftSlotsClusterTest {
                 "Cluster should form with " + numNodes + " nodes");
 
         // Verify all nodes see the correct cluster size
-        Thread.sleep(1000); // Allow view to propagate
-        for (SlotNode node : nodes) {
-            assertEquals(numNodes, node.getClusterSize(), node.name + " should see all nodes");
-        }
+        final int expected = numNodes;
+        waitFor(REPLICATION_TIMEOUT_MS, "view propagation to all Raft nodes",
+            () -> nodes.stream().allMatch(n -> n.getClusterSize() == expected));
 
         System.out.println("Cluster formed with " + numNodes + " nodes");
 
@@ -288,17 +298,10 @@ public class JGroupsRaftSlotsClusterTest {
         // Write to first node (may or may not be leader - Raft handles it)
         nodes.get(0).slots.write(slotId, data, true);
 
-        // Allow Raft consensus and replication
-        Thread.sleep(2000);
-
-        // Read from other nodes - should see committed data
-        byte[] result2 = nodes.get(1).slots.read(slotId);
-        assertNotNull(result2, "Node B should have data at slot " + slotId);
-        assertArrayEquals(data, result2, "Node B data should match");
-
-        byte[] result3 = nodes.get(2).slots.read(slotId);
-        assertNotNull(result3, "Node C should have data at slot " + slotId);
-        assertArrayEquals(data, result3, "Node C data should match");
+        waitFor(REPLICATION_TIMEOUT_MS, "Raft replication to Node B",
+            () -> Arrays.equals(data, nodes.get(1).slots.read(slotId)));
+        waitFor(REPLICATION_TIMEOUT_MS, "Raft replication to Node C",
+            () -> Arrays.equals(data, nodes.get(2).slots.read(slotId)));
 
         System.out.println("✓ Slot data replication verified across 3 Raft nodes");
     }
@@ -314,23 +317,21 @@ public class JGroupsRaftSlotsClusterTest {
         for (int slot = 0; slot < 5; slot++) {
             byte[] data = ("raft-slot-" + slot + "-data").getBytes();
             nodes.get(0).slots.write(slot, data, true);
-            Thread.sleep(500); // Allow each write to commit
         }
 
-        // Allow final replication
-        Thread.sleep(1000);
+        // Wait for all slots to replicate
+        byte[] lastExpected = ("raft-slot-4-data").getBytes();
+        waitFor(REPLICATION_TIMEOUT_MS, "Raft replication of all slots",
+            () -> Arrays.equals(lastExpected, nodes.get(1).slots.read(4))
+               && Arrays.equals(lastExpected, nodes.get(2).slots.read(4)));
 
         // Verify all slots on other nodes
         for (int slot = 0; slot < 5; slot++) {
             byte[] expected = ("raft-slot-" + slot + "-data").getBytes();
-
-            byte[] actual2 = nodes.get(1).slots.read(slot);
-            assertNotNull(actual2, "Node B should have data at slot " + slot);
-            assertArrayEquals(expected, actual2, "Node B slot " + slot + " data should match");
-
-            byte[] actual3 = nodes.get(2).slots.read(slot);
-            assertNotNull(actual3, "Node C should have data at slot " + slot);
-            assertArrayEquals(expected, actual3, "Node C slot " + slot + " data should match");
+            assertArrayEquals(expected, nodes.get(1).slots.read(slot),
+                "Node B slot " + slot + " data should match");
+            assertArrayEquals(expected, nodes.get(2).slots.read(slot),
+                "Node C slot " + slot + " data should match");
         }
 
         System.out.println("✓ Multiple slot replication verified");
@@ -348,20 +349,13 @@ public class JGroupsRaftSlotsClusterTest {
 
         // Write and verify replication
         nodes.get(0).slots.write(slotId, data, true);
-        Thread.sleep(1500);
-        assertNotNull(nodes.get(1).slots.read(slotId), "Node B should have data before clear");
-        assertNotNull(nodes.get(2).slots.read(slotId), "Node C should have data before clear");
+        waitFor(REPLICATION_TIMEOUT_MS, "Raft write replication before clear",
+            () -> nodes.get(1).slots.read(slotId) != null && nodes.get(2).slots.read(slotId) != null);
 
         // Clear from first node
         nodes.get(0).slots.clear(slotId, true);
-        Thread.sleep(1500);
-
-        // Verify cleared on all nodes
-        byte[] result2 = nodes.get(1).slots.read(slotId);
-        assertNull(result2, "Node B should have null data after clear");
-
-        byte[] result3 = nodes.get(2).slots.read(slotId);
-        assertNull(result3, "Node C should have null data after clear");
+        waitFor(REPLICATION_TIMEOUT_MS, "Raft clear replication",
+            () -> nodes.get(1).slots.read(slotId) == null && nodes.get(2).slots.read(slotId) == null);
 
         System.out.println("✓ Slot clear replication verified");
     }
@@ -380,8 +374,15 @@ public class JGroupsRaftSlotsClusterTest {
             nodes.get(i).slots.write(slotId, data, true);
         }
 
-        // Allow Raft consensus and replication
-        Thread.sleep(3000);
+        // Wait for Raft consensus and replication
+        waitFor(REPLICATION_TIMEOUT_MS, "Raft concurrent write replication", () -> {
+            for (int r = 0; r < nodes.size(); r++) {
+                for (int w = 0; w < nodes.size(); w++) {
+                    if (nodes.get(r).slots.read(w * 10) == null) return false;
+                }
+            }
+            return true;
+        });
 
         // Verify each node can read all slots
         for (int readerIdx = 0; readerIdx < nodes.size(); readerIdx++) {
@@ -412,22 +413,15 @@ public class JGroupsRaftSlotsClusterTest {
         // Initial write
         byte[] data1 = "raft-version-1".getBytes();
         nodes.get(0).slots.write(slotId, data1, true);
-        Thread.sleep(1000);
-
-        byte[] read1 = nodes.get(1).slots.read(slotId);
-        assertArrayEquals(data1, read1, "Node B should have version 1");
+        waitFor(REPLICATION_TIMEOUT_MS, "Raft v1 replication to Node B",
+            () -> Arrays.equals(data1, nodes.get(1).slots.read(slotId)));
 
         // Update the slot
         byte[] data2 = "raft-version-2-updated".getBytes();
         nodes.get(0).slots.write(slotId, data2, true);
-        Thread.sleep(1000);
-
-        // Verify update replicated
-        byte[] read2 = nodes.get(1).slots.read(slotId);
-        assertArrayEquals(data2, read2, "Node B should have version 2");
-
-        byte[] read3 = nodes.get(2).slots.read(slotId);
-        assertArrayEquals(data2, read3, "Node C should have version 2");
+        waitFor(REPLICATION_TIMEOUT_MS, "Raft v2 replication to all nodes",
+            () -> Arrays.equals(data2, nodes.get(1).slots.read(slotId))
+               && Arrays.equals(data2, nodes.get(2).slots.read(slotId)));
 
         System.out.println("✓ Slot update replication verified");
     }

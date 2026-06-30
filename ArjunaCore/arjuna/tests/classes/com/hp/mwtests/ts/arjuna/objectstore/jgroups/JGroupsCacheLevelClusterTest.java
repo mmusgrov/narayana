@@ -14,10 +14,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.hp.mwtests.ts.arjuna.objectstore.jgroups.JGroupsTestBase.REPLICATION_TIMEOUT_MS;
+import static com.hp.mwtests.ts.arjuna.objectstore.jgroups.JGroupsTestBase.waitFor;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -108,10 +111,8 @@ public class JGroupsCacheLevelClusterTest {
         cache2.start();
         assertTrue(listener2.await(10, TimeUnit.SECONDS), "Cluster should reach size 2");
 
-        // Give view time to propagate
-        Thread.sleep(500);
-        assertEquals(2, cache1.getClusterSize(), "Cache1 should see 2 members");
-        assertEquals(2, cache2.getClusterSize(), "Cache2 should see 2 members");
+        waitFor(REPLICATION_TIMEOUT_MS, "view propagation to 2 members",
+            () -> cache1.getClusterSize() == 2 && cache2.getClusterSize() == 2);
 
         // Create cache3 - all should see size 3
         ReplCache<ByteArrayKey, byte[]> cache3 = createCache("node3");
@@ -120,10 +121,8 @@ public class JGroupsCacheLevelClusterTest {
         cache3.start();
         assertTrue(listener3.await(10, TimeUnit.SECONDS), "Cluster should reach size 3");
 
-        Thread.sleep(500);
-        assertEquals(3, cache1.getClusterSize(), "Cache1 should see 3 members");
-        assertEquals(3, cache2.getClusterSize(), "Cache2 should see 3 members");
-        assertEquals(3, cache3.getClusterSize(), "Cache3 should see 3 members");
+        waitFor(REPLICATION_TIMEOUT_MS, "view propagation to 3 members",
+            () -> cache1.getClusterSize() == 3 && cache2.getClusterSize() == 3 && cache3.getClusterSize() == 3);
 
         System.out.println("✓ Cluster formation verified: 3 nodes");
     }
@@ -146,7 +145,8 @@ public class JGroupsCacheLevelClusterTest {
         cache3.start();
 
         assertTrue(listener.await(10, TimeUnit.SECONDS), "Cluster should form");
-        Thread.sleep(500); // Allow view to stabilize
+        waitFor(REPLICATION_TIMEOUT_MS, "cluster view stabilization",
+            () -> cache1.getClusterSize() == 3 && cache2.getClusterSize() == 3 && cache3.getClusterSize() == 3);
 
         // Write data on cache1
         ByteArrayKey key = new ByteArrayKey(new Uid().getBytes());
@@ -154,18 +154,10 @@ public class JGroupsCacheLevelClusterTest {
 
         cache1.put(key, value, (short) -1, 0); // -1 = replicate to all
 
-        // Allow replication to complete
-        Thread.sleep(1000);
-
-        // Verify on cache2
-        byte[] result2 = cache2.get(key);
-        assertNotNull(result2, "Cache2 should have the data");
-        assertArrayEquals(value, result2, "Cache2 data should match");
-
-        // Verify on cache3
-        byte[] result3 = cache3.get(key);
-        assertNotNull(result3, "Cache3 should have the data");
-        assertArrayEquals(value, result3, "Cache3 data should match");
+        waitFor(REPLICATION_TIMEOUT_MS, "data replication to cache2",
+            () -> Arrays.equals(value, cache2.get(key)));
+        waitFor(REPLICATION_TIMEOUT_MS, "data replication to cache3",
+            () -> Arrays.equals(value, cache3.get(key)));
 
         System.out.println("✓ Data replication verified across 3 nodes");
     }
@@ -186,24 +178,21 @@ public class JGroupsCacheLevelClusterTest {
         cache2.start();
 
         assertTrue(listener.await(10, TimeUnit.SECONDS), "Cluster should form");
-        Thread.sleep(500);
+        waitFor(REPLICATION_TIMEOUT_MS, "view stabilization to 2 members",
+            () -> cache1.getClusterSize() == 2 && cache2.getClusterSize() == 2);
 
         // Write and verify replication
         ByteArrayKey key = new ByteArrayKey(new Uid().getBytes());
         byte[] value = "data-to-be-removed".getBytes();
 
         cache1.put(key, value, (short) -1, 0);
-        Thread.sleep(1000);
-
-        assertNotNull(cache2.get(key), "Cache2 should have the data");
+        waitFor(REPLICATION_TIMEOUT_MS, "data replication to cache2",
+            () -> cache2.get(key) != null);
 
         // Remove from cache1
         cache1.remove(key);
-        Thread.sleep(1000);
-
-        // Verify removed from both
-        assertNull(cache1.get(key), "Cache1 should not have the data");
-        assertNull(cache2.get(key), "Cache2 should not have the data");
+        waitFor(REPLICATION_TIMEOUT_MS, "removal replication",
+            () -> cache1.get(key) == null && cache2.get(key) == null);
 
         System.out.println("✓ Data removal replication verified");
     }
@@ -226,7 +215,8 @@ public class JGroupsCacheLevelClusterTest {
         cache3.start();
 
         assertTrue(listener.await(10, TimeUnit.SECONDS), "Cluster should form");
-        Thread.sleep(500);
+        waitFor(REPLICATION_TIMEOUT_MS, "view stabilization to 3 members",
+            () -> cache1.getClusterSize() == 3 && cache2.getClusterSize() == 3 && cache3.getClusterSize() == 3);
 
         // Write different keys from each cache
         ByteArrayKey key1 = new ByteArrayKey(new Uid().getBytes());
@@ -237,20 +227,10 @@ public class JGroupsCacheLevelClusterTest {
         cache2.put(key2, "from-node2".getBytes(), (short) -1, 0);
         cache3.put(key3, "from-node3".getBytes(), (short) -1, 0);
 
-        Thread.sleep(1000);
-
-        // Each cache should see all 3 keys
-        assertNotNull(cache1.get(key1), "Cache1 should see key1");
-        assertNotNull(cache1.get(key2), "Cache1 should see key2");
-        assertNotNull(cache1.get(key3), "Cache1 should see key3");
-
-        assertNotNull(cache2.get(key1), "Cache2 should see key1");
-        assertNotNull(cache2.get(key2), "Cache2 should see key2");
-        assertNotNull(cache2.get(key3), "Cache2 should see key3");
-
-        assertNotNull(cache3.get(key1), "Cache3 should see key1");
-        assertNotNull(cache3.get(key2), "Cache3 should see key2");
-        assertNotNull(cache3.get(key3), "Cache3 should see key3");
+        waitFor(REPLICATION_TIMEOUT_MS, "replication of all keys to all caches",
+            () -> cache1.get(key1) != null && cache1.get(key2) != null && cache1.get(key3) != null
+               && cache2.get(key1) != null && cache2.get(key2) != null && cache2.get(key3) != null
+               && cache3.get(key1) != null && cache3.get(key2) != null && cache3.get(key3) != null);
 
         System.out.println("✓ Concurrent writes from multiple nodes verified");
     }
@@ -273,31 +253,26 @@ public class JGroupsCacheLevelClusterTest {
         cache3.start();
 
         assertTrue(formListener.await(10, TimeUnit.SECONDS), "Cluster should form");
-        Thread.sleep(500);
+        waitFor(REPLICATION_TIMEOUT_MS, "view stabilization to 3 members",
+            () -> cache1.getClusterSize() == 3 && cache2.getClusterSize() == 3 && cache3.getClusterSize() == 3);
 
         // Write data replicated to all nodes
         ByteArrayKey key = new ByteArrayKey(new Uid().getBytes());
         byte[] value = "persistent-data".getBytes();
         cache1.put(key, value, (short) -1, 0);
-        Thread.sleep(1000);
+        waitFor(REPLICATION_TIMEOUT_MS, "data replication to all caches",
+            () -> Arrays.equals(value, cache1.get(key)) && Arrays.equals(value, cache2.get(key)));
 
         // Stop cache3
-        ClusterFormationListener leaveListener = new ClusterFormationListener(2);
-        cache1.addReceiver(leaveListener);
         cache3.stop();
         caches.remove(cache3);
 
-        assertTrue(leaveListener.await(10, TimeUnit.SECONDS), "Cluster should shrink to 2");
-        Thread.sleep(500);
+        waitFor(REPLICATION_TIMEOUT_MS, "cluster shrink to 2 members",
+            () -> cache1.getClusterSize() == 2 && cache2.getClusterSize() == 2);
 
         // Data should still be on cache1 and cache2
-        byte[] result1 = cache1.get(key);
-        byte[] result2 = cache2.get(key);
-
-        assertNotNull(result1, "Cache1 should still have data");
-        assertNotNull(result2, "Cache2 should still have data");
-        assertArrayEquals(value, result1, "Cache1 data should be intact");
-        assertArrayEquals(value, result2, "Cache2 data should be intact");
+        assertArrayEquals(value, cache1.get(key), "Cache1 data should be intact");
+        assertArrayEquals(value, cache2.get(key), "Cache2 data should be intact");
 
         System.out.println("✓ Node leaving doesn't affect remaining data");
     }

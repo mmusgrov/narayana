@@ -16,9 +16,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.hp.mwtests.ts.arjuna.objectstore.jgroups.JGroupsTestBase.REPLICATION_TIMEOUT_MS;
+import static com.hp.mwtests.ts.arjuna.objectstore.jgroups.JGroupsTestBase.waitFor;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -156,14 +159,12 @@ public class JGroupsSlotsWALClusterTest {
         nodes.get(0).slots.write(slotId, data, true);
 
         // Wait for replication to all nodes
-        Thread.sleep(1000);
-
-        // Verify all nodes have the data (via cache replication)
-        for (int i = 0; i < nodes.size(); i++) {
-            byte[] result = nodes.get(i).slots.read(slotId);
-            assertArrayEquals(data, result,
-                "Node" + (char)('A' + i) + " should have data before failure");
-        }
+        waitFor(REPLICATION_TIMEOUT_MS, "data replication to all nodes", () -> {
+            for (SlotNode node : nodes) {
+                if (!Arrays.equals(data, node.slots.read(slotId))) return false;
+            }
+            return true;
+        });
         System.out.println("✓ All nodes have data (replicated via cache)");
 
         // ===== Phase 2: Simulate cluster-wide failure =====
@@ -210,13 +211,23 @@ public class JGroupsSlotsWALClusterTest {
         for (int i = 0; i < 3; i++) {
             nodes.get(i).start();
         }
-        Thread.sleep(3000);  // Wait for cluster formation
+        waitFor(REPLICATION_TIMEOUT_MS, "cluster formation without WAL", () -> {
+            for (SlotNode node : nodes) {
+                try {
+                    if (node.config.getCache().getClusterSize() != 3) return false;
+                } catch (Exception e) {
+                    return false;
+                }
+            }
+            return true;
+        });
 
         // Write data
         int slotId = 50;
         byte[] data = "will-be-lost".getBytes();
         nodes.get(0).slots.write(slotId, data, true);
-        Thread.sleep(500);
+        waitFor(REPLICATION_TIMEOUT_MS, "data replication before failure",
+            () -> nodes.get(1).slots.read(slotId) != null);
 
         // Stop all nodes
         for (SlotNode node : nodes) {
@@ -254,7 +265,8 @@ public class JGroupsSlotsWALClusterTest {
         int slotId = 60;
         byte[] data = "replicated-data".getBytes();
         nodes.get(0).slots.write(slotId, data, true);
-        Thread.sleep(500);
+        waitFor(REPLICATION_TIMEOUT_MS, "data replication before partial failure",
+            () -> Arrays.equals(data, nodes.get(1).slots.read(slotId)));
 
         // Stop node 3 only (partial failure)
         System.out.println("Stopping NodeC (partial failure)");
@@ -269,14 +281,8 @@ public class JGroupsSlotsWALClusterTest {
         nodes.get(2).config.setCache(null);  // Force new cache
         nodes.get(2).start();
 
-        // Wait for rejoin
-        Thread.sleep(1000);
-
-        // Node 3 should get data from OTHER nodes (via replication)
-        // OR from its own WAL
-        byte[] result = nodes.get(2).slots.read(slotId);
-        assertNotNull(result, "NodeC should recover data (from replication or WAL)");
-        assertArrayEquals(data, result, "NodeC data should match");
+        waitFor(REPLICATION_TIMEOUT_MS, "NodeC recovery (from replication or WAL)",
+            () -> Arrays.equals(data, nodes.get(2).slots.read(slotId)));
 
         System.out.println("✓ Partial failure recovery successful (replication + WAL)");
     }
@@ -300,11 +306,8 @@ public class JGroupsSlotsWALClusterTest {
 
         // NodeA writes v1 (goes to NodeA's WAL and replicates to NodeB)
         nodes.get(0).slots.write(slotId, dataV1, true);
-        Thread.sleep(500);
-
-        // Verify both have v1
-        assertArrayEquals(dataV1, nodes.get(0).slots.read(slotId), "NodeA should have v1");
-        assertArrayEquals(dataV1, nodes.get(1).slots.read(slotId), "NodeB should have v1");
+        waitFor(REPLICATION_TIMEOUT_MS, "v1 replication to NodeB",
+            () -> Arrays.equals(dataV1, nodes.get(1).slots.read(slotId)));
 
         // Stop NodeA only (NodeA's WAL still has v1)
         nodes.get(0).stop();
@@ -313,10 +316,8 @@ public class JGroupsSlotsWALClusterTest {
         // ===== Phase 2: NodeB writes v2 while NodeA is down =====
         System.out.println("\n--- Phase 2: NodeB writes v2 while NodeA is down ---");
         nodes.get(1).slots.write(slotId, dataV2, true);
-        Thread.sleep(500);
-
-        // NodeB has v2 in cache and WAL
-        assertArrayEquals(dataV2, nodes.get(1).slots.read(slotId), "NodeB should have v2");
+        waitFor(REPLICATION_TIMEOUT_MS, "v2 write on NodeB",
+            () -> Arrays.equals(dataV2, nodes.get(1).slots.read(slotId)));
 
         // ===== Phase 3: Restart NodeA - should NOT overwrite with stale WAL =====
         System.out.println("\n--- Phase 3: Restart NodeA ---");
@@ -326,16 +327,9 @@ public class JGroupsSlotsWALClusterTest {
         nodes.set(0, newNodeA);
         newNodeA.start();
 
-        // Wait for cluster to form and replicate
-        Thread.sleep(2000);
-
         // NodeA should have v2 from replication, NOT v1 from its stale WAL
-        byte[] result = nodes.get(0).slots.read(slotId);
-        assertNotNull(result, "NodeA should have data");
-
-        // This is the critical assertion: WAL should NOT overwrite newer replicated data
-        assertArrayEquals(dataV2, result,
-            "NodeA should have v2 from replication, not v1 from stale WAL");
+        waitFor(REPLICATION_TIMEOUT_MS, "NodeA receives v2 from replication (not stale WAL v1)",
+            () -> Arrays.equals(dataV2, nodes.get(0).slots.read(slotId)));
 
         System.out.println("✓ WAL correctly did not overwrite newer cache data");
     }
@@ -354,8 +348,17 @@ public class JGroupsSlotsWALClusterTest {
             nodes.get(i).start();
         }
 
-        // Wait for cluster formation and replication
-        Thread.sleep(3000);
+        final int expected = numNodes;
+        waitFor(REPLICATION_TIMEOUT_MS, "cluster formation with " + numNodes + " nodes", () -> {
+            for (SlotNode node : nodes) {
+                try {
+                    if (node.config.getCache().getClusterSize() != expected) return false;
+                } catch (Exception e) {
+                    return false;
+                }
+            }
+            return true;
+        });
 
         System.out.println("Cluster formed with " + numNodes + " nodes");
     }

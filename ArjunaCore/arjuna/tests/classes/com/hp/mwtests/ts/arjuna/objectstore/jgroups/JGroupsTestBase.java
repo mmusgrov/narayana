@@ -33,6 +33,23 @@ import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentMap;
 
 public class JGroupsTestBase {
+    public static final long REPLICATION_TIMEOUT_MS = 10_000;
+
+    @FunctionalInterface
+    public interface ThrowingBooleanSupplier {
+        boolean getAsBoolean() throws Exception;
+    }
+
+    public static void waitFor(long timeoutMs, String description, ThrowingBooleanSupplier condition) throws Exception {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (!condition.getAsBoolean()) {
+            if (System.currentTimeMillis() > deadline) {
+                throw new AssertionError("Timed out waiting for: " + description);
+            }
+            Thread.sleep(50);
+        }
+    }
+
     // the name of the cluster and the shared cache used for the object store
     static final String CLUSTER_NAME = "clusteredObjectStore";
     // location of the file system store (with surefire it will be the build directory)

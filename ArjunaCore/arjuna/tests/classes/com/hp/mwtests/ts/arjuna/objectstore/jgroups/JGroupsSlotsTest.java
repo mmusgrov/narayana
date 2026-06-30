@@ -21,6 +21,9 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
+import static com.hp.mwtests.ts.arjuna.objectstore.jgroups.JGroupsTestBase.REPLICATION_TIMEOUT_MS;
+import static com.hp.mwtests.ts.arjuna.objectstore.jgroups.JGroupsTestBase.waitFor;
+
 public class JGroupsSlotsTest {
     public static void setupStore() throws IOException, CoreEnvironmentBeanException {
         // common config for each slot store
@@ -80,7 +83,7 @@ public class JGroupsSlotsTest {
     }
 
     @Test
-    public void test() throws IOException, CoreEnvironmentBeanException {
+    public void test() throws Exception {
         setupStore();
 
         SlotStoreEnvironmentBean slotStoreConfig = BeanPopulator.getDefaultInstance(SlotStoreEnvironmentBean.class);
@@ -98,15 +101,13 @@ public class JGroupsSlotsTest {
 
         try {
             Assertions.assertTrue(recoveryStore.write_committed(uid, typeName, oos));
-            // Give time for message to propagate
-            Thread.sleep(500);
+            waitFor(REPLICATION_TIMEOUT_MS, "write propagation",
+                () -> recoveryStore.read_committed(uid, typeName) != null);
             InputObjectState inputData = recoveryStore.read_committed(uid, typeName);
             String tn = inputData.unpackString();
             Assertions.assertEquals(data, tn);
         } catch (ObjectStoreException e) {
             Assertions.fail(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
         }
     }
 }
