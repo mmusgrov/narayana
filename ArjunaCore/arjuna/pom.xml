@@ -46,14 +46,14 @@
     <dependency>
       <groupId>org.jgroups</groupId>
       <artifactId>jgroups-raft</artifactId>
-      <version>1.1.4.Final</version>
-      <!--      <version>2.0.0.Alpha1</version>-->
+      <version>${version.org.jgroups.raft}</version>
+      <scope>provided</scope>
     </dependency>
     <!-- Optional utilized to collect metrics. -->
     <dependency>
       <groupId>org.hdrhistogram</groupId>
       <artifactId>HdrHistogram</artifactId>
-      <version>2.2.2</version>
+      <version>${version.org.hdrhistogram}</version>
       <optional>true</optional>
     </dependency>
 
