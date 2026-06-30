@@ -71,34 +71,22 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
     }
 
     public ReplCache<ByteArrayKey, byte[]> getCache() throws CoreEnvironmentBeanException {
-        if (cache == null) {
+        if(cache == null) {
             if (jGroupsConfigFileName == null) {
                 throw new CoreEnvironmentBeanException(tsLogger.i18NLogger.warn_jgroups_config());
             }
-
-            cache = new ReplCache<>(jGroupsConfigFileName, getCacheName());
-            cache.setCallTimeout(1500L);
-            cache.setCachingTime(cachingTime);
-            cache.setMigrateData(true);
+            synchronized (this) {
+                if (cache == null) { // double-checked locking
+                    cache = new ReplCache<>(jGroupsConfigFileName, getCacheName());
+                    cache.setCallTimeout(1500L);
+                    cache.setCachingTime(cachingTime);
+                    cache.setMigrateData(true);
+                }
+            }
         }
 
         return cache;
     }
-        /*            if (jGroupsConfigFileName != null) {
-                try {
-                    DefaultCacheManager cacheManager = new DefaultCacheManager(
-                            JGroupsStoreEnvironmentBean.class.getResourceAsStream(jGroupsConfigFileName));
-                    if (cacheName == null) {
-                        cacheName = cacheManager.getName(); // cache name defaults the cache manager name
-                    }
-                    nodeAddress = cacheManager.getNodeAddress();
-
-                    cache = cacheManager.getCache(cacheName);
-                } catch (IOException e) {
-                    tsLogger.i18NLogger.warn_jgroups_config(e);
-                    throw new RuntimeException(e);
-                }
-            }*/
 
     public void setCache(ReplCache<ByteArrayKey, byte[]> cache) {
         this.cache = cache;
@@ -267,6 +255,7 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
         if(jGroupsSlotKeyGenerator == null && slotKeyGeneratorClassName != null)
         {
             synchronized (this) {
+                // double-checked locking
                 if(jGroupsSlotKeyGenerator == null && (slotKeyGeneratorClassName != null && !slotKeyGeneratorClassName.isBlank())) {
                     jGroupsSlotKeyGenerator = ClassloadingUtility.loadAndInstantiateClass(JGroupsSlotKeyGenerator.class, slotKeyGeneratorClassName, null);
                 }
@@ -448,15 +437,4 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
     public void setRaftHeartbeatInterval(int raftHeartbeatInterval) {
         this.raftHeartbeatInterval = raftHeartbeatInterval;
     }
-/*
-    public ReplicatedHashMap<byte[], byte[]> getCache2() throws Exception {
-        if (cache2 == null) {
-            JChannel channel = new JChannel(getJGroupsConfigFileName());
-            channel.connect("cluster");//TODO getCacheName());
-
-            cache2 = new ReplicatedHashMap<>(channel);
-        }
-
-        return cache2;
-    }*/
 }

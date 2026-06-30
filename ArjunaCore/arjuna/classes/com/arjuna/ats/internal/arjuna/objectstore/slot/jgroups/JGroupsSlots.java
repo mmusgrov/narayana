@@ -130,13 +130,6 @@ public class JGroupsSlots implements BackingSlots {
             Set<ByteArrayKey> existingKeys = cache.getL2Cache().getInternalMap().keySet();
             load(existingKeys);
 
-            // If slots weren't fully initialized (cache was empty), generate new keys
-            for (int i = 0; i < slots.length; i++) {
-                if (slots[i] == null) {
-                    slots[i] = jGroupsSlotKeyGenerator.generateUniqueKey(i);
-                }
-            }
-
             // Now load from WAL (slots[] is fully initialized)
             if (journal != null) {
                 // WAL enabled: load from journal, but don't overwrite cache data

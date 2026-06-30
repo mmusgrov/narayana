@@ -112,6 +112,9 @@ public class SlotJournal {
             1                   // maxAIO (ignored for NIO)
         );
 
+        // optimize record updates (in-place replace instead of append+delete) otherwise every slot overwrite results in
+        // faster journal growth and more compaction overhead.
+        journal.replaceableRecord((byte)0);
         journal.setRemoveExtraFilesOnLoad(true);
     }
 

@@ -121,11 +121,10 @@ public class JGroupsClusterTest extends JGroupsTestBase {
         // Remove
         assertTrue("Remove should succeed", recoveryStore.remove_committed(uid, TYPE_NAME));
 
-        // Verify removed
-        InputObjectState afterRemove = null;
+        // Verify removed — some stores throw ObjectStoreException, others return null
         try {
-            afterRemove = recoveryStore.read_committed(uid, TYPE_NAME);
-            fail("the recoveryStore should not contain the removed record");
+            InputObjectState afterRemove = recoveryStore.read_committed(uid, TYPE_NAME);
+            assertNull("should not contain removed record", afterRemove);
         } catch (ObjectStoreException ignore) {
         }
 

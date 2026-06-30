@@ -57,20 +57,26 @@ public class JGroupsSlotsTest {
         cache.setMigrateData(true);
         cache.start();
 
-        byte[] k = "key-repl-1".getBytes();
-        byte[] v = "value-repl-1".getBytes();
-        ByteArrayKey key = new ByteArrayKey(k);
+        try {
+            byte[] k = "key-repl-1".getBytes();
+            byte[] v = "value-repl-1".getBytes();
+            ByteArrayKey key = new ByteArrayKey(k);
 
-        cache.put(key, v, (short) 1, 0);
-        byte[] bytes = cache.get(key);
-        Assertions.assertArrayEquals(v, bytes);
+            cache.put(key, v, (short) 1, 0);
+            byte[] bytes = cache.get(key);
+            Assertions.assertArrayEquals(v, bytes);
 
-        JGroupsStoreEnvironmentBean config = BeanPopulator.getDefaultInstance(JGroupsStoreEnvironmentBean.class);
-        ReplCache<ByteArrayKey, byte[]> slotStoreCache = config.getCache();
+            JGroupsStoreEnvironmentBean config = BeanPopulator.getDefaultInstance(JGroupsStoreEnvironmentBean.class);
+            ReplCache<ByteArrayKey, byte[]> slotStoreCache = config.getCache();
 
-        slotStoreCache.put(key, v, (short) 1, 0);
-        bytes = cache.get(key);
-        Assertions.assertArrayEquals(v, bytes);
+            slotStoreCache.put(key, v, (short) 1, 0);
+            bytes = cache.get(key);
+            Assertions.assertArrayEquals(v, bytes);
+
+            slotStoreCache.stop();
+        } finally {
+            cache.stop();
+        }
     }
 
     @Test
