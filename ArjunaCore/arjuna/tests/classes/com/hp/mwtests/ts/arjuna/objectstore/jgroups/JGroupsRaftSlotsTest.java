@@ -164,7 +164,6 @@ public class JGroupsRaftSlotsTest {
 
         // Single node should elect itself as leader
         assertTrue(slots.hasLeader(), "Should have a leader");
-// TODO        assertEquals("LEADER", slots.getRole(), "Should be LEADER");
 
         System.out.println("✓ Leader election verified");
     }
@@ -179,11 +178,8 @@ public class JGroupsRaftSlotsTest {
         }
 
         // Verify we can read role and leader status
-// TODO        String role = slots.getRole();
-// TODO        assertNotNull(role, "Role should not be null");
         assertTrue(slots.hasLeader(), "Should have a leader");
 
-// TODO        System.out.println("Role: " + role);
         System.out.println("Has leader: " + slots.hasLeader());
         System.out.println("✓ Raft metrics verified");
     }

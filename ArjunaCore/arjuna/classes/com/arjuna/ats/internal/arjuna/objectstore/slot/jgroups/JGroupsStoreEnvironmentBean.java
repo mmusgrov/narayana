@@ -24,7 +24,7 @@ import java.io.File;
 public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implements JGroupsStoreEnvironmentBeanMBean {
 
     private String jGroupsConfigFileName = "jgroups-transport-config.xml";
-    private ReplCache<ByteArrayKey, byte[]> cache;
+    private volatile ReplCache<ByteArrayKey, byte[]> cache;
     private String cacheName = "defaultJGroupsCache";
     private short replicationCount = -1;
     private boolean ignoreReturnValues = true;
@@ -72,7 +72,7 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
     }
 
     public ReplCache<ByteArrayKey, byte[]> getCache() throws CoreEnvironmentBeanException {
-        if(cache == null) {
+        if (cache == null) {
             if (jGroupsConfigFileName == null) {
                 throw new CoreEnvironmentBeanException(tsLogger.i18NLogger.warn_jgroups_config());
             }

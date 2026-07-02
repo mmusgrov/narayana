@@ -41,8 +41,8 @@
 
     <!-- Failure detection -->
     <FD_SOCK/>
-    <FD_ALL timeout="3000"
-            interval="1000"/>
+    <FD_ALL3 timeout="3000"
+             interval="1000"/>
     <VERIFY_SUSPECT timeout="1500"/>
 
     <!-- Barrier for flush protocol -->
@@ -72,7 +72,7 @@
          min_threshold="0.4"/>
 
     <!-- Message fragmentation -->
-    <FRAG2 frag_size="60K"/>
+    <FRAG4 frag_size="60K"/>
 
     <!-- Raft-specific protocols -->
 
