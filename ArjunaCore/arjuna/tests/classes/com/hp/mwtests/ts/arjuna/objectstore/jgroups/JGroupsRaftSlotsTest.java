@@ -271,8 +271,13 @@ public class JGroupsRaftSlotsTest {
     // Helper methods
 
     private void cleanupStoreDir() {
+        cleanupDir(STORE_DIR);
+        cleanupDir(STORE_DIR + "-fsync");
+    }
+
+    private static void cleanupDir(String dir) {
         try {
-            Path storePath = Paths.get(STORE_DIR);
+            Path storePath = Paths.get(dir);
             if (Files.exists(storePath)) {
                 Files.walk(storePath)
                         .sorted(Comparator.reverseOrder())

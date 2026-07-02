@@ -266,12 +266,6 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
         return jGroupsSlotKeyGenerator;
     }
 
-    /**
-     * Enable JGroups-Raft consensus for strong consistency and persistent WAL.
-     * When enabled, uses JGroupsRaftSlots instead of JGroupsSlots.
-     *
-     * @return true if Raft is enabled
-     */
     // ===== WAL (Write-Ahead Log) Properties =====
 
     /**
@@ -349,7 +343,12 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
     }
 
     // ===== Raft Properties =====
-
+    /**
+     * Enable JGroups-Raft consensus for strong consistency and persistent WAL.
+     * When enabled, uses JGroupsRaftSlots instead of JGroupsSlots.
+     *
+     * @return true if Raft is enabled
+     */
     public boolean isRaftEnabled() {
         return raftEnabled;
     }
