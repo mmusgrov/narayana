@@ -72,7 +72,9 @@ public class SlotJournal {
      * @param bufferSize Buffer size in bytes for batching writes
      * @param bufferFlushesPerSecond How many times per second to flush the buffer
      * @throws IOException if journal cannot be created
+     * @deprecated Use {@link #SlotJournal(JGroupsStoreEnvironmentBean)} instead
      */
+    @Deprecated
     public SlotJournal(String storeDir, boolean syncWrites, boolean syncDeletes,
                        int bufferSize, int bufferFlushesPerSecond) throws IOException {
         this.syncWrites = syncWrites;
@@ -108,6 +110,72 @@ public class SlotJournal {
             "slot-journal",     // filePrefix
             "dat",              // fileExtension
             1                   // maxAIO (ignored for NIO)
+        );
+
+        // optimize record updates (in-place replace instead of append+delete) otherwise every slot overwrite results in
+        // faster journal growth and more compaction overhead.
+        journal.replaceableRecord(RECORD_TYPE);
+        journal.setRemoveExtraFilesOnLoad(true);
+    }
+
+    /**
+     * Create a new SlotJournal using configuration from JGroupsStoreEnvironmentBean.
+     * This constructor mirrors HornetqJournalStore's approach to journal configuration.
+     *
+     * @param config Environment bean with WAL journal configuration
+     * @throws IOException if journal cannot be created
+     */
+    public SlotJournal(JGroupsStoreEnvironmentBean config) throws IOException {
+        this.syncWrites = config.isWalSyncWrites();
+        this.syncDeletes = config.isWalSyncDeletes();
+
+        String storeDir = config.getStoreDir();
+        if (storeDir == null || storeDir.isEmpty()) {
+            throw new IllegalArgumentException("storeDir must be set when WAL is enabled");
+        }
+
+        File storeDirFile = new File(storeDir);
+        if (!storeDirFile.exists() && !storeDirFile.mkdirs()) {
+            throw new IOException(tsLogger.i18NLogger.get_dir_create_failed(storeDirFile.getCanonicalPath()));
+        }
+
+        // Buffer timeout calculation matches HornetqJournalStore
+        int bufferTimeoutNanos = (int)(1000000000d / config.getWalBufferFlushesPerSecond());
+
+        SequentialFileFactory fileFactory;
+        if (config.isWalAsyncIO() && AIOSequentialFileFactory.isSupported()) {
+            fileFactory = new AIOSequentialFileFactory(
+                storeDirFile,
+                config.getWalBufferSize(),
+                bufferTimeoutNanos,
+                config.getWalMaxIO(),
+                config.isWalLogRates()
+            );
+        } else {
+            if (config.isWalAsyncIO()) {
+                tsLogger.i18NLogger.warn_not_asyncIO();
+            }
+            fileFactory = new NIOSequentialFileFactory(
+                storeDirFile,
+                true,  // buffered - enables TimedBuffer for write batching
+                config.getWalBufferSize(),
+                bufferTimeoutNanos,
+                1,  // maxIO has no effect in NIO mode
+                config.isWalLogRates()
+            );
+        }
+
+        // Create journal with configuration from environment bean
+        journal = new JournalImpl(
+            config.getWalFileSize(),
+            config.getWalMinFiles(),
+            config.getWalPoolSize(),
+            config.getWalCompactMinFiles(),
+            config.getWalCompactPercentage(),
+            fileFactory,
+            config.getWalFilePrefix(),
+            config.getWalFileExtension(),
+            config.getWalMaxIO()
         );
 
         // optimize record updates (in-place replace instead of append+delete) otherwise every slot overwrite results in

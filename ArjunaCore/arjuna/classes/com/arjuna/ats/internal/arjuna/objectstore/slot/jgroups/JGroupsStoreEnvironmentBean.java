@@ -34,13 +34,22 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
     private JGroupsSlotKeyGenerator jGroupsSlotKeyGenerator;
     private long cachingTime = 0L;  // L2 cache time in millis (0 = disabled for consistency)
 
-    // Raft-specific configuration
-    // WAL (Write-Ahead Log) persistence for JGroupsSlots (ReplCache)
-    private boolean walEnabled = false;
-    private boolean walSyncWrites = true;  // Fsync after writes (slower, safer)
-    private boolean walSyncDeletes = false; // Fsync after deletes (usually not needed)
-    private int walBufferSize = 490 * 1024; // Artemis journal buffer size (default 490KB, matches HornetQ default)
-    private int walBufferFlushesPerSecond = 300; // Artemis journal flush rate (default 300, matches HornetQ default)
+    // WAL (Write-Ahead Log) persistence for crash recovery
+    private boolean walEnabled = true; // persist writes to a log before writing to the cache
+    private volatile int walFileSize = 1024*1024*2; // 10MB per file
+    private volatile int walMinFiles = 2; // Minimum 2 files
+    private volatile int walPoolSize = 20; // upper limit for pre-created journal files
+    private volatile int walCompactMinFiles = 10; // minimal number of files before we can considering compacting
+    private volatile int walCompactPercentage = 30;
+    private volatile String walFilePrefix = "slot-journal";
+    private volatile String walFileExtension = "log";
+    private volatile int walMaxIO = 2;
+    private volatile boolean walSyncWrites = true;
+    private volatile boolean walSyncDeletes = false;
+    private volatile int walBufferFlushesPerSecond = 500;
+    private volatile int walBufferSize = 490 * 1024;
+    private volatile boolean walLogRates = false;
+    private volatile boolean walAsyncIO = false;
 
     // Raft-specific properties (for JGroupsRaftSlots)
     private boolean raftEnabled = false;
@@ -340,6 +349,154 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
 
     public void setWalBufferFlushesPerSecond(int walBufferFlushesPerSecond) {
         this.walBufferFlushesPerSecond = walBufferFlushesPerSecond;
+    }
+
+    /**
+     * Get the desired size in bytes of each WAL journal file.
+     * Default: 10MB (10485760 bytes)
+     *
+     * @return the individual log file size, in bytes
+     */
+    public int getWalFileSize() {
+        return walFileSize;
+    }
+
+    public void setWalFileSize(int walFileSize) {
+        this.walFileSize = walFileSize;
+    }
+
+    /**
+     * Get the minimum number of WAL journal files to use.
+     * Default: 2
+     *
+     * @return the minimum number of individual log files
+     */
+    public int getWalMinFiles() {
+        return walMinFiles;
+    }
+
+    public void setWalMinFiles(int walMinFiles) {
+        this.walMinFiles = walMinFiles;
+    }
+
+    /**
+     * Get how many WAL journal files can be reused.
+     * Default: 0 (no pooling)
+     *
+     * @return the number of files that can be reused
+     */
+    public int getWalPoolSize() {
+        return walPoolSize;
+    }
+
+    public void setWalPoolSize(int walPoolSize) {
+        this.walPoolSize = walPoolSize;
+    }
+
+    /**
+     * Get the minimal number of files before WAL compaction can be considered.
+     * Default: 0 (automatic compaction disabled)
+     *
+     * @return the threshold file count
+     */
+    public int getWalCompactMinFiles() {
+        return walCompactMinFiles;
+    }
+
+    public void setWalCompactMinFiles(int walCompactMinFiles) {
+        this.walCompactMinFiles = walCompactMinFiles;
+    }
+
+    /**
+     * Get the percentage minimum capacity usage at which to start WAL compaction.
+     * Default: 0 (compaction disabled)
+     *
+     * @return the threshold percentage
+     */
+    public int getWalCompactPercentage() {
+        return walCompactPercentage;
+    }
+
+    public void setWalCompactPercentage(int walCompactPercentage) {
+        this.walCompactPercentage = walCompactPercentage;
+    }
+
+    /**
+     * Get the prefix to be used when naming each WAL journal file.
+     * Default: "slot-journal"
+     *
+     * @return the prefix used to construct individual log file names
+     */
+    public String getWalFilePrefix() {
+        return walFilePrefix;
+    }
+
+    public void setWalFilePrefix(String walFilePrefix) {
+        this.walFilePrefix = walFilePrefix;
+    }
+
+    /**
+     * Get the suffix to be used when naming each WAL journal file.
+     * Default: "dat"
+     *
+     * @return the suffix used to construct individual log file names
+     */
+    public String getWalFileExtension() {
+        return walFileExtension;
+    }
+
+    public void setWalFileExtension(String walFileExtension) {
+        this.walFileExtension = walFileExtension;
+    }
+
+    /**
+     * Get the maximum write requests queue depth for WAL.
+     * For NIO this property has no effect and will be hard coded to 1.
+     * For AIO, the default is 2 but the recommended value is 500.
+     * Default: 1
+     *
+     * @return the max number of outstanding requests
+     */
+    public int getWalMaxIO() {
+        return walMaxIO;
+    }
+
+    public void setWalMaxIO(int walMaxIO) {
+        this.walMaxIO = walMaxIO;
+    }
+
+    /**
+     * Get the IO type of WAL Journal.
+     * Default: false (NIO)
+     *
+     * @return true if AsyncIO is enabled, false otherwise which means NIO
+     */
+    public boolean isWalAsyncIO() {
+        return walAsyncIO;
+    }
+
+    /**
+     * Set the type of WAL Journal.
+     * Note that Journal silently falls back to NIO if AIO native libraries are not available.
+     *
+     * @param walAsyncIO true to enable AsyncIO, false to disable
+     */
+    public void setWalAsyncIO(boolean walAsyncIO) {
+        this.walAsyncIO = walAsyncIO;
+    }
+
+    /**
+     * Get the debug log mode for WAL Journal throughput statistics.
+     * Default: false
+     *
+     * @return true if rate logging is enabled, false otherwise
+     */
+    public boolean isWalLogRates() {
+        return walLogRates;
+    }
+
+    public void setWalLogRates(boolean walLogRates) {
+        this.walLogRates = walLogRates;
     }
 
     // ===== Raft Properties =====

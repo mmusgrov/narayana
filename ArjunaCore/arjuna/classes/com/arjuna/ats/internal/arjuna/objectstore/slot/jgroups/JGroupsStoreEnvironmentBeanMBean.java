@@ -147,4 +147,51 @@ public interface JGroupsStoreEnvironmentBeanMBean extends SlotStoreEnvironmentBe
      * @return the slot key generator instance
      */
     JGroupsSlotKeyGenerator getSlotKeyGenerator();
+
+    // ===== WAL Configuration Methods =====
+
+    boolean isWalEnabled();
+    void setWalEnabled(boolean walEnabled);
+
+    boolean isWalSyncWrites();
+    void setWalSyncWrites(boolean walSyncWrites);
+
+    boolean isWalSyncDeletes();
+    void setWalSyncDeletes(boolean walSyncDeletes);
+
+    int getWalBufferSize();
+    void setWalBufferSize(int walBufferSize);
+
+    int getWalBufferFlushesPerSecond();
+    void setWalBufferFlushesPerSecond(int walBufferFlushesPerSecond);
+
+    int getWalFileSize();
+    void setWalFileSize(int walFileSize);
+
+    int getWalMinFiles();
+    void setWalMinFiles(int walMinFiles);
+
+    int getWalPoolSize();
+    void setWalPoolSize(int walPoolSize);
+
+    int getWalCompactMinFiles();
+    void setWalCompactMinFiles(int walCompactMinFiles);
+
+    int getWalCompactPercentage();
+    void setWalCompactPercentage(int walCompactPercentage);
+
+    String getWalFilePrefix();
+    void setWalFilePrefix(String walFilePrefix);
+
+    String getWalFileExtension();
+    void setWalFileExtension(String walFileExtension);
+
+    int getWalMaxIO();
+    void setWalMaxIO(int walMaxIO);
+
+    boolean isWalAsyncIO();
+    void setWalAsyncIO(boolean walAsyncIO);
+
+    boolean isWalLogRates();
+    void setWalLogRates(boolean walLogRates);
 }

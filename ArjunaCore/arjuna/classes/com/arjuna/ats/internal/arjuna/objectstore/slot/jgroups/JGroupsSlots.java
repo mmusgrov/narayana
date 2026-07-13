@@ -101,19 +101,14 @@ public class JGroupsSlots implements BackingSlots {
         try {
             // Initialize WAL if enabled
             if (config.isWalEnabled()) {
-                String storeDir = config.getStoreDir();
-                if (storeDir == null || storeDir.isEmpty()) {
-                    throw new IllegalArgumentException("storeDir must be set when WAL is enabled");
-                }
-
-                tsLogger.logger.info("JGroupsSlots: Enabling WAL with storeDir=" + storeDir +
+                tsLogger.logger.info("JGroupsSlots: Enabling WAL with storeDir=" + config.getStoreDir() +
                     ", syncWrites=" + config.isWalSyncWrites() +
                     ", syncDeletes=" + config.isWalSyncDeletes() +
-                    ", bufferSize=" + config.getWalBufferSize() +
-                    ", bufferFlushesPerSecond=" + config.getWalBufferFlushesPerSecond());
+                    ", fileSize=" + config.getWalFileSize() +
+                    ", minFiles=" + config.getWalMinFiles() +
+                    ", asyncIO=" + config.isWalAsyncIO());
 
-                journal = new SlotJournal(storeDir, config.isWalSyncWrites(), config.isWalSyncDeletes(),
-                    config.getWalBufferSize(), config.getWalBufferFlushesPerSecond());
+                journal = new SlotJournal(config);
                 journal.start();
 
                 tsLogger.logger.info("JGroupsSlots: WAL loaded " + journal.size() + " slots from disk");
