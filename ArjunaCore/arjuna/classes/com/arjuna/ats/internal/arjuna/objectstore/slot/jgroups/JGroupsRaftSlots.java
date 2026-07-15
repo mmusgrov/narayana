@@ -123,6 +123,11 @@ public class JGroupsRaftSlots implements BackingSlots {
             tsLogger.logger.info("Connecting to Raft cluster: " + clusterName);
             channel.connect(clusterName);
 
+            // Wait for Raft leader election before allowing reads
+            // This is critical because SlotStore's constructor will immediately try to read all slots
+            // to rebuild its index, and reads require a leader
+            waitForLeaderElection(config.getRaftTimeout());
+
             // Raft state machine is loaded from the persistent log during connect().
             // SlotStore's constructor will call read(i) for each slot to rebuild its index,
             // so no additional loading is needed here.
@@ -256,6 +261,45 @@ public class JGroupsRaftSlots implements BackingSlots {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Wait for Raft leader election to complete.
+     * This is called during initialization to ensure a leader is elected before any reads occur.
+     *
+     * @param timeoutMs maximum time to wait in milliseconds
+     * @throws IOException if leader election doesn't complete within timeout
+     */
+    private void waitForLeaderElection(long timeoutMs) throws IOException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        long sleepMs = 50;
+
+        tsLogger.logger.info("Waiting for Raft leader election (timeout: " + timeoutMs + "ms)");
+
+        while (System.currentTimeMillis() < deadline) {
+            // Check leader directly without requiring initialized flag
+            // (hasLeader() requires initialized=true, but we're still initializing)
+            if (channel != null) {
+                try {
+                    RAFT raft = channel.getProtocolStack().findProtocol(RAFT.class);
+                    if (raft != null && raft.leader() != null) {
+                        tsLogger.logger.info("Raft leader elected");
+                        return;
+                    }
+                } catch (Exception e) {
+                    // Continue waiting
+                }
+            }
+
+            try {
+                Thread.sleep(sleepMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IOException("Interrupted while waiting for Raft leader election", e);
+            }
+        }
+
+        throw new IOException("Timed out waiting for Raft leader election after " + timeoutMs + "ms");
     }
 
     /**
