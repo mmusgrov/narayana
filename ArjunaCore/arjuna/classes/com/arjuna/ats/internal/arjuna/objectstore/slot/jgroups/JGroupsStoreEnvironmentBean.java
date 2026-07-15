@@ -308,7 +308,7 @@ public class JGroupsStoreEnvironmentBean extends SlotStoreEnvironmentBean implem
 
     /**
      * Enable fsync after each delete from WAL.
-     * Usually not needed since deletes are less critical than writes.
+     * If deletes are lost then recovery will generate warnings but no data loss.
      *
      * @return true if fsync is enabled for deletes
      */
