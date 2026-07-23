@@ -40,7 +40,7 @@ public class JGroupsRaftSlotsTest extends JGroupsTestBase {
         // Create configuration
         config = new JGroupsRaftStoreEnvironmentBean();
 
-        config.setJGroupsConfigFileName("jgroups-raft.xml");
+        config.setJGroupsConfigFileName("jgroups-raft-config.xml");
         config.setNodeAddress(NODE_NAME);
         config.setClusterName("raft-test-" + System.currentTimeMillis());
         config.setCacheName(config.getClusterName());

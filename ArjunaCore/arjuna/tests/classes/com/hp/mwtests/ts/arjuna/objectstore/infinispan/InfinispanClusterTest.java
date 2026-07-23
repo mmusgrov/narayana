@@ -65,7 +65,7 @@ public class InfinispanClusterTest {
         GlobalConfigurationBuilder globalConfig = GlobalConfigurationBuilder.defaultClusteredBuilder();
 
         globalConfig.transport().nodeName(nodeName)
-                .clusterName(CLUSTER_NAME).addProperty("configurationFile", "jgroups.xml");;
+                .clusterName(CLUSTER_NAME).addProperty("configurationFile", "jgroups-config.xml");;
 
         var manager = new DefaultCacheManager(globalConfig.build());
 

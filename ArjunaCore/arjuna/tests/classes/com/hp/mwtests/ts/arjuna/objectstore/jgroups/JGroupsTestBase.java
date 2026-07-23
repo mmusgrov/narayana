@@ -43,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JGroupsTestBase {
-    static final String JGROUPS_CONFIG_FILE = "jgroups.xml";
+    static final String JGROUPS_CONFIG_FILE = "jgroups-config.xml";
     static final String CLUSTER_NAME = "clusteredObjectStore"; // a name for the cluster of shared stores
     // location of the file system store (with surefire it will be the build directory)
     static final String STORE_DIR = System.getProperty("user.dir") + "/jgroups-caches";

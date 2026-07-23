@@ -13,7 +13,7 @@
     <entry key="JGroupsStoreEnvironmentBean.slotKeyGeneratorClassName">com.hp.mwtests.ts.arjuna.objectstore.jgroups.SharedSlotKeyGenerator</entry>
 
     <!-- JGroups config file name, resolved relative to the test resource directory -->
-    <entry key="JGroupsStoreEnvironmentBean.jGroupsConfigFileName">jgroups.xml</entry>
+    <entry key="JGroupsStoreEnvironmentBean.jGroupsConfigFileName">jgroups-config.xml</entry>
     <!-- cluster name and cache name of the clustered object store  -->
     <entry key="JGroupsStoreEnvironmentBean.clusterName">jGroupsClusteredObjectStore</entry>
     <entry key="JGroupsStoreEnvironmentBean.cacheName">jGroupsClusteredCache</entry>

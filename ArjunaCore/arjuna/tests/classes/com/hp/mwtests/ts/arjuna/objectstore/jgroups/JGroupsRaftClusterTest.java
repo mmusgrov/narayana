@@ -55,7 +55,7 @@ public class JGroupsRaftClusterTest extends JGroupsTestBase {
             this.slots = new JGroupsRaftSlots();
 
             // Basic configuration
-            config.setJGroupsConfigFileName("jgroups-raft.xml"); // the JGroups+RAFT protocol stack
+            config.setJGroupsConfigFileName("jgroups-raft-config.xml"); // the JGroups+RAFT protocol stack
             config.setNodeAddress(nodeName);
             config.setClusterName(clusterName);
             config.setCacheName(clusterName);
