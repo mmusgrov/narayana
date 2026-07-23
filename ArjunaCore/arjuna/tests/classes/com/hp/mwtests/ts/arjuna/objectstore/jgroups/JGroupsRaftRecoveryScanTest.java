@@ -52,7 +52,7 @@ public class JGroupsRaftRecoveryScanTest extends JGroupsTestBase {
             this.config = new JGroupsRaftStoreEnvironmentBean();
 
             // Basic configuration
-            config.setJGroupsConfigFileName("jgroups-raft.xml");
+            config.setJGroupsConfigFileName("jgroups-raft-config.xml");
             config.setNodeAddress(nodeName);
             config.setClusterName(clusterName);
             config.setCacheName(clusterName);

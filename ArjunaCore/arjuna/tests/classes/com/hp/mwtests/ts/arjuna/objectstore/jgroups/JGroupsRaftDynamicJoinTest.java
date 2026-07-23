@@ -60,7 +60,7 @@ public class JGroupsRaftDynamicJoinTest extends JGroupsTestBase {
         String storeDir = STORE_DIR + "/raft-bootstrap/node1";
 
         JGroupsRaftStoreEnvironmentBean config = new JGroupsRaftStoreEnvironmentBean();
-        config.setJGroupsConfigFileName("jgroups-raft.xml");
+        config.setJGroupsConfigFileName("jgroups-raft-config.xml");
         config.setNodeAddress("node1");
         config.setClusterName(clusterName);
         config.setCacheName(clusterName);
@@ -97,7 +97,7 @@ public class JGroupsRaftDynamicJoinTest extends JGroupsTestBase {
 
         // Node1: founding member with explicit raftMembers
         JGroupsRaftStoreEnvironmentBean config1 = new JGroupsRaftStoreEnvironmentBean();
-        config1.setJGroupsConfigFileName("jgroups-raft.xml");
+        config1.setJGroupsConfigFileName("jgroups-raft-config.xml");
         config1.setNodeAddress("node1");
         config1.setClusterName(clusterName);
         config1.setCacheName(clusterName);
@@ -116,10 +116,10 @@ public class JGroupsRaftDynamicJoinTest extends JGroupsTestBase {
         // Write data via node1 before node2 joins
         slots1.write(42, node1Msg.getBytes(), true);
 
-        // Node2: empty raftMembers — init() triggers joinOrBootstrap which finds
+        // Node2: empty raftMembers - init() triggers joinOrBootstrap which finds
         // node1 as leader and joins via REDIRECT.addServer
         JGroupsRaftStoreEnvironmentBean config2 = new JGroupsRaftStoreEnvironmentBean();
-        config2.setJGroupsConfigFileName("jgroups-raft.xml");
+        config2.setJGroupsConfigFileName("jgroups-raft-config.xml");
         config2.setNodeAddress("node2");
         config2.setClusterName(clusterName);
         config2.setCacheName(clusterName);
