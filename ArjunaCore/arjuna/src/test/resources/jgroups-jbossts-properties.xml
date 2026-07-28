@@ -10,7 +10,6 @@
     <entry key="SlotStoreEnvironmentBean.storeDir">jgroups-caches</entry>
 
     <entry key="JGroupsStoreEnvironmentBean.nodeAddress">node1</entry>
-    <entry key="JGroupsStoreEnvironmentBean.slotKeyGeneratorClassName">com.hp.mwtests.ts.arjuna.objectstore.jgroups.SharedSlotKeyGenerator</entry>
 
     <!-- JGroups config file name, resolved relative to the test resource directory -->
     <entry key="JGroupsStoreEnvironmentBean.jGroupsConfigFileName">jgroups-config.xml</entry>

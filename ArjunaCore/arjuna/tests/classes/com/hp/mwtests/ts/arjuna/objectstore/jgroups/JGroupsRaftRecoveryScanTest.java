@@ -58,7 +58,6 @@ public class JGroupsRaftRecoveryScanTest extends JGroupsTestBase {
             config.setCacheName(clusterName);
             config.setStoreDir(RAFT_STORE_DIR + "/" + nodeName);
             config.setNumberOfSlots(256);
-            config.setSlotKeyGeneratorClassName(SharedSlotKeyGenerator.class.getName());
 
             // Raft-specific configuration
             config.setRaftMembers(nodeName);  // Single node for recovery test

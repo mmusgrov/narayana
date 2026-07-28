@@ -154,8 +154,6 @@ public class JGroupsTestBase {
             config.setCacheName(clusterName); // Use clusterName so all stores join the same cluster
             config.setJGroupsConfigFileName(configFile);
             config.setBackingSlots(slots);
-            // Use SharedSlotKeyGenerator so all nodes in the cluster share the same slot keys
-            config.setSlotKeyGeneratorClassName(SharedSlotKeyGenerator.class.getName());
 
             config.setCallTimeout(1500L);
             config.setCachingTime(30000L);

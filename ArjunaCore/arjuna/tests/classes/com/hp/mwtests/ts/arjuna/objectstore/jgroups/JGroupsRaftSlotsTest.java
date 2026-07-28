@@ -47,7 +47,6 @@ public class JGroupsRaftSlotsTest extends JGroupsTestBase {
         config.setStoreDir(STORE_DIR);
         config.setNumberOfSlots(256);
         config.setReplicationCount((short) -1);
-        config.setSlotKeyGeneratorClassName(SharedSlotKeyGenerator.class.getName());
 
         // Raft config
         config.setRaftMembers(NODE_NAME);  // Single node for basic tests see JGroupsRaftClusterTest for multi-node
