@@ -997,7 +997,7 @@ Under high concurrent load, all writer threads are effectively queued behind thi
 * **Single-node clusters**: The majority requirement of 1 is trivially satisfied,
 but writes are still serialized through the single processing thread. Throughput is bounded
 by how quickly that thread can process each entry (appending it to the persistent log, flushing
-to disk when fsync is enabled, and applying it to the in-memory state machine.
+to disk when fsync is enabled, and applying it to the in-memory state machine).
 * **Multi-node clusters**: Each write additionally requires network round-trips for majority acknowledgment.
 This increases per-write latency but does not improve throughput - the same single thread processes all
 proposals.
