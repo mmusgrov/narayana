@@ -61,7 +61,6 @@ public class JGroupsRaftClusterTest extends JGroupsTestBase {
             config.setCacheName(clusterName);
             config.setStoreDir(storeDir);
             config.setNumberOfSlots(256);
-            config.setSlotKeyGeneratorClassName(SharedSlotKeyGenerator.class.getName());
 
             // Raft-specific configuration
             config.setRaftMembers(raftMembers);
