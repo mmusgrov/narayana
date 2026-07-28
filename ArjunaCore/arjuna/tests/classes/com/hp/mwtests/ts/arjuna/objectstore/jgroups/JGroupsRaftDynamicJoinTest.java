@@ -1,7 +1,7 @@
 /*
  * Copyright The Narayana Authors
  *
- * SPDX-License-Identifier: LGPL-2.1-only
+ * SPDX-License-Identifier: Apache-2.0
  */
 package com.hp.mwtests.ts.arjuna.objectstore.jgroups;
 
@@ -56,6 +56,8 @@ public class JGroupsRaftDynamicJoinTest extends JGroupsTestBase {
      */
     @Test
     public void testSingleNodeBootstrap() throws Exception {
+        removeDirectory(STORE_DIR);
+
         String clusterName = "raft-bootstrap-" + System.currentTimeMillis();
         String storeDir = STORE_DIR + "/raft-bootstrap/node1";
 
@@ -90,6 +92,8 @@ public class JGroupsRaftDynamicJoinTest extends JGroupsTestBase {
      */
     @Test
     public void testDynamicJoin() throws Exception {
+        removeDirectory(STORE_DIR);
+
         String node1Msg = "from node1";
         String clusterName = "raft-join-" + System.currentTimeMillis();
         String storeDir1 = STORE_DIR + "/raft-join/node1";

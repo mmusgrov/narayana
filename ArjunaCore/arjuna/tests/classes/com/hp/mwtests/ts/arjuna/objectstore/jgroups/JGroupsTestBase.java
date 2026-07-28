@@ -1,7 +1,7 @@
 /*
  * Copyright The Narayana Authors
  *
- * SPDX-License-Identifier: LGPL-2.1-only
+ * SPDX-License-Identifier: Apache-2.0
  */
 package com.hp.mwtests.ts.arjuna.objectstore.jgroups;
 
@@ -29,6 +29,7 @@ import org.jgroups.protocols.raft.RAFT;
 import org.jgroups.protocols.raft.Role;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.file.Files;
@@ -104,7 +105,7 @@ public class JGroupsTestBase {
                             }
                         });
             }
-        } catch (IOException ignore) {
+        } catch (IOException | UncheckedIOException ignore) {
         }
     }
 
@@ -170,12 +171,7 @@ public class JGroupsTestBase {
                     try {
                         config.getCache().stop();
                     } catch (Throwable e) {
-                        if ("null".equals(config.getCache().getView())) {
-                            System.err.printf("ERROR: null view while stopping cache %s%n",
-                                    config.getCache().getClusterName());
-                        } else {
-                            throw new RuntimeException(e);
-                        }
+                        throw new RuntimeException("ERROR: null view while stopping cache: " + config.getCacheName());
                     }
                 }
             } catch (CoreEnvironmentBeanException ignore) {
