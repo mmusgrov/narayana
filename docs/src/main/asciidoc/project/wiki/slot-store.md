@@ -166,6 +166,9 @@ key-to-slot mapping is handled by `SlotStore` above this interface — a
 `JGroupsSlots` implements `BackingSlots` using a JGroups `ReplCache` — a
 distributed hash map that replicates entries across cluster nodes.
 
+> **Note:** this implementation is experimental and not yet recommended for
+> production systems.
+
 ### Two-level key system
 
 There are two kinds of keys in the system.  `SlotStoreKey` (Uid + typeName +
@@ -303,8 +306,7 @@ deterministic key generator to share data across nodes.
 ### State machine
 
 `JGroupsRaftSlots` uses JGroups-Raft's built-in `ReplicatedStateMachine<Integer,
-byte[]>` — a replicated key-value map.  It does not implement a custom
-`StateMachine`.  All operations (`put`, `remove`) are applied to an internal
+byte[]>` — a replicated key-value map. All operations (`put`, `remove`) are applied to an internal
 `HashMap` when Raft log entries are committed.  On restart, the Raft log is
 replayed through this state machine to restore the full in-memory state.
 
