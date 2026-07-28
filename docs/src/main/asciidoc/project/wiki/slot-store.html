@@ -549,5 +549,222 @@ provides crash recovery for the in-memory cache data.</p>
 slot IDs and restores data to the cache <strong>only if the cache does
 not already have data for that key</strong> (replicated data wins over
 WAL data, since it may be more recent).</p>
+<h2 id="jgroupsraftslots">JGroupsRaftSlots</h2>
+<p><code>JGroupsRaftSlots</code> implements <code>BackingSlots</code>
+using JGroups Raft — a consensus protocol that guarantees linearizable
+writes across the cluster. Unlike <code>JGroupsSlots</code>, which
+relies on <code>ReplCache</code> (best-effort replication), this
+implementation ensures that a write only succeeds after a majority of
+nodes have durably committed the operation.</p>
+<blockquote>
+<p><strong>Note:</strong> this implementation is experimental and not
+yet recommended for production systems.</p>
+</blockquote>
+<h3 id="how-it-differs-from-jgroupsslots">How it differs from
+JGroupsSlots</h3>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>JGroupsRaftSlots</th>
+<th>JGroupsSlots</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Underlying mechanism</td>
+<td>JGroups-Raft <code>ReplicatedStateMachine</code></td>
+<td>JGroups <code>ReplCache</code> (consistent hashing)</td>
+</tr>
+<tr>
+<td>Consistency model</td>
+<td>Strong (linearizable writes)</td>
+<td>Eventual consistency</td>
+</tr>
+<tr>
+<td>Persistence</td>
+<td>Raft’s built-in <code>FileBasedLog</code></td>
+<td>Optional <code>SlotJournal</code> (Artemis journal)</td>
+</tr>
+<tr>
+<td>Key type</td>
+<td><code>Integer</code> (slot index directly)</td>
+<td><code>ByteArrayKey</code> (via
+<code>JGroupsSlotKeyGenerator</code>)</td>
+</tr>
+<tr>
+<td>Split-brain protection</td>
+<td>Yes (quorum prevents divergence)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Leader election</td>
+<td>Required — writes go through elected leader</td>
+<td>Not applicable — any node can write</td>
+</tr>
+<tr>
+<td>Minimum nodes</td>
+<td>3 recommended (1 possible for testing)</td>
+<td>1+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="key-type">Key type</h3>
+<p><code>JGroupsRaftSlots</code> uses the slot number (<code>int</code>)
+directly as the key into the
+<code>ReplicatedStateMachine&lt;Integer, byte[]&gt;</code>. There is no
+<code>ByteArrayKey</code> layer and no key generator — the integer slot
+index is the cache key on every node:</p>
+<pre><code>slotIdIndex: SlotStoreKey ──► int (slot number)
+ReplicatedStateMachine:  int ──► byte[] (serialised data)</code></pre>
+<p>Because every node uses the same integer key, there is no need for a
+deterministic key generator to share data across nodes.</p>
+<h3 id="state-machine">State machine</h3>
+<p><code>JGroupsRaftSlots</code> uses JGroups-Raft’s built-in
+<code>ReplicatedStateMachine&lt;Integer, byte[]&gt;</code> — a
+replicated key-value map. It does not implement a custom
+<code>StateMachine</code>. All operations (<code>put</code>,
+<code>remove</code>) are applied to an internal <code>HashMap</code>
+when Raft log entries are committed. On restart, the Raft log is
+replayed through this state machine to restore the full in-memory
+state.</p>
+<h3 id="initialisation-1">Initialisation</h3>
+<ol type="1">
+<li>Create a <code>JChannel</code> from the XML config file and set the
+node name.</li>
+<li>Locate the <code>RAFT</code> protocol in the JGroups protocol
+stack.</li>
+<li>Configure the Raft log directory (<code>raft.logDir()</code>) and
+fsync behaviour (<code>raft.logUseFsync()</code>).</li>
+<li>Set the membership list:
+<ul>
+<li>If <code>raftMembers</code> is provided
+(e.g. <code>"node1,node2,node3"</code>), set that static list.</li>
+<li>If empty, start with an empty membership for dynamic join (see
+below).</li>
+</ul></li>
+<li>Create a <code>ReplicatedStateMachine&lt;Integer, byte[]&gt;</code>
+with <code>allowDirtyReads(true)</code>.</li>
+<li>Connect the channel to the cluster.</li>
+<li>If the node starts as a Learner (dynamic mode), call
+<code>joinOrBootstrap()</code>.</li>
+<li>Wait for leader election to complete.</li>
+</ol>
+<h3 id="write-1">Write</h3>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">write</span><span class="op">(</span><span class="dt">int</span> slotId<span class="op">,</span> <span class="dt">byte</span><span class="op">[]</span> data<span class="op">,</span> <span class="dt">boolean</span> sync<span class="op">)</span></span></code></pre></div>
+<ol type="1">
+<li><code>cache.put(slotId, data)</code> — proposes a Raft log
+entry.</li>
+<li>The call <strong>blocks</strong> until a majority of cluster members
+have appended the entry to their Raft log (and optionally fsynced).</li>
+<li>If this node is a follower, the <code>REDIRECT</code> protocol in
+the JGroups stack transparently forwards the write to the current
+leader.</li>
+</ol>
+<p>The <code>sync</code> parameter is <strong>not used</strong> — Raft
+consensus provides its own durability guarantee.</p>
+<h3 id="read-1">Read</h3>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="dt">byte</span><span class="op">[]</span> <span class="fu">read</span><span class="op">(</span><span class="dt">int</span> slotId<span class="op">)</span></span></code></pre></div>
+<ol type="1">
+<li><code>cache.get(slotId)</code> — reads directly from the local
+<code>ReplicatedStateMachine</code>.</li>
+<li>Because <code>allowDirtyReads(true)</code> is set, reads do not go
+through Raft consensus. This is safe because all writes are committed
+via consensus before returning, and the local state machine is populated
+from the persistent Raft log on startup.</li>
+</ol>
+<h3 id="clear-1">Clear</h3>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">clear</span><span class="op">(</span><span class="dt">int</span> slotId<span class="op">,</span> <span class="dt">boolean</span> sync<span class="op">)</span></span></code></pre></div>
+<ol type="1">
+<li><code>cache.remove(slotId)</code> — proposes a deletion as a Raft
+log entry.</li>
+<li>Like <code>write()</code>, blocks until majority commit. The
+<code>sync</code> parameter is not used.</li>
+</ol>
+<h3 id="persistence">Persistence</h3>
+<p><code>JGroupsRaftSlots</code> does <strong>not</strong> use the
+<code>SlotJournal</code> (Artemis-based WAL). Instead it relies on
+Raft’s own <code>FileBasedLog</code>, stored in the directory configured
+by <code>storeDir</code>. The Raft log records every committed operation
+and is replayed on startup to rebuild the state machine.</p>
+<p>Durability is controlled by <code>raftLogFsync</code>: -
+<strong><code>true</code></strong> (default) — every log entry is
+fsynced to disk before the write returns. -
+<strong><code>false</code></strong> — log entries are buffered; a crash
+may lose recently committed entries.</p>
+<h3 id="leader-election-and-forwarding">Leader election and
+forwarding</h3>
+<p>Leader election is handled by the <code>ELECTION</code> protocol in
+the JGroups-Raft stack using the standard Raft election algorithm with
+randomised timeouts.</p>
+<p>Write forwarding is handled by the <code>REDIRECT</code> protocol.
+When a follower receives a write, <code>REDIRECT</code> transparently
+forwards it to the current leader. This means any node can accept
+writes.</p>
+<h3 id="dynamic-membership">Dynamic membership</h3>
+<p>When <code>raftMembers</code> is not configured, the node starts with
+an empty membership list and uses dynamic join:</p>
+<ol type="1">
+<li>After connecting, the node waits briefly for a leader to
+appear.</li>
+<li><strong>Leader found</strong> — join via
+<code>REDIRECT.addServer(nodeName)</code>, which is itself a Raft log
+entry requiring leader consensus. The joining node starts as a Learner,
+receives the log, and is promoted to Follower.</li>
+<li><strong>No leader, node is alone</strong> — bootstrap a new
+single-member cluster by reconnecting with
+<code>members = [nodeName]</code>.</li>
+<li><strong>No leader, other nodes exist</strong> — wait for the
+coordinator to bootstrap, then join via <code>addServer()</code>.</li>
+</ol>
+<p><code>addServer()</code> and <code>removeServer()</code> are also
+exposed for programmatic cluster management.</p>
+<h3 id="configuration">Configuration</h3>
+<p><code>JGroupsRaftStoreEnvironmentBean</code> extends
+<code>JGroupsStoreEnvironmentBean</code> and adds:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Property</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>raftLogFsync</code></td>
+<td><code>true</code></td>
+<td>Whether to fsync Raft log writes to disk</td>
+</tr>
+<tr>
+<td><code>raftMembers</code></td>
+<td>(empty)</td>
+<td>Comma-separated static member list; empty for dynamic mode</td>
+</tr>
+<tr>
+<td><code>raftTimeout</code></td>
+<td><code>5000</code> ms</td>
+<td>Timeout for Raft operations (majority ack)</td>
+</tr>
+<tr>
+<td><code>raftElectionMaxInterval</code></td>
+<td><code>500</code> ms</td>
+<td>Max time to wait for leader election</td>
+</tr>
+</tbody>
+</table>
 </body>
 </html>

@@ -262,3 +262,151 @@ cache data.
 During startup, `loadFromWAL()` iterates the journal's slot IDs and restores
 data to the cache **only if the cache does not already have data for that key**
 (replicated data wins over WAL data, since it may be more recent).
+
+## JGroupsRaftSlots
+
+`JGroupsRaftSlots` implements `BackingSlots` using JGroups Raft — a consensus
+protocol that guarantees linearizable writes across the cluster.  Unlike
+`JGroupsSlots`, which relies on `ReplCache` (best-effort replication), this
+implementation ensures that a write only succeeds after a majority of nodes have
+durably committed the operation.
+
+> **Note:** this implementation is experimental and not yet recommended for
+> production systems.
+
+### How it differs from JGroupsSlots
+
+| Aspect | JGroupsRaftSlots | JGroupsSlots |
+|-|-|-|
+| Underlying mechanism | JGroups-Raft `ReplicatedStateMachine` | JGroups `ReplCache` (consistent hashing) |
+| Consistency model | Strong (linearizable writes) | Eventual consistency |
+| Persistence | Raft's built-in `FileBasedLog` | Optional `SlotJournal` (Artemis journal) |
+| Key type | `Integer` (slot index directly) | `ByteArrayKey` (via `JGroupsSlotKeyGenerator`) |
+| Split-brain protection | Yes (quorum prevents divergence) | No |
+| Leader election | Required — writes go through elected leader | Not applicable — any node can write |
+| Minimum nodes | 3 recommended (1 possible for testing) | 1+ |
+
+### Key type
+
+`JGroupsRaftSlots` uses the slot number (`int`) directly as the key into the
+`ReplicatedStateMachine<Integer, byte[]>`.  There is no `ByteArrayKey` layer and
+no key generator — the integer slot index is the cache key on every node:
+
+```
+slotIdIndex: SlotStoreKey ──► int (slot number)
+ReplicatedStateMachine:  int ──► byte[] (serialised data)
+```
+
+Because every node uses the same integer key, there is no need for a
+deterministic key generator to share data across nodes.
+
+### State machine
+
+`JGroupsRaftSlots` uses JGroups-Raft's built-in `ReplicatedStateMachine<Integer,
+byte[]>` — a replicated key-value map.  It does not implement a custom
+`StateMachine`.  All operations (`put`, `remove`) are applied to an internal
+`HashMap` when Raft log entries are committed.  On restart, the Raft log is
+replayed through this state machine to restore the full in-memory state.
+
+### Initialisation
+
+1. Create a `JChannel` from the XML config file and set the node name.
+2. Locate the `RAFT` protocol in the JGroups protocol stack.
+3. Configure the Raft log directory (`raft.logDir()`) and fsync behaviour
+   (`raft.logUseFsync()`).
+4. Set the membership list:
+   - If `raftMembers` is provided (e.g. `"node1,node2,node3"`), set that static
+     list.
+   - If empty, start with an empty membership for dynamic join (see below).
+5. Create a `ReplicatedStateMachine<Integer, byte[]>` with `allowDirtyReads(true)`.
+6. Connect the channel to the cluster.
+7. If the node starts as a Learner (dynamic mode), call `joinOrBootstrap()`.
+8. Wait for leader election to complete.
+
+### Write
+
+```java
+void write(int slotId, byte[] data, boolean sync)
+```
+
+1. `cache.put(slotId, data)` — proposes a Raft log entry.
+2. The call **blocks** until a majority of cluster members have appended the
+   entry to their Raft log (and optionally fsynced).
+3. If this node is a follower, the `REDIRECT` protocol in the JGroups stack
+   transparently forwards the write to the current leader.
+
+The `sync` parameter is **not used** — Raft consensus provides its own
+durability guarantee.
+
+### Read
+
+```java
+byte[] read(int slotId)
+```
+
+1. `cache.get(slotId)` — reads directly from the local `ReplicatedStateMachine`.
+2. Because `allowDirtyReads(true)` is set, reads do not go through Raft
+   consensus.  This is safe because all writes are committed via consensus
+   before returning, and the local state machine is populated from the
+   persistent Raft log on startup.
+
+### Clear
+
+```java
+void clear(int slotId, boolean sync)
+```
+
+1. `cache.remove(slotId)` — proposes a deletion as a Raft log entry.
+2. Like `write()`, blocks until majority commit.  The `sync` parameter is not
+   used.
+
+### Persistence
+
+`JGroupsRaftSlots` does **not** use the `SlotJournal` (Artemis-based WAL).
+Instead it relies on Raft's own `FileBasedLog`, stored in the directory
+configured by `storeDir`.  The Raft log records every committed operation and
+is replayed on startup to rebuild the state machine.
+
+Durability is controlled by `raftLogFsync`:
+- **`true`** (default) — every log entry is fsynced to disk before the write
+  returns.
+- **`false`** — log entries are buffered; a crash may lose recently committed
+  entries.
+
+### Leader election and forwarding
+
+Leader election is handled by the `ELECTION` protocol in the JGroups-Raft stack
+using the standard Raft election algorithm with randomised timeouts.
+
+Write forwarding is handled by the `REDIRECT` protocol.  When a follower
+receives a write, `REDIRECT` transparently forwards it to the current leader.
+This means any node can accept writes.
+
+### Dynamic membership
+
+When `raftMembers` is not configured, the node starts with an empty membership
+list and uses dynamic join:
+
+1. After connecting, the node waits briefly for a leader to appear.
+2. **Leader found** — join via `REDIRECT.addServer(nodeName)`, which is itself a
+   Raft log entry requiring leader consensus.  The joining node starts as a
+   Learner, receives the log, and is promoted to Follower.
+3. **No leader, node is alone** — bootstrap a new single-member cluster by
+   reconnecting with `members = [nodeName]`.
+4. **No leader, other nodes exist** — wait for the coordinator to bootstrap,
+   then join via `addServer()`.
+
+`addServer()` and `removeServer()` are also exposed for programmatic cluster
+management.
+
+### Configuration
+
+`JGroupsRaftStoreEnvironmentBean` extends `JGroupsStoreEnvironmentBean` and
+adds:
+
+| Property | Default | Description |
+|-|-|-|
+| `raftLogFsync` | `true` | Whether to fsync Raft log writes to disk |
+| `raftMembers` | (empty) | Comma-separated static member list; empty for dynamic mode |
+| `raftTimeout` | `5000` ms | Timeout for Raft operations (majority ack) |
+| `raftElectionMaxInterval` | `500` ms | Max time to wait for leader election |
