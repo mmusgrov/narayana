@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>slot-store</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<h1 id="slotstore-internals-how-jgroupsslotstore-works">SlotStore
+internals: how JGroupsSlotStore works</h1>
+<p>This document describes the internal architecture of the slot-based
+object store, focusing on how the JGroupsSlotStore makes transaction log
+data available across a cluster.</p>
+<h2 id="layer-overview">Layer overview</h2>
+<p>The slot store is built from four layers, each with a single
+responsibility:</p>
+<pre><code>ObjectStoreAPI  (Narayana&#39;s standard persistence interface)
+      │
+      ▼
+SlotStoreAdaptor   translates (Uid, typeName) into SlotStoreKey
+      │
+      ▼
+SlotStore           manages the slot index, free list, and serialisation
+      │
+      ▼
+BackingSlots        physical read/write/clear of numbered slots
+ (interface)        (JGroupsSlots, DiskSlots, InfinispanSlots, …)</code></pre>
+<p>Every layer delegates downward and never reaches past its immediate
+neighbour.</p>
+<h2 id="slotstoreadaptor">SlotStoreAdaptor</h2>
+<p><code>SlotStoreAdaptor</code> implements <code>ObjectStoreAPI</code>
+— the interface that the rest of Narayana uses for transaction log
+persistence. Its only job is to translate the
+<code>(Uid, typeName, stateStatus)</code> tuples that
+<code>ObjectStoreAPI</code> works with into <code>SlotStoreKey</code>
+objects that <code>SlotStore</code> understands.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>ObjectStoreAPI method</th>
+<th>What the adaptor does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>write_committed(uid, type, state)</code></td>
+<td>Creates <code>SlotStoreKey(uid, type, OS_COMMITTED)</code>, calls
+<code>store.write(key, state)</code></td>
+</tr>
+<tr>
+<td><code>read_committed(uid, type)</code></td>
+<td>Creates the same key, calls <code>store.read(key)</code></td>
+</tr>
+<tr>
+<td><code>remove_committed(uid, type)</code></td>
+<td>Creates the same key, calls <code>store.remove(key)</code></td>
+</tr>
+<tr>
+<td><code>currentState(uid, type)</code></td>
+<td>Calls <code>store.contains(key)</code> — returns
+<code>OS_COMMITTED</code> or <code>OS_UNKNOWN</code></td>
+</tr>
+<tr>
+<td><code>allObjUids(type, …)</code></td>
+<td>Calls <code>store.getMatchingKeys(templateKey)</code> and packs the
+matching UIDs</td>
+</tr>
+<tr>
+<td><code>allTypes(…)</code></td>
+<td>Calls <code>store.getKnownTypes()</code> and decomposes hierarchical
+type paths</td>
+</tr>
+</tbody>
+</table>
+<p>The adaptor reports <code>fullCommitNeeded() == false</code> — the
+slot store writes directly to committed state. Shadow/uncommitted
+operations are not supported.</p>
+<h2 id="slotstorekey">SlotStoreKey</h2>
+<p>A <code>SlotStoreKey</code> is an immutable triple of
+<code>(Uid, typeName, stateStatus)</code>. The type name is normalised
+to always start with <code>/</code>.</p>
+<p>When a slot is written, the key is serialised into the front of the
+byte array before the actual <code>OutputObjectState</code> payload:</p>
+<pre><code>┌──────────────────────┬──────────────────────────┐
+│  SlotStoreKey bytes  │  OutputObjectState bytes  │
+│  (uid+type+status)   │  (application payload)    │
+└──────────────────────┴──────────────────────────┘</code></pre>
+<p>This makes every slot <strong>self-describing</strong>: on startup
+the store can read each slot, deserialise the key from the front, and
+rebuild its in-memory index without any external metadata.</p>
+<h2 id="slotstore">SlotStore</h2>
+<p><code>SlotStore</code> is the core of the design. It manages three
+data structures:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>slotIdIndex</code></td>
+<td><code>ConcurrentHashMap&lt;SlotStoreKey, Integer&gt;</code></td>
+<td>Maps each logical key to the slot number that holds its data</td>
+</tr>
+<tr>
+<td><code>freeList</code></td>
+<td><code>ConcurrentLinkedDeque&lt;Integer&gt;</code></td>
+<td>Pool of slot numbers available for new writes</td>
+</tr>
+<tr>
+<td><code>slots</code></td>
+<td><code>BackingSlots</code></td>
+<td>The physical storage backend</td>
+</tr>
+</tbody>
+</table>
+<h3 id="startup-recovery">Startup recovery</h3>
+<p>The constructor scans every slot (0 … numberOfSlots − 1) by calling
+<code>slots.read(i)</code>. For each slot:</p>
+<ul>
+<li><strong>Empty/null</strong> → the slot number goes on the
+<code>freeList</code>.</li>
+<li><strong>Has data</strong> → the <code>SlotStoreKey</code> is
+deserialised from the front of the data, and
+<code>slotIdIndex.put(key, i)</code> rebuilds the index entry.</li>
+</ul>
+<p>No external index file is needed — the slots themselves are the
+source of truth.</p>
+<h3 id="write-flow">Write flow</h3>
+<pre><code>SlotStore.write(key, outputObjectState)</code></pre>
+<ol type="1">
+<li><strong>Serialise</strong> — pack the <code>SlotStoreKey</code> then
+the <code>OutputObjectState</code> into a single <code>byte[]</code>.
+Reject if larger than <code>bytesPerSlot</code>.</li>
+<li><strong>Allocate</strong> — <code>freeList.poll()</code> to claim a
+fresh slot number. If the free list is empty the store is full and the
+write returns <code>false</code>.</li>
+<li><strong>Write</strong> —
+<code>slots.write(slotId, data, syncWrites)</code>. On failure the slot
+is recycled and the exception propagates.</li>
+<li><strong>Index</strong> — <code>slotIdIndex.put(key, slotId)</code>.
+The return value reveals whether this is a rewrite (previous slot
+existed for the same key).</li>
+<li><strong>Free old slot</strong> — if this was a rewrite,
+<code>slots.clear(previousSlot)</code> then
+<code>freeList.add(previousSlot)</code>.</li>
+</ol>
+<p>Writes always go to a <strong>new slot</strong>, never in-place. The
+old slot is freed only after the new slot is written and the index is
+updated. This guarantees that on crash, recovery finds at least one
+complete copy.</p>
+<h3 id="read-flow">Read flow</h3>
+<pre><code>SlotStore.read(key)</code></pre>
+<ol type="1">
+<li><strong>Lookup</strong> — <code>slotIdIndex.get(key)</code> to
+obtain the slot number.</li>
+<li><strong>Read</strong> — <code>slots.read(slotId)</code> to get the
+raw bytes.</li>
+<li><strong>Deserialise</strong> —
+<code>SlotStoreKey.unpackFrom(buffer)</code> advances past the key
+portion, then <code>InputObjectState.unpackFrom(buffer)</code> reads the
+payload.</li>
+</ol>
+<h3 id="remove-flow">Remove flow</h3>
+<pre><code>SlotStore.remove(key)</code></pre>
+<ol type="1">
+<li><strong>Unindex</strong> — <code>slotIdIndex.remove(key)</code>. If
+the key was not present, return <code>false</code>.</li>
+<li><strong>Clear</strong> —
+<code>slots.clear(slotId, syncDeletes)</code>. On failure the slot is
+recycled and the exception propagates.</li>
+<li><strong>Free</strong> — <code>freeList.add(slotId)</code>.</li>
+</ol>
+<p>The index is updated <em>before</em> the backing store is cleared. If
+the process crashes between these two steps, the startup recovery loop
+will find data still in the slot, re-index it, and recovery will retry
+the remove.</p>
+<h3 id="slot-recycling">Slot recycling</h3>
+<p>When <code>slots.write()</code> or <code>slots.clear()</code> throws
+<code>IOException</code>, the failed slot must be handled. The
+<code>recycleFailedSlots</code> configuration controls the policy:</p>
+<ul>
+<li><strong><code>true</code></strong> (default) — return the slot to
+the free list immediately. Safe because all built-in
+<code>BackingSlots</code> implementations guard against indeterminate
+state (DiskSlots uses checksums, JGroupsRaftSlots blocks until majority
+commit, JGroupsSlots uses synchronous RPC, InfinispanSlotStore uses
+synchronous cache operations).</li>
+<li><strong><code>false</code></strong> — attempt to clear the slot
+first. If the clear succeeds the slot is recycled; if the clear also
+fails the slot is <strong>quarantined</strong> (dropped from
+circulation). Quarantined slots remain unavailable until the store
+restarts.</li>
+</ul>
+<h2 id="backingslots-interface">BackingSlots interface</h2>
+<p><code>BackingSlots</code> is the SPI that physical storage backends
+implement:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">init</span><span class="op">(</span>SlotStoreEnvironmentBean config<span class="op">)</span> <span class="kw">throws</span> <span class="bu">IOException</span><span class="op">;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">write</span><span class="op">(</span><span class="dt">int</span> slot<span class="op">,</span> <span class="dt">byte</span><span class="op">[]</span> data<span class="op">,</span> <span class="dt">boolean</span> sync<span class="op">)</span> <span class="kw">throws</span> <span class="bu">IOException</span><span class="op">;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="dt">byte</span><span class="op">[]</span> <span class="fu">read</span><span class="op">(</span><span class="dt">int</span> slot<span class="op">)</span> <span class="kw">throws</span> <span class="bu">IOException</span><span class="op">;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">clear</span><span class="op">(</span><span class="dt">int</span> slot<span class="op">,</span> <span class="dt">boolean</span> sync<span class="op">)</span> <span class="kw">throws</span> <span class="bu">IOException</span><span class="op">;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">stop</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">IOException</span><span class="op">;</span>   <span class="co">// default no-op</span></span></code></pre></div>
+<p>Slot numbers range from 0 to <code>numberOfSlots − 1</code>. All
+concurrency control and key-to-slot mapping is handled by
+<code>SlotStore</code> above this interface — a
+<code>BackingSlots</code> implementation only deals with numbered byte
+arrays.</p>
+<h2 id="jgroupsslots">JGroupsSlots</h2>
+<p><code>JGroupsSlots</code> implements <code>BackingSlots</code> using
+a JGroups <code>ReplCache</code> — a distributed hash map that
+replicates entries across cluster nodes.</p>
+<h3 id="two-level-key-system">Two-level key system</h3>
+<p>There are two kinds of keys in the system. <code>SlotStoreKey</code>
+(Uid + typeName + stateStatus) is the logical key used by
+<code>SlotStore</code>’s <code>ConcurrentHashMap</code>.
+<code>ByteArrayKey</code> is the physical key used in the JGroups
+<code>ReplCache</code>. The <code>slots[]</code> array bridges them:</p>
+<pre><code>slotIdIndex: SlotStoreKey ──► int (slot number)
+slots[int]:  int ──────────► ByteArrayKey (cache key)
+ReplCache:   ByteArrayKey ──► byte[] (serialised data)</code></pre>
+<p>The first two mappings are local to each node and the third is
+global, ie. the same for all nodes. Therefore, provided the composite
+mapping, SlotStoreKey -&gt; ByteArrayKey, is the same for all nodes it
+is irrelevant which slot is used to store the ByteArrayKey.</p>
+<h3 id="initialisation">Initialisation</h3>
+<ol type="1">
+<li>Allocate <code>ByteArrayKey[] slots</code> with size
+<code>numberOfSlots</code>.</li>
+<li>Obtain or create the <code>JGroupsSlotKeyGenerator</code>. The
+default generator creates keys from <code>new Uid().getBytes()</code>
+(random, not deterministic). A custom deterministic generator can be
+plugged in via
+<code>JGroupsStoreEnvironmentBean.setSlotKeyGeneratorClassName()</code>.</li>
+<li>Optionally start a write-ahead log (<code>SlotJournal</code>) for
+disk persistence.</li>
+<li>Start the <code>ReplCache</code>.</li>
+<li>Call <code>load(existingKeys)</code> to populate
+<code>slots[]</code> from keys already in the cache’s L2 store, filling
+remaining positions with generated keys.</li>
+<li>If the WAL is enabled, call <code>loadFromWAL()</code> to recover
+data not yet in the cache (skipping entries the cache already has from
+replication).</li>
+</ol>
+<h3 id="write">Write</h3>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">write</span><span class="op">(</span><span class="dt">int</span> slot<span class="op">,</span> <span class="dt">byte</span><span class="op">[]</span> data<span class="op">,</span> <span class="dt">boolean</span> sync<span class="op">)</span></span></code></pre></div>
+<ol type="1">
+<li>If WAL is enabled, write to the journal first.</li>
+<li><code>cache.put(slots[slot], data, replicationCount, 0)</code> — the
+<code>0</code> timeout means “cache forever until explicitly
+removed.”</li>
+</ol>
+<p>The <code>sync</code> parameter is <strong>not used</strong> —
+replication behaviour is controlled by the <code>ReplCache</code>
+configuration (synchronous RPC with <code>callTimeout</code>).</p>
+<h3 id="read">Read</h3>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="dt">byte</span><span class="op">[]</span> <span class="fu">read</span><span class="op">(</span><span class="dt">int</span> slot<span class="op">)</span></span></code></pre></div>
+<ol type="1">
+<li><code>cache.get(slots[slot])</code> — reads from the local L2 cache,
+falling back to remote nodes if needed.</li>
+<li>If null and WAL is enabled, falls back to
+<code>journal.read(slot)</code>.</li>
+</ol>
+<h3 id="clear">Clear</h3>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="dt">void</span> <span class="fu">clear</span><span class="op">(</span><span class="dt">int</span> slot<span class="op">,</span> <span class="dt">boolean</span> sync<span class="op">)</span></span></code></pre></div>
+<ol type="1">
+<li>If WAL is enabled, delete from the journal.</li>
+<li><code>cache.remove(key)</code> — broadcasts removal across the
+cluster.</li>
+<li><code>cache.getL2Cache().remove(key)</code> — also clears the local
+L2 cache, because <code>ReplCache.remove()</code> does not always clean
+it.</li>
+</ol>
+<h3 id="how-different-nodes-see-the-same-data">How different nodes see
+the same data</h3>
+<p>The JGroups <code>ReplCache</code> provides cross-node
+visibility:</p>
+<ul>
+<li><strong><code>replicationCount</code></strong> controls how many
+nodes receive each write. The default of <code>-1</code> means full
+replication — every node gets a copy.</li>
+<li><strong><code>cache.put()</code></strong> replicates the entry via
+synchronous RPC, bounded by <code>callTimeout</code> (default 1500
+ms).</li>
+<li><strong><code>cache.get()</code></strong> reads from the local L2
+cache first, then from remote nodes if the key is not found
+locally.</li>
+<li><strong><code>cache.remove()</code></strong> broadcasts the removal
+to all nodes that hold the entry.</li>
+<li><strong><code>migrateData</code></strong> (default
+<code>true</code>) automatically re-replicates entries when nodes join
+or leave the cluster.</li>
+</ul>
+<p>For data to be consistently visible across nodes, all nodes must use
+the same <code>ByteArrayKey</code> for each slot number. The default key
+generator creates random keys per-node (different nodes will have
+different cache keys for the same slot index). To share slot data across
+nodes, configure a deterministic key generator that produces the same
+key for a given slot index on every node (see
+<code>SharedSlotKeyGenerator</code> for an example).</p>
+<h3 id="write-ahead-log-wal">Write-ahead log (WAL)</h3>
+<p>When <code>walEnabled</code> is <code>true</code>, JGroupsSlots
+writes to an Artemis-based journal before writing to the cache. This
+provides crash recovery for the in-memory cache data.</p>
+<p>During startup, <code>loadFromWAL()</code> iterates the journal’s
+slot IDs and restores data to the cache <strong>only if the cache does
+not already have data for that key</strong> (replicated data wins over
+WAL data, since it may be more recent).</p>
+</body>
+</html>
