@@ -21,7 +21,7 @@ public class JGroupsRaftStoreEnvironmentBean extends JGroupsStoreEnvironmentBean
     private String raftMembers = null;
     private int raftTimeout = 5000; // milliseconds
     private int raftElectionMaxInterval = 500; // milliseconds
-    private boolean allowDirtyReads = true;
+    private boolean allowDirtyReads = false;
 
     public JGroupsRaftStoreEnvironmentBean() {
         setJGroupsConfigFileName("jgroups-raft-config.xml");
@@ -94,6 +94,10 @@ public class JGroupsRaftStoreEnvironmentBean extends JGroupsStoreEnvironmentBean
      * data on follower nodes that have not yet received the latest log entries.
      * When false, reads go through the Raft leader for consistent results at the
      * cost of higher latency.
+     * <p>
+     * When the store is used as a transaction log use the value false (the default)
+     * so that recovery reads for in-doubt transactions are forwarded to the Raft
+     * leader and a complete, up-to-date view is returned.
      *
      * @return true if dirty reads are allowed
      */
