@@ -72,7 +72,7 @@ public class JGroupsRaftSlots implements BackingSlots {
         }
 
         try {
-            tsLogger.i18NLogger.warn_jgroups_raft_slot_store();
+            tsLogger.i18NLogger.warn_jgroups_raft_slot_store_is_experimental();
 
             // Check if channel and cache are pre-configured (for testing multi-node scenarios)
             JChannel preConfiguredChannel = null;
