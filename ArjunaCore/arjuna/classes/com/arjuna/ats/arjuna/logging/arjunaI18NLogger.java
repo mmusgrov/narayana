@@ -1703,6 +1703,15 @@ public interface arjunaI18NLogger {
 	@LogMessage(level = WARN)
 	void warn_slot_store_too_few_slots(int actual, int configured);
 
+    @Message(id = 12427, value = "Transaction {0} failed to load (records was never formally committed or rolled back)",
+			format = MESSAGE_FORMAT)
+	@LogMessage(level = WARN)
+	void warn_journal_transaction_load_error(long txId);
+
+	@Message(id = 12428, value = "Journal: Failed to load record id {0} reason {1}", format = MESSAGE_FORMAT)
+	@LogMessage(level = WARN)
+	void warn_journal_replay(long id, String message);
+
     /*
         Allocate new messages directly above this notice.
           - id: use the next id number in numeric sequence. Don't reuse ids.
