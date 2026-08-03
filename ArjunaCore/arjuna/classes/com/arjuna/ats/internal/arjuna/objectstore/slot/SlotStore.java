@@ -177,11 +177,10 @@ public class SlotStore {
         if (previousSlot != null) {
             try {
                 slots.clear(previousSlot, config.isSyncDeletes());
+                freeList.add(previousSlot);
             } catch (IOException e) {
                 recycleSlot(previousSlot);
-                throw e;
             }
-            freeList.add(previousSlot);
         }
 
         return true;
