@@ -69,17 +69,28 @@ public class JGroupsRecoveryScanTest extends JGroupsTestBase {
 
     @AfterAll
     static void afterAll() {
-        if (manager != null) {
-            manager.terminate();
-            manager = null;
+        try {
+            if (manager != null) {
+                manager.terminate();
+                manager = null;
+            }
+        } catch (Exception ignore) {
         }
-        if (recoveryStore != null) {
-            recoveryStore.stop();
-            recoveryStore = null;
+
+        try {
+            if (recoveryStore != null) {
+                recoveryStore.stop();
+                recoveryStore = null;
+            }
+        } catch (Exception ignore) {
         }
-        if (store != null) {
-            store.stop();
-            store = null;
+
+        try {
+            if (store != null) {
+                store.stop();
+                store = null;
+            }
+        } catch (Exception ignore) {
         }
     }
 
