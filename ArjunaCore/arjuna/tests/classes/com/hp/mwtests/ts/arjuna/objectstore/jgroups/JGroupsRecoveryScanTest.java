@@ -17,12 +17,14 @@ import com.arjuna.ats.arjuna.coordinator.abstractrecord.RecordTypeMap;
 import com.arjuna.ats.arjuna.exceptions.ObjectStoreException;
 import com.arjuna.ats.arjuna.objectstore.RecoveryStore;
 import com.arjuna.ats.arjuna.recovery.RecoveryManager;
+import com.arjuna.ats.arjuna.state.InputObjectState;
 import com.arjuna.ats.internal.arjuna.recovery.AtomicActionRecoveryModule;
 import com.hp.mwtests.ts.arjuna.resources.CrashRecord;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -108,7 +110,8 @@ public class JGroupsRecoveryScanTest extends JGroupsTestBase {
 
         // Verify that there is something in the store (the in-doubt transaction)
         try {
-            recoveryStore.read_committed(aa.getSavingUid(), aa.type());
+            InputObjectState inDoubt = recoveryStore.read_committed(aa.getSavingUid(), aa.type());
+            assertNotNull(inDoubt, "Record should be available in the recovery store");
         } catch (ObjectStoreException e) {
             fail("Record should be available in the recovery store: ", e);
         }
