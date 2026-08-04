@@ -144,7 +144,7 @@ public class SlotJournal {
         List<RecordInfo> committedRecords = new LinkedList<>();
         List<PreparedTransactionInfo> preparedTransactions = new LinkedList<>();
         TransactionFailureCallback failureCallback = (txId, records, recordsToDelete) -> {
-            tsLogger.i18NLogger.warn_journal_transaction_load_error(txId);
+            tsLogger.i18NLogger.warn_journal_transaction_load(txId);
         };
 
         // Load journal and replay records
@@ -198,7 +198,7 @@ public class SlotJournal {
         try {
             journal.scheduleCompactAndBlock(5000); // 5 second timeout
         } catch (Exception e) {
-            tsLogger.logger.warnf("SlotJournal: Compaction failed during stop: %s", e.getMessage());
+            tsLogger.i18NLogger.warn_journal_compaction(e.getMessage());
         }
         journal.stop();
     }

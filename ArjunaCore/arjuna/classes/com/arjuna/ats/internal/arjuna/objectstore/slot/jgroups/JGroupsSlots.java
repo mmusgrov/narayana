@@ -143,6 +143,10 @@ public class JGroupsSlots implements BackingSlots {
                     nextFree++;
                 }
 
+                if (nextFree >= slots.length) {
+                    throw new IOException(tsLogger.i18NLogger.get_jgroups_too_few_slots(slots.length));
+                }
+
                 slots[nextFree] = originalKey;
                 cache.put(originalKey, data, replicationCount, 0);
                 if (nextFree != slotId) {

@@ -472,10 +472,10 @@ public class JGroupsRaftSlots implements BackingSlots {
         if (raftMembers != null && !raftMembers.isEmpty()) {
             String[] members = raftMembers.split(",");
             if (members.length % 2 == 0) {
-                tsLogger.logger.warnf("Raft cluster has even number of nodes (%d). Odd numbers (3, 5, 7) are recommended for proper quorum.", members.length);
+                tsLogger.i18NLogger.warn_cluster_size_is_even(members.length);
             }
             if (members.length < 3) {
-                tsLogger.logger.warnf("Raft cluster has only %d nodes. Minimum 3 nodes recommended for fault tolerance.", members.length);
+                tsLogger.i18NLogger.warn_cluster_size_too_small(members.length);
             }
         }
     }

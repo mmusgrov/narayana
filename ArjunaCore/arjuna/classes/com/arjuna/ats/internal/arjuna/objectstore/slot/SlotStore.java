@@ -179,6 +179,7 @@ public class SlotStore {
                 slots.clear(previousSlot, config.isSyncDeletes());
                 freeList.add(previousSlot);
             } catch (IOException e) {
+                // the new state is already stored, so do not report the write as failed
                 recycleSlot(previousSlot);
             }
         }
