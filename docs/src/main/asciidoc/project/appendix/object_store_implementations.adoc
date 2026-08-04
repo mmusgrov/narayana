@@ -970,7 +970,7 @@ Default: true
 
 ==== JGroupsSlotStore tuning
 
-JGroupsSlotStore combines asynchronous in-memory replication with an optional write-ahead log (WAL) for persistence.
+JGroupsSlotStore combines in-memory replication (synchronous or asynchronous, depending on the ReplCache configuration) with an optional write-ahead log (WAL) for persistence.
 
 `JGroupsStoreEnvironmentBean.walSyncWrites`::
 When `true` (the default), WAL writes are fsynced for full durability.
