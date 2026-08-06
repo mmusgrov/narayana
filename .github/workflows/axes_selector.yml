@@ -55,6 +55,10 @@ on:
         description: 'PERFORMANCE testing axis'
         required: true
         type: boolean
+      QUICKSTART:
+        description: 'QUICKSTART testing axis'
+        required: true
+        type: boolean
       postgres:
         description: 'PostgreSQL will be used for the DB_TESTS testing axis.'
         required: false
@@ -93,6 +97,10 @@ on:
         type: string
       PERF_PR_NUMBER:
         description: 'PERF_PR_NUMBER: PR number to checkout for the performance repo tests.'
+        required: false
+        type: string
+      QUICKSTART_PR_NUMBER:
+        description: 'QUICKSTART_PR_NUMBER: PR number to checkout for the quickstart repo tests.'
         required: false
         type: string
       benchmarks:
@@ -152,6 +160,10 @@ on:
         description: 'PERFORMANCE testing axis'
         required: true
         type: boolean
+      QUICKSTART:
+        description: 'QUICKSTART testing axis'
+        required: false
+        type: boolean
       enabled_databases:
         description: 'The collection of databases to test against'
         required: false
@@ -188,6 +200,7 @@ jobs:
       JACOCO: ${{ steps.parse.outputs.JACOCO || steps.set-axes-inputs.outputs.JACOCO || inputs.JACOCO }}
       DB_TESTS: ${{ steps.parse.outputs.DB_TESTS || steps.set-axes-inputs.outputs.DB_TESTS || inputs.DB_TESTS }}
       PERFORMANCE: ${{ steps.parse.outputs.PERFORMANCE || steps.set-axes-inputs.outputs.PERFORMANCE || inputs.PERFORMANCE }}
+      QUICKSTART: ${{ steps.parse.outputs.QUICKSTART || steps.set-axes-inputs.outputs.QUICKSTART || inputs.QUICKSTART }}
       enabled_databases: ${{ steps.parse.outputs.enabled_databases || steps.set-axes-inputs.outputs.enabled_databases || inputs.enabled_databases }}
       jdk_versions: ${{ steps.parse.outputs.jdk_versions || steps.set-axes-inputs.outputs.jdk_versions || inputs.jdk_versions }}
       environment_variables: ${{ steps.parse.outputs.environment_variables || steps.set-axes-inputs.outputs.environment_variables || inputs.environment_variables }}
@@ -222,7 +235,8 @@ jobs:
               'QA_JTS_OPENJDKORB',
               'JACOCO',
               'DB_TESTS',
-              'PERFORMANCE'
+              'PERFORMANCE',
+              'QUICKSTART'
             ];
             
             // Convert '! AXIS' to '!AXIS'
@@ -292,6 +306,7 @@ jobs:
                 'AS_BRANCH',
                 'SPI_BRANCH',
                 'PERF_PR_NUMBER',
+                'QUICKSTART_PR_NUMBER',
                 'JMH_MEASUREMENT_TIME',
                 'JMH_FORKS',
                 'JMH_WARMUP_ITERATIONS',
@@ -357,6 +372,7 @@ jobs:
             core.setOutput('JACOCO', '${{ inputs.JACOCO }}');
             core.setOutput('DB_TESTS', '${{ inputs.DB_TESTS }}');
             core.setOutput('PERFORMANCE', '${{ inputs.PERFORMANCE }}');
+            core.setOutput('QUICKSTART', '${{ inputs.QUICKSTART }}');
             if (${{ inputs.DB_TESTS }}) {
               // Creates enabled_databases
               const selected_databases = [
@@ -379,7 +395,8 @@ jobs:
               ['AS_BRANCH', '${{ inputs.AS_BRANCH }}'],
               ['NARAYANA_FORK_BRANCH_TO_REBASE_ON', '${{ inputs.NARAYANA_FORK_BRANCH_TO_REBASE_ON }}'],
               ['SPI_BRANCH', '${{ inputs.SPI_BRANCH }}'],
-              ['PERF_PR_NUMBER', '${{ inputs.PERF_PR_NUMBER }}']
+              ['PERF_PR_NUMBER', '${{ inputs.PERF_PR_NUMBER }}'],
+              ['QUICKSTART_PR_NUMBER', '${{ inputs.QUICKSTART_PR_NUMBER }}']
             ].filter(entry => entry[1] !== ''));
 
             core.info(`Custom Envs: ${JSON.stringify(extractedEnvVars)}`);
@@ -468,3 +485,16 @@ jobs:
       pull_request_repo: ${{ needs.axes_selector.outputs.pr_repo }}
       environment_variables: ${{ needs.axes_selector.outputs.environment_variables }}
       benchmarks: ${{ needs.axes_selector.outputs.benchmarks }}
+
+  QUICKSTART:
+    needs: axes_selector
+    if: ${{ needs.axes_selector.outputs.QUICKSTART == 'true' }}
+    uses: ./.github/workflows/quickstart.yml
+    strategy:
+      matrix:
+        jdk_version: ${{ fromJSON(needs.axes_selector.outputs.jdk_versions) }}
+    with:
+      jdk_version: ${{ matrix.jdk_version }}
+      pull_request_ref: ${{ needs.axes_selector.outputs.pr_ref }}
+      pull_request_repo: ${{ needs.axes_selector.outputs.pr_repo }}
+      environment_variables: ${{ needs.axes_selector.outputs.environment_variables }}
