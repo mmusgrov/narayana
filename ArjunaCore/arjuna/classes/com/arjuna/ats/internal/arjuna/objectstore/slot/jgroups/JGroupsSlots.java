@@ -14,6 +14,9 @@ import org.jgroups.blocks.Cache;
 import org.jgroups.blocks.ReplCache;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -117,12 +120,21 @@ public class JGroupsSlots implements BackingSlots {
             return;
         }
 
-        int recoveredCount = 0; // incremented when an entry is recovered from the log
-        int skippedCount = 0; // incremented if the cache already contains the log entry
+        int recoveredCount = 0;
+        int skippedCount = 0;
         boolean warned = false;
 
         Set<ByteArrayKey> cacheKeys = cache.getL2Cache().getInternalMap().keySet();
-        int nextFree = 0; // next slot to populate
+        int nextFree = 0;
+
+        // Journal mutations are deferred to a second phase so that the complete
+        // slot mapping is known before any record is moved. Without deferral,
+        // two records that swap positions (A at slot 2 → 5, B at slot 5 → 2)
+        // would interfere: deleting slot 2 before processing slot 5 loses A's
+        // data, and the recovery path could overwrite a cache-hit record's
+        // journal entry before the cache-hit iteration reads it.
+        Set<Integer> journalDeletes = new LinkedHashSet<>();
+        Map<Integer, Object[]> journalWrites = new LinkedHashMap<>();
 
         for (Integer slotId : journal.getSlotIds()) {
             if (slotId < 0 || slotId >= slots.length) {
@@ -150,51 +162,40 @@ public class JGroupsSlots implements BackingSlots {
                 slots[nextFree] = originalKey;
                 cache.put(originalKey, data, replicationCount, 0);
                 if (nextFree != slotId) {
-                    journal.delete(slotId);
-                    journal.write(nextFree, originalKey, data);
+                    journalDeletes.add(slotId);
+                    journalWrites.put(nextFree, new Object[]{originalKey, data});
                 }
                 nextFree++;
                 recoveredCount++;
             } else {
-                // load() may have assigned originalKey to a different slot
-                // position than the WAL's slotId (ConcurrentHashMap iteration
-                // order is non-deterministic). Without rebasing, clear(currentSlot)
-                // would call journal.delete(currentSlot) - missing the record
-                // at the old position - and a later restart would resurrect it.
-
-                // The cache-hit path now handles two cases:
-                //
-                //  1. Slot shuffle (findSlot returns a different position): Rebases the journal
-                //  entry from the old position to the current one, so clear(currentSlot) targets the right record.
-                //  2. Replication race (findSlot returns -1): Key arrived from a faster node after load() finished.
-                //  Claims a free slot using the same nextFree scan as the recovery path, assigns the key there, and
-                //  rebases the journal. Without this, the key would be in the cache but unreachable through slots[].
-                //
-                //  The replication-race case is hard to test deterministically (it requires a key to enter the cache
-                //  between load() and loadFromWAL() within init()), but it shares the same free-slot logic as the
-                //  well-tested recovery path.
+                byte[] cacheData = cache.get(originalKey);
                 int currentSlot = findSlot(originalKey);
                 if (currentSlot < 0) {
-                    // Key arrived via replication from a faster node after
-                    // load() ran - not yet in slots[]. Claim a free slot so
-                    // the data is reachable and the journal targets it.
                     while (nextFree < slots.length && cacheKeys.contains(slots[nextFree])) {
                         nextFree++;
                     }
-                    if (nextFree < slots.length) {
-                        currentSlot = nextFree;
-                        slots[currentSlot] = originalKey;
-                        nextFree++;
+                    if (nextFree >= slots.length) {
+                        throw new IOException(tsLogger.i18NLogger.get_jgroups_too_few_slots(slots.length));
                     }
+                    currentSlot = nextFree;
+                    slots[currentSlot] = originalKey;
+                    nextFree++;
                 }
-                if (currentSlot >= 0 && currentSlot != slotId) {
-                    journal.delete(slotId);
-                    if (journal.getKey(currentSlot) == null) {
-                        journal.write(currentSlot, originalKey, data);
-                    }
+                if (currentSlot != slotId) {
+                    journalDeletes.add(slotId);
                 }
+                journalWrites.put(currentSlot, new Object[]{originalKey, cacheData});
                 skippedCount++;
             }
+        }
+
+        // Phase 2: apply all journal mutations. Deleting every source before
+        // writing any destination prevents data loss when records swap slots.
+        for (Integer slot : journalDeletes) {
+            journal.delete(slot);
+        }
+        for (Map.Entry<Integer, Object[]> entry : journalWrites.entrySet()) {
+            journal.write(entry.getKey(), (ByteArrayKey) entry.getValue()[0], (byte[]) entry.getValue()[1]);
         }
 
         tsLogger.logger.debugf("JGroupsSlots: Recovered %d slots from write-ahead log to cache%s",
