@@ -27,7 +27,6 @@ import org.jgroups.protocols.raft.ELECTION;
 import org.jgroups.protocols.raft.NO_DUPES;
 import org.jgroups.protocols.raft.RAFT;
 import org.jgroups.protocols.raft.REDIRECT;
-import org.jgroups.protocols.raft.Role;
 import org.jgroups.raft.blocks.ReplicatedStateMachine;
 import org.jgroups.stack.ProtocolStack;
 import org.jgroups.util.Util;
@@ -187,7 +186,7 @@ public class JGroupsRaftPartitionTest extends JGroupsTestBase {
         }
 
         boolean isLeader() {
-            return Role.Leader.name().equals(raft().role());
+            return raft().isLeader();
         }
     }
 
@@ -327,6 +326,8 @@ public class JGroupsRaftPartitionTest extends JGroupsTestBase {
 
         RaftNode leader = findLeader();
         List<RaftNode> followers = nodes.stream().filter(n -> !n.isLeader()).toList();
+        assertEquals(2, followers.size(),
+                "Expected exactly one leader and two followers, found followers: " + followers.size());
         RaftNode isolated = followers.get(0);
         RaftNode remaining = followers.get(1);
 
