@@ -80,9 +80,8 @@ public class JGroupsRaftConfigFromFileTest extends JGroupsTestBase {
         assertEquals(10_000, raftConfig.getRaftTimeout());
         assertEquals(1000, raftConfig.getRaftElectionMaxInterval());
 
-        // jGroupsRaftConfigFileName retains its default because the field name (jGroupsRaftConfigFileName)
-        // does not match the setter convention (setJGroupsConfigFileName), preventing BeanPopulator discovery
-        assertEquals("jgroups-raft-config.xml", raftConfig.getJGroupsConfigFileName());
+        assertEquals("jgroups-raft-alt-config.xml", raftConfig.getJGroupsConfigFileName(),
+                "jGroupsConfigFileName should be set from properties file");
 
         // verify SlotStoreEnvironmentBean base properties were loaded (separate BeanPopulator instance,
         // configured with SlotStoreEnvironmentBean.* prefix keys from the same properties file)
