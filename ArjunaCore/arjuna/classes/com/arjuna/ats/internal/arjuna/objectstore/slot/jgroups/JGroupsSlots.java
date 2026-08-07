@@ -156,6 +156,43 @@ public class JGroupsSlots implements BackingSlots {
                 nextFree++;
                 recoveredCount++;
             } else {
+                // load() may have assigned originalKey to a different slot
+                // position than the WAL's slotId (ConcurrentHashMap iteration
+                // order is non-deterministic). Without rebasing, clear(currentSlot)
+                // would call journal.delete(currentSlot) - missing the record
+                // at the old position - and a later restart would resurrect it.
+
+                // The cache-hit path now handles two cases:
+                //
+                //  1. Slot shuffle (findSlot returns a different position): Rebases the journal
+                //  entry from the old position to the current one, so clear(currentSlot) targets the right record.
+                //  2. Replication race (findSlot returns -1): Key arrived from a faster node after load() finished.
+                //  Claims a free slot using the same nextFree scan as the recovery path, assigns the key there, and
+                //  rebases the journal. Without this, the key would be in the cache but unreachable through slots[].
+                //
+                //  The replication-race case is hard to test deterministically (it requires a key to enter the cache
+                //  between load() and loadFromWAL() within init()), but it shares the same free-slot logic as the
+                //  well-tested recovery path.
+                int currentSlot = findSlot(originalKey);
+                if (currentSlot < 0) {
+                    // Key arrived via replication from a faster node after
+                    // load() ran - not yet in slots[]. Claim a free slot so
+                    // the data is reachable and the journal targets it.
+                    while (nextFree < slots.length && cacheKeys.contains(slots[nextFree])) {
+                        nextFree++;
+                    }
+                    if (nextFree < slots.length) {
+                        currentSlot = nextFree;
+                        slots[currentSlot] = originalKey;
+                        nextFree++;
+                    }
+                }
+                if (currentSlot >= 0 && currentSlot != slotId) {
+                    journal.delete(slotId);
+                    if (journal.getKey(currentSlot) == null) {
+                        journal.write(currentSlot, originalKey, data);
+                    }
+                }
                 skippedCount++;
             }
         }
@@ -164,34 +201,55 @@ public class JGroupsSlots implements BackingSlots {
             recoveredCount, skippedCount > 0 ? " (skipped " + skippedCount + " already in cache)" : "");
     }
 
+    private int findSlot(ByteArrayKey key) {
+        for (int i = 0; i < slots.length; i++) {
+            if (key.equals(slots[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /*
-     * The slots initialisation algorithm is:
-     * 1.  Initialise the slots array using the cache (load method). Cache key iteration order is
-     *     non-deterministic, so slots[i] may map to a different ByteArrayKey than before a crash.
-     * 2a. Read keys and data from the write-ahead log (loadFromWAL method).
-     * 2b. For each WAL entry, check putIfAbsent against the original ByteArrayKey persisted with the
-     *     entry - not slots[slotId], which may have been reassigned by load(). This prevents data
-     *     loss when load() shuffles key-to-slot assignments. If the original key is not in the cache,
-     *     assign it to a free slot position and replicate via cache.put().
+     * == Slot-reassignment problem and WAL recovery ==
      *
-     *     putIfAbsent on the internal JGroups map is atomic against the receiver thread, so if
-     *     replicated data arrives concurrently, putIfAbsent keeps the replicated value and discards
-     *     the stale WAL value.
+     * load() populates slots[] from the cache's ConcurrentHashMap key set, whose iteration order is
+     * non-deterministic. After a restart the same ByteArrayKey may occupy a different slot index than
+     * the one recorded in the WAL at write time. Two things must be correct for recovery/restart to work:
+     *
+     *   1. Lookup by the right key (SHA ec341880c1). Each WAL record persists the original ByteArrayKey
+     *      alongside the data. loadFromWAL() uses that persisted key for putIfAbsent - not
+     *      slots[slotId], which may now point to an unrelated key. Without this, putIfAbsent could
+     *      match against the wrong cache entry, silently skipping unreplicated data.
+     *
+     *   2. Rebase the journal index. When putIfAbsent returns false (a surviving node already has the
+     *      data), the journal record is still indexed under the pre-crash slot position. If the key
+     *      now lives at a different slot, clear(currentSlot) would call journal.delete(currentSlot) -
+     *      missing the record at the old position - and a later restart would resurrect cleared data.
+     *      To avoid this scenario the fix deletes the stale entry and rewrites it at the current slot.
+     *      If the key is not yet in slots[] (it arrived via replication from a faster node after load()
+     *      ran), a free slot is claimed so the data is reachable through the slot interface.
+     *
+     *      putIfAbsent on the internal local JGroups map is atomic against the JGroups message receiver
+     *      thread, so if replicated data arrives concurrently, putIfAbsent keeps the replicated value
+     *      and discards the stale WAL value.
      *
      * Scenarios:
-     *     Single-node crash or restart with surviving nodes: the surviving nodes already have the data
-     *     via replication, so putIfAbsent returns false and WAL entries are skipped.
+     *     Single-node crash with surviving nodes: survivors already have the data via replication,
+     *     so putIfAbsent returns false. The journal is rebased to the current slot mapping.
      *
-     *     All-nodes crash or restart: each node recovers its own WAL locally via putIfAbsent, then
-     *     replicates the recovered data to the cluster via cache.put() to restore the full replicated
-     *     state.
+     *     All-nodes crash: each node recovers its own WAL locally (putIfAbsent returns true), then
+     *     replicates via cache.put() to restore the full replicated state.
      *
-     *     Partial-crash with unreplicated data: the WAL entries original key is not in the cache.
-     *     putIfAbsent succeeds, and the data is assigned to a free slot and replicated.
+     *     Partial crash with unreplicated data: the WAL entry's original key is absent from the cache.
+     *     putIfAbsent succeeds, the data is assigned to a free slot and replicated.
      *
-     *     A graceful restart behaves the same as a crash from this algorithm's perspective - the WAL
-     *     may contain entries for transactions that were active at shutdown time, and the same
-     *     putIfAbsent-then-replicate logic applies.
+     *     All-nodes simultaneous restart: a race is possible - a faster node may replicate recovered
+     *     data before a slower node's loadFromWAL() runs, causing putIfAbsent to return false for
+     *     keys that load() never saw. The free-slot claim in the rebase path handles this.
+     *
+     *     Graceful restart: behaves the same as a crash  the WAL may contain entries for transactions
+     *     that were active at shutdown, and the same putIfAbsent-then-rebase logic applies.
      */
     private static <K, V> boolean putIfAbsent(ReplCache<K, V> cache, K key, V val) {
         // remark the ReplCache.Value constructor uses an arbitrary value for the second parameter (replication_count)
