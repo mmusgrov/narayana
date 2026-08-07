@@ -206,8 +206,8 @@ jobs:
       environment_variables: ${{ steps.parse.outputs.environment_variables || steps.set-axes-inputs.outputs.environment_variables || inputs.environment_variables }}
       benchmarks: ${{ steps.parse.outputs.benchmarks || inputs.benchmarks || '["stores", "comparisons", "rts", "transports", "journal"]' }}
       pr_number: ${{ steps.set-pr-data.outputs.pr_number }}
-      pr_ref: ${{ steps.set-pr-data.outputs.pr_ref }}
-      pr_repo: ${{ steps.set-pr-data.outputs.pr_repo }}
+      pr_ref: ${{ steps.set-pr-data.outputs.pr_ref || inputs.pull_request_ref }}
+      pr_repo: ${{ steps.set-pr-data.outputs.pr_repo || inputs.pull_request_repo }}
 
     steps:
       - name: Extract PR metadata
