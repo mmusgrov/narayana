@@ -309,8 +309,15 @@ elected leader. Polls every 50ms up to raftElectionMaxInterval (default 500ms).
 JGroupsRaftSlots overrides isIndexStale() and clearIndexStale() to signal when
 Raft-replicated data may have arrived without going through SlotStore.write().
 
-A `volatile boolean indexStale` flag is set to true in two places:
+A `volatile boolean indexStale` flag is set to true in three places:
 
+. *Notification listener*: registered via
+  `cache.addNotificationListener(...)`. The put and remove callbacks set
+  `indexStale = true` whenever the state machine is updated, including
+  replicated entries applied while the node remains in the same Raft role.
+  On the leader this is redundant (SlotStore.write() already updated the
+  index) but harmless; on followers it is the primary trigger for detecting
+  remotely replicated mutations.
 . *Role change listener*: `raft.addRoleListener(role -> indexStale = true)`.
   Registered in both the standard and pre-configured init paths. When a
   follower is promoted to leader, the new leader's SlotStore index may be
