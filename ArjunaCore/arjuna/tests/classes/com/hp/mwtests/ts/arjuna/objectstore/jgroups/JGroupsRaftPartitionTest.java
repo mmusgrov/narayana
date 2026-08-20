@@ -550,7 +550,7 @@ public class JGroupsRaftPartitionTest extends JGroupsTestBase {
         RaftNode follower = nodes.stream()
                 .filter(n -> !n.isLeader()).findFirst().orElseThrow();
 
-        // Activate the follower's store — its SlotStore scans all slots (all empty)
+        // Activate the follower's store - its SlotStore scans all slots (all empty)
         RecoveryStore followerRs = activateStore(follower);
 
         // Write a record directly to the leader's RSM. Raft replicates the entry
@@ -567,7 +567,7 @@ public class JGroupsRaftPartitionTest extends JGroupsTestBase {
         assertFalse(containsAtomicAction(followerRs, probe),
                 "Before role change: follower's index should not contain the replicated entry");
 
-        // Isolate the leader — the followers elect a new leader, triggering
+        // Isolate the leader - the followers elect a new leader, triggering
         // role change notifications that set indexStale = true
         List<RaftNode> followers = nodes.stream().filter(n -> !n.isLeader()).toList();
         partition(followers, List.of(leader));

@@ -18,6 +18,8 @@ import org.jgroups.raft.blocks.ReplicatedStateMachine;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -53,6 +55,10 @@ public class JGroupsRaftSlots implements BackingSlots {
     private JGroupsRaftStoreEnvironmentBean config;
     private volatile boolean initialized = false;
     private volatile boolean indexStale;
+    // Slots being written or cleared by this node's SlotStore. The notification
+    // listener skips these because the calling SlotStore.write()/remove() will
+    // update slotIdIndex and freeList itself after the Raft operation returns.
+    private final Set<Integer> pendingLocalWrites = ConcurrentHashMap.newKeySet();
 
     /**
      * Initialize the Raft-based slot store.
@@ -101,9 +107,10 @@ public class JGroupsRaftSlots implements BackingSlots {
                         config.getNodeAddress());
 
                 RAFT preConfiguredRaft = channel.getProtocolStack().findProtocol(RAFT.class);
-                if (preConfiguredRaft != null) {
-                    preConfiguredRaft.addRoleListener(role -> indexStale = true);
+                if (preConfiguredRaft == null) {
+                    throw new IllegalStateException("RAFT protocol not found in JGroups stack");
                 }
+                preConfiguredRaft.addRoleListener(role -> indexStale = true);
 
                 addNotificationListener();
 
@@ -213,12 +220,14 @@ public class JGroupsRaftSlots implements BackingSlots {
     @Override
     public void write(int slotId, byte[] data, boolean sync) throws IOException {
         checkInitialized();
+        pendingLocalWrites.add(slotId);
         try {
-            // Raft put() blocks until majority commit
             cache.put(slotId, data);
         } catch (Exception e) {
             tsLogger.logger.warn("Raft write failed for slot " + slotId, e);
             throw new IOException("Raft write failed", e);
+        } finally {
+            pendingLocalWrites.remove(slotId);
         }
     }
 
@@ -232,11 +241,14 @@ public class JGroupsRaftSlots implements BackingSlots {
     @Override
     public void clear(int slotId, boolean sync) throws IOException {
         checkInitialized();
+        pendingLocalWrites.add(slotId);
         try {
             cache.remove(slotId);
         } catch (Exception e) {
             tsLogger.logger.warn("Raft clear failed for slot " + slotId, e);
             throw new IOException("Raft clear failed", e);
+        } finally {
+            pendingLocalWrites.remove(slotId);
         }
     }
 
@@ -494,16 +506,20 @@ public class JGroupsRaftSlots implements BackingSlots {
 
     private void addNotificationListener() {
         RAFT raft = channel.getProtocolStack().findProtocol(RAFT.class);
+        if (raft == null) {
+            throw new IllegalStateException("RAFT protocol not found in JGroups stack");
+        }
         cache.addNotificationListener(new ReplicatedStateMachine.Notification<>() {
-            // Only followers need the notification — on the leader, SlotStore.write()
-            // already updates the index and a redundant indexStale=true would let a
-            // concurrent read trigger refreshIndex() mid-write.
+            // Skip notifications for slots this node is currently writing or
+            // clearing - the calling SlotStore.write()/remove() will update
+            // slotIdIndex and freeList itself. For all other mutations (replicated
+            // from another node) mark the index stale so the next read refreshes it.
             @Override public void put(Integer key, byte[] oldVal, byte[] newVal) {
-                if (!Role.Leader.name().equals(raft.role()))
+                if (!pendingLocalWrites.contains(key))
                     indexStale = true;
             }
             @Override public void remove(Integer key, byte[] oldVal) {
-                if (!Role.Leader.name().equals(raft.role()))
+                if (!pendingLocalWrites.contains(key))
                     indexStale = true;
             }
             @Override public void get(Integer key, byte[] val) {}
